@@ -1,0 +1,95 @@
+<!-- 
+    Author: Victor Hugo Garcia de Oliveira
+    12/01/2018
+-->
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Agenda Pessoal</title>
+
+		<!-- CSS -->
+		<link rel="stylesheet" type="text/css" href="css/bootstrap.css"/>
+        <link rel="stylesheet" type="text/css" href="css/datepickk.css"/>
+
+
+        <!-- JS -->
+        <script src="js/bootstrap.min.js"></script>
+        <script src="js/jquery-3.2.1.min.js"></script>
+        <script src="js/moment.js"></script>
+        <script src="js/datepickk.js"></script>
+	</head>
+
+	<body>
+	<nav id="myNavbar" class="navbar navbar-default navbar-fixed-top"/>
+	<div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbarCollapse" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Personal Journal</a>
+        </div>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="nav navbar-nav navbar-right">
+                
+                <li class="navbar-text"><script type="text/javascript">
+                	 document.write(moment().format('MMMM Do YYYY'));
+                </script></li>
+                <!-- <li><a href="#" target="_blank"></a></li> -->
+                <li><a href="#" target="_blank">Jon Doe <img class="img-circle" src="http://sozialreferat.com/wp-content/uploads/2016/09/Profile-Picture-43-150x150.jpg" alt="Profile Photo" style="width=: 20px; height: 20px"></a></li>               
+            	</ul>
+        	</div>
+    	</div>
+	</nav>
+
+    <section>
+        <div class="container" style="margin-top: 50px;">
+            <div class="row">
+                    <div class="col-md-4" id="calendar">
+                        <script type="text/javascript">
+                            var now = new Date();
+                            //Initializing the calendar
+                            var calendar = new Datepickk({
+                                container: document.querySelector('#calendar'),
+                                inline:true,
+                                range: true,
+                                //Function marking the number of appointments (e.g. 2 apointments for today).
+                                tooltips: {
+                                    //In that example, using the function date, the appointment is marked for today.
+                                    date: new Date(),
+                                    text: 'Tooltip'
+                                 },
+                                //Function to highlight the events marked in the calendar.
+                                highlight:{
+                                    //In that example, the events highlighted is the first week of the month.
+                                    start: new Date(now.getFullYear(),now.getMonth(),3),
+                                    end: new Date(now.getFullYear(),now.getMonth(),6),
+                                 backgroundColor:'#05676E',
+                                    color:'#fff',
+                                 legend: 'Highlight'
+                                }
+                            });
+                        </script>
+                </div>
+
+                    <div class="col-md-8 text-center">
+                        <h1> How to put a grid here? </h1>
+                        <p>Here will be put a grid, showing the next events and reminders. In fact, I love interactive grids. I just hope to make it right.</p>
+                </div>
+             </div>
+    </div>
+      
+	
+    </section>
+	
+
+
+    </body>
+</html>
