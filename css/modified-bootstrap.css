@@ -1086,7 +1086,7 @@ body {
   font-size: 14px;
   line-height: 1.42857143;
   color: #333;
-  background-color: #00aba9;
+  background-color: #e74c3c;
 }
 input,
 button,
@@ -4494,7 +4494,7 @@ select[multiple].input-group-sm > .input-group-btn > .btn {
 }
 /*NOTA: Tema Padrão da Navbar*/
 .navbar-default {
-  background-color: #e74c3c;
+  background-color: #1a1110;
   border-color: #c0392b;
 }
 .navbar-default .navbar-brand {

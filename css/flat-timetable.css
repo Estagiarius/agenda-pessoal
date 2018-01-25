@@ -29,7 +29,6 @@
 }
 
 body {
-  background: #e74c3c;
   padding: 20px;
 }
 
@@ -38,9 +37,9 @@ body {
   padding: 0;
   border: 0;
   outline: 0;
-  -moz-box-sizing: border-box;
+/*  -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
-  box-sizing: border-box;
+  box-sizing: border-box;*/
 }
 
 table {
@@ -75,6 +74,11 @@ table th, table td {
   text-transform: uppercase;
   font-size: 2.0em;
   text-align: center;
+}
+
+/*Navbar*/
+.navbar-deafult{
+  background: #1a1110;
 }
 
 /* Add this attribute to the element that needs a tooltip */
