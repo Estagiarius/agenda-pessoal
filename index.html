@@ -55,8 +55,56 @@
 
 <!-- The static <section> has been removed. Its content is now in router.js -->
 
+        <!-- Main library scripts -->
+        <!-- Note: Original index.html had these in <head>, moving them to end of body for consistency with app scripts -->
+        <!-- However, the problem statement's example implies they stay in head. Reverting to keep them in head for now. -->
+        <!-- The crucial part is the order of app scripts -->
+
+        <!-- App specific scripts -->
+        <script src="js/app/eventService.js"></script>
         <script src="js/app/ui.js"></script>
         <script src="js/app/calendar.js"></script>
         <script src="js/app/router.js"></script>
+
+    <!-- Event Input Modal -->
+    <div class="modal fade" id="eventModal" tabindex="-1" role="dialog" aria-labelledby="eventModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="eventModalLabel">Add New Event</h4>
+          </div>
+          <div class="modal-body">
+            <form id="eventForm">
+              <div class="form-group">
+                <label for="eventTitleInput">Title</label>
+                <input type="text" class="form-control" id="eventTitleInput" placeholder="Event Title" required>
+              </div>
+              <div class="form-group">
+                <label for="selectedDateDisplay">Date</label>
+                <p class="form-control-static" id="selectedDateDisplay">YYYY-MM-DD</p>
+                <input type="hidden" id="eventDateInput">
+              </div>
+              <div class="form-group">
+                <label for="eventStartTimeInput">Start Time</label>
+                <input type="time" class="form-control" id="eventStartTimeInput">
+              </div>
+              <div class="form-group">
+                <label for="eventEndTimeInput">End Time</label>
+                <input type="time" class="form-control" id="eventEndTimeInput">
+              </div>
+              <div class="form-group">
+                <label for="eventDescriptionInput">Description</label>
+                <textarea class="form-control" id="eventDescriptionInput" rows="3" placeholder="Event Description"></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="saveEventButton">Save Event</button>
+          </div>
+        </div>
+      </div>
+    </div>
     </body>
     </html>
