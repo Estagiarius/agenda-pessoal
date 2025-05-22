@@ -9,17 +9,56 @@ function initCalendar() {
         return;
     }
 
-    var now = new Date();
+    // Retrieve events before initializing Datepickk
+    let events = [];
+    if (window.eventService && typeof window.eventService.getEvents === 'function') {
+        events = window.eventService.getEvents();
+        // console.log('Retrieved events for calendar:', events); // For debugging
+    } else {
+        console.error('eventService not available or getEvents is not a function.');
+    }
+
+    // Transform events into datepickkTooltips
+    const datepickkTooltips = [];
+    const eventsByDate = {}; // Helper to group events
+
+    events.forEach(event => {
+        // Assuming event.date is 'YYYY-MM-DD'
+        const parts = event.date.split('-');
+        if (parts.length === 3) {
+            const eventDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            
+            const dateKey = eventDate.toDateString(); // Use toDateString for grouping by day
+
+            if (!eventsByDate[dateKey]) {
+                eventsByDate[dateKey] = {
+                    date: eventDate, // Store the actual Date object
+                    titles: []
+                };
+            }
+            eventsByDate[dateKey].titles.push(event.title);
+        } else {
+            console.warn('Invalid date format for event:', event);
+        }
+    });
+
+    for (const key in eventsByDate) {
+        const dayData = eventsByDate[key];
+        datepickkTooltips.push({
+            date: dayData.date,
+            text: dayData.titles.join('\n') // Join multiple titles with a newline for the tooltip
+        });
+    }
+    // console.log('Generated Datepickk tooltips:', datepickkTooltips); // For debugging
+
+    var now = new Date(); // Still used for highlight, can be kept.
     // Initializing the calendar
     var calendar = new Datepickk({
         container: calendarDiv,
         inline: true,
         range: true, // Note: Range true might affect onSelect behavior for single date selection intent
-        tooltips: {
-            date: new Date(),
-            text: 'Tooltip'
-        },
-        highlight: {
+        tooltips: datepickkTooltips, // Use dynamically generated tooltips
+        highlight: { // Keep existing highlight logic or adjust as needed
             start: new Date(now.getFullYear(), now.getMonth(), 4),
             end: new Date(now.getFullYear(), now.getMonth(), 6),
             backgroundColor: '#05676E',
@@ -88,6 +127,14 @@ function initCalendar() {
                 window.eventService.addEvent(eventObject);
                 // For debugging:
                 // console.log('Current events:', window.eventService.getEvents());
+                // After adding an event, the calendar tooltips should ideally refresh.
+                // This might require re-initializing the calendar or having a method to update tooltips.
+                // For now, this subtask focuses on initial load.
+                 if (typeof initCalendar === 'function') { // Attempt to refresh calendar
+                    // Need to remove the 'datepickk-initialized' class to allow re-initialization
+                    if(calendarDiv) calendarDiv.classList.remove('datepickk-initialized');
+                    initCalendar();
+                }
             } else {
                 console.error('eventService not available or addEvent is not a function.');
             }
