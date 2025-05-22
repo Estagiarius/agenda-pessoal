@@ -4,10 +4,12 @@ function initCalendar() {
         // console.warn('Calendar div #calendar not found for initialization.');
         return;
     }
-    if (calendarDiv.classList.contains('datepickk-initialized')) {
-        // console.log('Calendar already initialized on #calendar.');
-        return;
-    }
+
+    // Clear any previous calendar instance and the initialized marker
+    calendarDiv.innerHTML = ''; 
+    calendarDiv.classList.remove('datepickk-initialized');
+
+    // Removed the early return guard: if (calendarDiv.classList.contains('datepickk-initialized')) { return; }
 
     // Retrieve events before initializing Datepickk
     let events = [];
@@ -56,9 +58,9 @@ function initCalendar() {
     var calendar = new Datepickk({
         container: calendarDiv,
         inline: true,
-        range: true, // Note: Range true might affect onSelect behavior for single date selection intent
-        tooltips: datepickkTooltips, // Use dynamically generated tooltips
-        highlight: { // Keep existing highlight logic or adjust as needed
+        range: true, 
+        tooltips: datepickkTooltips, 
+        highlight: { 
             start: new Date(now.getFullYear(), now.getMonth(), 4),
             end: new Date(now.getFullYear(), now.getMonth(), 6),
             backgroundColor: '#05676E',
@@ -66,16 +68,13 @@ function initCalendar() {
             legend: 'Highlight'
         },
         onSelect: function(isSelected) {
-            // 'this' refers to the date object in Datepickk's onSelect
             const selectedDate = this; 
-            
-            // Attempt to format date using moment if available, otherwise manual.
             let formattedDate;
             if (typeof moment === 'function') {
                 formattedDate = moment(selectedDate).format('YYYY-MM-DD');
             } else {
                 const year = selectedDate.getFullYear();
-                const month = ('0' + (selectedDate.getMonth() + 1)).slice(-2); // Months are 0-indexed
+                const month = ('0' + (selectedDate.getMonth() + 1)).slice(-2);
                 const day = ('0' + selectedDate.getDate()).slice(-2);
                 formattedDate = year + '-' + month + '-' + day;
             }
@@ -90,7 +89,6 @@ function initCalendar() {
                 eventDateInput.value = formattedDate;
             }
             
-            // Using jQuery to show the Bootstrap modal, as per Bootstrap's JS requirements
             if (typeof $ === 'function' && $('#eventModal').modal) {
                  $('#eventModal').modal('show');
             } else {
@@ -98,14 +96,15 @@ function initCalendar() {
             }
         }
     });
-    calendarDiv.classList.add('datepickk-initialized');
+    calendarDiv.classList.add('datepickk-initialized'); // Add marker after successful initialization
 
     // Add Event Listener for the "Save Event" button
     const saveEventButton = document.getElementById('saveEventButton');
-    if (saveEventButton && !saveEventButton.dataset.listenerAttached) { // Prevent attaching multiple listeners
+    // Check if listener already attached by checking a custom attribute or a more robust way
+    if (saveEventButton && !saveEventButton.dataset.listenerAttached) { 
         saveEventButton.addEventListener('click', function() {
             const title = document.getElementById('eventTitleInput').value;
-            const date = document.getElementById('eventDateInput').value; // From hidden input
+            const date = document.getElementById('eventDateInput').value; 
             const startTime = document.getElementById('eventStartTimeInput').value;
             const endTime = document.getElementById('eventEndTimeInput').value;
             const description = document.getElementById('eventDescriptionInput').value;
@@ -125,15 +124,8 @@ function initCalendar() {
 
             if (window.eventService && typeof window.eventService.addEvent === 'function') {
                 window.eventService.addEvent(eventObject);
-                // For debugging:
-                // console.log('Current events:', window.eventService.getEvents());
-                // After adding an event, the calendar tooltips should ideally refresh.
-                // This might require re-initializing the calendar or having a method to update tooltips.
-                // For now, this subtask focuses on initial load.
-                 if (typeof initCalendar === 'function') { // Attempt to refresh calendar
-                    // Need to remove the 'datepickk-initialized' class to allow re-initialization
-                    if(calendarDiv) calendarDiv.classList.remove('datepickk-initialized');
-                    initCalendar();
+                if (typeof initCalendar === 'function') { 
+                    initCalendar(); // Just call initCalendar
                 }
             } else {
                 console.error('eventService not available or addEvent is not a function.');
@@ -141,11 +133,11 @@ function initCalendar() {
             
             const eventForm = document.getElementById('eventForm');
             if (eventForm) {
-                 eventForm.reset(); // Reset the form
+                 eventForm.reset(); 
             }
 
             if (typeof $ === 'function' && $('#eventModal').modal) {
-                $('#eventModal').modal('hide'); // Hide modal using jQuery
+                $('#eventModal').modal('hide'); 
             }
         });
         saveEventButton.dataset.listenerAttached = 'true';
