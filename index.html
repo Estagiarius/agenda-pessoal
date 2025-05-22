@@ -21,7 +21,6 @@
 	<script src="js/bootstrap.min.js"></script>
 	<script src="js/moment.js"></script>
 	<script src="js/datepickk.js"></script>
-	<script src="js/lokijs.min.js"></script>
 </head>
 
 <body>
@@ -38,144 +37,74 @@
 		</div>
 		<!-- Collect the nav links, forms, and other content for toggling -->
 		<div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="nav navbar-nav"> <!-- Added Home link to the left -->
+                <li><a href="#/home">Home</a></li>
+            </ul>
 			<ul class="nav navbar-nav navbar-right">
-
-				<li class="navbar-text"><script type="text/javascript">
-					document.write(moment().format('MMMM Do YYYY'));
-				</script></li>
-				<!-- <li><a href="#" target="_blank"></a></li> -->
+				<li class="navbar-text" id="current-date-display"></li>
+				<li><a href="#/settings">Settings</a></li> 
 				<li><a href="#" target="_blank">Jon Doe <img class="img-circle" src="http://sozialreferat.com/wp-content/uploads/2016/09/Profile-Picture-43-150x150.jpg" alt="Profile Photo" style="width=: 20px; height: 20px"></a></li>               
 			</ul>
 		</div>
 	</div>
 </nav>
 
-<section>
-	<div class="container" style="margin-top: 50px;">
-		<div class="row">
-			<div class="col-md-4" id="calendar">
-				<script type="text/javascript">
-					var now = new Date();
-                            //Initializing the calendar (Just to remember: It's a JSON file.)
-                            var calendar = new Datepickk({
-                            	container: document.querySelector('#calendar'),
-                            	inline:true,
-                            	range: true,
-                                //Function marking the number of appointments (e.g. 2 apointments for today).
-                                tooltips: {
-                                    //In that example, using the function date, the appointment is marked for today.
-                                    date: new Date(),
-                                    text: 'Tooltip'
-                                },
-                                //Function to highlight the events marked in the calendar.
-                                highlight:{
-                                    //In that example, the events highlighted is the first week of the month.
-                                    start: new Date(now.getFullYear(),now.getMonth(), 4),
-                                    end: new Date(now.getFullYear(),now.getMonth(), 6),
-                                    backgroundColor:'#05676E',
-                                    color:'#fff',
-                                    legend: 'Highlight'
-                                }
-                            });
-                        </script>
-                    </div>
+<div id="main-content-area">
+  <!-- Content for different views will be loaded here by the router -->
+</div>
 
-                    <div class="col-md-8 text-center">
-                    	<!-- / College Timetable -->
-                    	<div class='tab'>
-                    		<table border='0' cellpadding='0' cellspacing='0'>
-                    			<caption class='title'>Today Events</caption>
-                    			<tr class='days'>
-                    				<th></th>
-                    				<th>Monday</th>
-                    				<th>Tuesday</th>
-                    				<th>Wednesday</th>
-                    				<th>Thursday</th>
-                    				<th>Friday</th>
-                    			</tr>
-                    			<tr>
-                    				<td class='time'>9.00</td>
-                    				<td class='cs335 blue' data-tooltip='Software Engineering &amp; Software Process'>CS335 [JH1]</td>
-                    				<td class='cs426 purple' data-tooltip='Computer Graphics'>CS426 [CS1]</td>
-                    				<td></td>
-                    				<td></td>
-                    				<td>-</td>
-                    			</tr>
-                    			<tr>
-                    				<td class='time'>10.00</td>
-                    				<td></td>
-                    				<td class='cs335 blue lab' data-tooltip='Software Engineering &amp; Software Process'>CS335 [Lab]</td>
-                    				<td class='md352 green' data-tooltip='Multimedia Production &amp; Management'>MD352 [Kairos]</td>
-                    				<td></td>
-                    				<td>-</td>
-                    			</tr>
-                    			<tr>
-                    				<td class='time'>11.00</td>
-                    				<td></td>
-                    				<td class='cs335 blue lab' data-tooltip='Software Engineering &amp; Software Process'>CS335 [Lab]</td>
-                    				<td class='md352 green' data-tooltip='Multimedia Production &amp; Management'>MD352 [Kairos]</td>
-                    				<td class='cs240 orange' data-tooltip='Operating Systems'>CS240 [CH]</td>
-                    				<td>-</td>
-                    			</tr>
-                    			<tr>
-                    				<td class='time'>12.00</td>
-                    				<td></td>
-                    				<td class='md303 navy' data-tooltip='Media &amp; Globalisation'>MD303 [CS2]</td>
-                    				<td class='md313 red' data-tooltip='Special Topic: Multiculturalism &amp; Nationalism'>MD313 [Iontas]</td>
-                    				<td></td>
-                    				<td>-</td>
-                    			</tr>
-                    			<tr>
-                    				<td class='time'>13.00</td>
-                    				<td></td>
-                    				<td></td>
-                    				<td></td>
-                    				<td></td>
-                    				<td>-</td>
-                    			</tr>
-                    			<tr>
-                    				<td class='time'>14.00</td>
-                    				<td></td>
-                    				<td></td>
-                    				<td class='cs426 purple' data-tooltip='Computer Graphics'>CS426 [CS2]</td>
-                    				<td class='cs240 orange' data-tooltip='Operating Systems'>CS240 [TH1]</td>
-                    				<td>-</td>
-                    			</tr>
-                    			<tr>
-                    				<td class='time'>15.00</td>
-                    				<td></td>
-                    				<td></td>
-                    				<td></td>
-                    				<td class='cs240 orange lab' data-tooltip='Operating Systems'>CS240 [Lab]</td>
-                    				<td>-</td>
-                    			</tr>
-                    			<tr>
-                    				<td class='time'>16.00</td>
-                    				<td></td>
-                    				<td></td>
-                    				<td></td>
-                    				<td class='cs240 orange lab' data-tooltip='Operating Systems'>CS240 [Lab]</td>
-                    				<td>-</td>
-                    			</tr>
-                    			<tr>
-                    				<td class='time'>17.00</td>
-                    				<td class='cs335 blue' data-tooltip='Software Engineering &amp; Software Process'>CS335 [TH1]</td>
-                    				<td></td>
-                    				<td></td>
-                    				<td></td>
-                    				<td>-</td>
-                    			</tr>
-                    		</table>
-                    	</div>
+<!-- The static <section> has been removed. Its content is now in router.js -->
 
-                    </div>
-                </div>
-            </div>
+        <!-- Main library scripts -->
+        <!-- Note: Original index.html had these in <head>, moving them to end of body for consistency with app scripts -->
+        <!-- However, the problem statement's example implies they stay in head. Reverting to keep them in head for now. -->
+        <!-- The crucial part is the order of app scripts -->
 
+        <!-- App specific scripts -->
+        <script src="js/app/eventService.js"></script>
+        <script src="js/app/ui.js"></script>
+        <script src="js/app/calendar.js"></script>
+        <script src="js/app/router.js"></script>
 
-        </section>
-
-
-
+    <!-- Event Input Modal -->
+    <div class="modal fade" id="eventModal" tabindex="-1" role="dialog" aria-labelledby="eventModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="eventModalLabel">Add New Event</h4>
+          </div>
+          <div class="modal-body">
+            <form id="eventForm">
+              <div class="form-group">
+                <label for="eventTitleInput">Title</label>
+                <input type="text" class="form-control" id="eventTitleInput" placeholder="Event Title" required>
+              </div>
+              <div class="form-group">
+                <label for="selectedDateDisplay">Date</label>
+                <p class="form-control-static" id="selectedDateDisplay">YYYY-MM-DD</p>
+                <input type="hidden" id="eventDateInput">
+              </div>
+              <div class="form-group">
+                <label for="eventStartTimeInput">Start Time</label>
+                <input type="time" class="form-control" id="eventStartTimeInput">
+              </div>
+              <div class="form-group">
+                <label for="eventEndTimeInput">End Time</label>
+                <input type="time" class="form-control" id="eventEndTimeInput">
+              </div>
+              <div class="form-group">
+                <label for="eventDescriptionInput">Description</label>
+                <textarea class="form-control" id="eventDescriptionInput" rows="3" placeholder="Event Description"></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="saveEventButton">Save Event</button>
+          </div>
+        </div>
+      </div>
+    </div>
     </body>
     </html>

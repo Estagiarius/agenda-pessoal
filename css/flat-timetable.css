@@ -1,4 +1,19 @@
-@import (../fonts/open-sans/OpenSans-Regular.ttf));
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 300;
+  src: local('Open Sans Light'), local('OpenSans-Light'),
+       url('../fonts/open-sans/OpenSans-Light.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Open Sans Regular'), local('OpenSans-Regular'),
+       url('../fonts/open-sans/OpenSans-Regular.ttf') format('truetype');
+}
+
 .blue {
   background: #3498db;
 }
