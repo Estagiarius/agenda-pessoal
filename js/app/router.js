@@ -99,9 +99,45 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
     `;
 
+    const todoViewHtml = `
+<div class="container-fluid">
+  <h2>My To-Do List</h2>
+  <form id="addTodoForm">
+    <div class="form-group">
+      <label for="todoTextInput">Task Description</label>
+      <input type="text" id="todoTextInput" class="form-control" placeholder="What needs to be done?" required>
+    </div>
+    <div class="form-group">
+      <label for="todoPriorityInput">Priority</label>
+      <select id="todoPriorityInput" class="form-control">
+        <option value="High">High</option>
+        <option value="Medium" selected>Medium</option>
+        <option value="Low">Low</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="todoDueDateInput">Due Date (Optional)</label>
+      <input type="date" id="todoDueDateInput" class="form-control">
+    </div>
+    <button type="submit" class="btn btn-primary">Add Task</button>
+  </form>
+
+  <h3 style="margin-top: 20px;">Open Tasks</h3>
+  <ul id="openTasksList" class="list-group">
+    <!-- Open tasks will be rendered here -->
+  </ul>
+
+  <h3 style="margin-top: 20px;">Completed Tasks</h3>
+  <ul id="completedTasksList" class="list-group">
+    <!-- Completed tasks will be rendered here -->
+  </ul>
+</div>
+`;
+
     const views = {
         '#/home': homeViewHtml,
         '#/settings': '<h2>Settings Page</h2><p>Settings will go here. This is loaded by the router.</p>',
+        '#/todos': todoViewHtml
     };
 
     function loadView(hash) {
@@ -119,6 +155,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     initCalendar();
                 } else {
                     console.error('initCalendar function is not defined. Make sure calendar.js is loaded before router.js.');
+                }
+            } else if (viewKey === '#/todos') { // Added else if
+                if (typeof initTodoPage === 'function') {
+                    initTodoPage();
+                } else {
+                    console.error('initTodoPage function not defined. Make sure todo.js is loaded before router.js.');
                 }
             }
         } else {

@@ -39,6 +39,7 @@
 		<div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="nav navbar-nav"> <!-- Added Home link to the left -->
                 <li><a href="#/home">Home</a></li>
+                <li><a href="#/todos">To-Do List</a></li> 
             </ul>
 			<ul class="nav navbar-nav navbar-right">
 				<li class="navbar-text" id="current-date-display"></li>
@@ -55,15 +56,12 @@
 
 <!-- The static <section> has been removed. Its content is now in router.js -->
 
-        <!-- Main library scripts -->
-        <!-- Note: Original index.html had these in <head>, moving them to end of body for consistency with app scripts -->
-        <!-- However, the problem statement's example implies they stay in head. Reverting to keep them in head for now. -->
-        <!-- The crucial part is the order of app scripts -->
-
         <!-- App specific scripts -->
         <script src="js/app/eventService.js"></script>
+        <script src="js/app/todoService.js"></script> 
         <script src="js/app/ui.js"></script>
         <script src="js/app/calendar.js"></script>
+        <script src="js/app/todo.js"></script> {/* New script */}
         <script src="js/app/router.js"></script>
 
     <!-- Event Input Modal -->
