@@ -114,41 +114,12 @@ document.addEventListener('DOMContentLoaded', function() {
             mainContentArea.innerHTML = views[viewKey];
             mainContentArea.style.display = 'block';
             
-            // Attempt to re-initialize calendar if home view is loaded and calendar script exists
             if (viewKey === '#/home') {
-                // This is a simplified approach. A more robust solution would be for calendar.js
-                // to expose an init function that can be called here.
-                // For now, we rely on calendar.js running on DOMContentLoaded and finding the #calendar div
-                // if it's part of the dynamically loaded HTML.
-                // If calendar.js was already run, and the #calendar div was not present, this won't
-                // automatically re-run it. This might need further adjustment in a later step.
-                // However, calendar.js is included after router.js, so it should run after this initial loadView.
-                // If Datepickk is already initialized on a previous #calendar div, it might cause issues.
-                // A simple way to try and force re-init (if Datepickk allows) is to clear and re-add,
-                // or call its init function if available.
-                
-                // The Datepickk constructor is in calendar.js.
-                // If the calendar div is now loaded, and calendar.js runs after this,
-                // it *should* find it.
-                // Let's ensure the calendar script itself can handle being called if the div is ready.
-                // The existing calendar.js wraps its logic in DOMContentLoaded.
-                // When we set innerHTML, the scripts inside homeViewHtml are NOT automatically executed.
-                // The calendar.js is loaded via <script> tag in index.html.
-                // The calendar.js initialization needs to be called MANUALLY after loading homeViewHtml.
-                // This is a more complex part.
-                // For this step, the subtask asks to focus on HTML movement.
-                // "A simple solution for the calendar for now is to ensure calendar.js still runs *after*
-                // the router has potentially loaded the home view."
-                // "Let's simplify for this subtask: Assume calendar.js will still find its #calendar div
-                // if the home view is loaded by default."
-                // The calendar.js is already loaded in index.html. It runs once.
-                // We need to make sure it can re-initialize.
-                // The simplest path for *this specific subtask* is to assume calendar.js will handle it,
-                // or it's a known limitation for now.
-                // The problem statement says: "Assume calendar.js will still find its #calendar div if the home view is loaded by default."
-                // If navigating to #/home from another route, it will need re-initialization.
-                // This is where an exposed init function in calendar.js would be ideal.
-                // For now, I will proceed without manual re-initialization in the router, per subtask guidance.
+                if (typeof initCalendar === 'function') {
+                    initCalendar();
+                } else {
+                    console.error('initCalendar function is not defined. Make sure calendar.js is loaded before router.js.');
+                }
             }
         } else {
             mainContentArea.innerHTML = '<h2>404 - Page Not Found</h2><p>The page you requested could not be found.</p>';
