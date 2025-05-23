@@ -1,3 +1,6 @@
+// Variable to store the current filter category
+let currentFilterCategory = 'all';
+
 function initCalendar() {
     const calendarDiv = document.querySelector('#calendar');
     if (!calendarDiv) {
@@ -10,19 +13,25 @@ function initCalendar() {
     }
 
     // Retrieve events before initializing Datepickk
-    let events = [];
+    let allEvents = [];
     if (window.eventService && typeof window.eventService.getEvents === 'function') {
-        events = window.eventService.getEvents();
-        // console.log('Retrieved events for calendar:', events); // For debugging
+        allEvents = window.eventService.getEvents();
     } else {
         console.error('eventService not available or getEvents is not a function.');
     }
+
+    // Filter events based on currentFilterCategory
+    const filteredEvents = (currentFilterCategory === 'all')
+        ? allEvents
+        : allEvents.filter(event => event.category === currentFilterCategory);
+    
+    // console.log('Displaying events for category:', currentFilterCategory, filteredEvents); // For debugging
 
     // Transform events into datepickkTooltips
     const datepickkTooltips = [];
     const eventsByDate = {}; // Helper to group events
 
-    events.forEach(event => {
+    filteredEvents.forEach(event => { // Use filteredEvents here
         // Assuming event.date is 'YYYY-MM-DD'
         const parts = event.date.split('-');
         if (parts.length === 3) {
@@ -33,10 +42,10 @@ function initCalendar() {
             if (!eventsByDate[dateKey]) {
                 eventsByDate[dateKey] = {
                     date: eventDate, // Store the actual Date object
-                    titles: []
+                    eventDetails: [] // Store event title and category
                 };
             }
-            eventsByDate[dateKey].titles.push(event.title);
+            eventsByDate[dateKey].eventDetails.push({ title: event.title, category: event.category });
         } else {
             console.warn('Invalid date format for event:', event);
         }
@@ -44,20 +53,33 @@ function initCalendar() {
 
     for (const key in eventsByDate) {
         const dayData = eventsByDate[key];
+        const tooltipText = dayData.eventDetails.map(detail => {
+            if (detail.category && detail.category !== 'General') {
+                return `[${detail.category}] ${detail.title}`;
+            }
+            return detail.title;
+        }).join('\n');
+
         datepickkTooltips.push({
             date: dayData.date,
-            text: dayData.titles.join('\n') // Join multiple titles with a newline for the tooltip
+            text: tooltipText
         });
     }
     // console.log('Generated Datepickk tooltips:', datepickkTooltips); // For debugging
 
     var now = new Date(); // Still used for highlight, can be kept.
+
+    // If calendar instance exists, try to destroy it before re-initializing
+    // This is a common pattern if a library doesn't offer a direct update method.
+    // However, Datepickk's API is unknown, so we rely on the 'datepickk-initialized' flag.
+    // For this exercise, we'll assume no explicit destroy method is available/needed beyond removing the class.
+
     // Initializing the calendar
-    var calendar = new Datepickk({
+    var calendar = new Datepickk({ // 'calendar' variable is scoped to initCalendar
         container: calendarDiv,
         inline: true,
-        range: true, // Note: Range true might affect onSelect behavior for single date selection intent
-        tooltips: datepickkTooltips, // Use dynamically generated tooltips
+        range: true, 
+        tooltips: datepickkTooltips, 
         highlight: { // Keep existing highlight logic or adjust as needed
             start: new Date(now.getFullYear(), now.getMonth(), 4),
             end: new Date(now.getFullYear(), now.getMonth(), 6),
@@ -102,13 +124,17 @@ function initCalendar() {
 
     // Add Event Listener for the "Save Event" button
     const saveEventButton = document.getElementById('saveEventButton');
-    if (saveEventButton && !saveEventButton.dataset.listenerAttached) { // Prevent attaching multiple listeners
+    // Ensure this listener is only attached once.
+    // A more robust way would be to manage the listener outside initCalendar if initCalendar is called multiple times.
+    // For now, the data-attribute guard is kept.
+    if (saveEventButton && !saveEventButton.dataset.listenerAttached) { 
         saveEventButton.addEventListener('click', function() {
             const title = document.getElementById('eventTitleInput').value;
-            const date = document.getElementById('eventDateInput').value; // From hidden input
+            const date = document.getElementById('eventDateInput').value;
             const startTime = document.getElementById('eventStartTimeInput').value;
             const endTime = document.getElementById('eventEndTimeInput').value;
             const description = document.getElementById('eventDescriptionInput').value;
+            const category = document.getElementById('eventCategoryInput').value;
 
             if (!title || !date) {
                 alert('Please enter at least a title and ensure a date is selected.');
@@ -116,38 +142,70 @@ function initCalendar() {
             }
 
             const eventObject = {
-                title: title,
-                date: date,
-                startTime: startTime,
-                endTime: endTime,
-                description: description
+                title: title, date: date, startTime: startTime, endTime: endTime,
+                description: description, category: category
             };
 
             if (window.eventService && typeof window.eventService.addEvent === 'function') {
                 window.eventService.addEvent(eventObject);
-                // For debugging:
-                // console.log('Current events:', window.eventService.getEvents());
-                // After adding an event, the calendar tooltips should ideally refresh.
-                // This might require re-initializing the calendar or having a method to update tooltips.
-                // For now, this subtask focuses on initial load.
-                 if (typeof initCalendar === 'function') { // Attempt to refresh calendar
-                    // Need to remove the 'datepickk-initialized' class to allow re-initialization
-                    if(calendarDiv) calendarDiv.classList.remove('datepickk-initialized');
-                    initCalendar();
+                
+                // Regarding calendar refresh:
+                // Without specific Datepickk API documentation for updating tooltips dynamically,
+                // the safest approach provided by the current structure is re-initialization.
+                // If Datepickk had a method like `calendar.updateTooltips(newTooltipsArray)`
+                // or `calendar.refreshData()`, that would be preferred.
+                // For now, we continue to re-initialize.
+                // The 'datepickk-initialized' class removal allows initCalendar to run again.
+                if (calendarDiv) {
+                    calendarDiv.classList.remove('datepickk-initialized');
+                    // Potentially, if Datepickk had a destroy method, it would be called here:
+                    // if (window.currentCalendarInstance && typeof window.currentCalendarInstance.destroy === 'function') {
+                    //     window.currentCalendarInstance.destroy();
+                    // }
                 }
+                initCalendar(); // Re-initialize the calendar to show new event tooltip
             } else {
                 console.error('eventService not available or addEvent is not a function.');
             }
             
             const eventForm = document.getElementById('eventForm');
             if (eventForm) {
-                 eventForm.reset(); // Reset the form
+                 eventForm.reset();
             }
 
             if (typeof $ === 'function' && $('#eventModal').modal) {
-                $('#eventModal').modal('hide'); // Hide modal using jQuery
+                $('#eventModal').modal('hide');
             }
         });
         saveEventButton.dataset.listenerAttached = 'true';
     }
+    // Store the instance if we needed to call methods on it later, e.g., a hypothetical destroy.
+    // window.currentCalendarInstance = calendar; 
 }
+
+// Setup event listener for the category filter dropdown
+// This should be done once the DOM is ready, or ensure this script runs after the dropdown exists.
+// Given script placement at end of body, this should be fine.
+document.addEventListener('DOMContentLoaded', function() {
+    const categoryFilterDropdown = document.getElementById('categoryFilterDropdown');
+    const calendarDiv = document.querySelector('#calendar'); // Get calendarDiv for re-initialization
+
+    if (categoryFilterDropdown && calendarDiv) {
+        categoryFilterDropdown.addEventListener('change', function() {
+            currentFilterCategory = this.value;
+            // console.log('Filter changed to:', currentFilterCategory); // For debugging
+            
+            if (calendarDiv.classList.contains('datepickk-initialized')) {
+                calendarDiv.classList.remove('datepickk-initialized');
+            }
+            // Potentially, if Datepickk had a destroy method, it would be called here:
+            // if (window.currentCalendarInstance && typeof window.currentCalendarInstance.destroy === 'function') {
+            //     window.currentCalendarInstance.destroy();
+            // }
+            initCalendar(); // Re-initialize the calendar with the new filter
+        });
+    } else {
+        if (!categoryFilterDropdown) console.error('#categoryFilterDropdown not found.');
+        if (!calendarDiv) console.error('#calendar div not found for filter listener setup.');
+    }
+});
