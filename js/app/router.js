@@ -104,6 +104,44 @@ document.addEventListener('DOMContentLoaded', function() {
         '#/settings': '<h2>Página de Configurações</h2><p>As configurações ficarão aqui. Isto é carregado pelo roteador.</p>',
     };
 
+    const settingsViewHtml = `
+<div class="container" style="margin-top: 20px;">
+    <h2>Notification Settings</h2>
+    <form>
+        <div class="form-group">
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" id="enableSoundNotification">
+                    Enable sound for notifications
+                </label>
+            </div>
+        </div>
+        <!-- <button type="button" id="saveSettingsButton" class="btn btn-primary">Save Settings</button> -->
+        <p><small>Settings are saved automatically when changed.</small></p>
+    </form>
+</div>
+    `;
+    views['#/settings'] = settingsViewHtml; // Add settings view to the views object
+
+    function initSettingsViewLogic() {
+        const enableSoundCheckbox = document.getElementById('enableSoundNotification');
+        
+        if (enableSoundCheckbox && window.settingsService) {
+            // Load initial settings
+            const currentSettings = window.settingsService.getNotificationSettings();
+            enableSoundCheckbox.checked = currentSettings.enableSound;
+
+            // Save settings on change
+            enableSoundCheckbox.addEventListener('change', function() {
+                window.settingsService.saveNotificationSettings({ enableSound: this.checked });
+                // console.log('Notification sound setting saved:', this.checked); // For debugging
+            });
+        } else {
+            if (!enableSoundCheckbox) console.error('#enableSoundNotification checkbox not found.');
+            if (!window.settingsService) console.error('settingsService not available.');
+        }
+    }
+
     function loadView(hash) {
         // Always try to hide the question bank first if ui.js is loaded
         if (typeof ui !== 'undefined' && typeof ui.hideQuestionBank === 'function') {
@@ -183,13 +221,29 @@ document.addEventListener('DOMContentLoaded', function() {
             mainContentArea.style.display = 'block';
             
             if (viewKey === '#/home') {
+
+                // Hide To-Do list when on home/calendar view if it exists
+                const todoListContainer = document.getElementById('todo-list-container');
+                if (todoListContainer) {
+                    todoListContainer.style.display = 'none'; 
+                }
                 // Initialize calendar only if home view is active and initCalendar is defined
                 if (typeof initCalendar === 'function') {
                     initCalendar();
                 } else {
                     console.error('A função initCalendar não está definida. Certifique-se de que calendar.js seja carregado antes de router.js.');
                 }
+            } else if (viewKey === '#/settings') {
+                // Hide To-Do list when on settings view
+                const todoListContainer = document.getElementById('todo-list-container');
+                if (todoListContainer) {
+                    todoListContainer.style.display = 'none'; 
+                }
+                initSettingsViewLogic();
             }
+            // Potential: If To-Do list should be its own view, manage its visibility here too.
+            // For now, it's part of the default content in index.html and hidden on other views.
+
         } else {
             mainContentArea.innerHTML = '<h2>404 - Página Não Encontrada</h2><p>A página que você solicitou não pôde ser encontrada.</p>';
             mainContentArea.style.display = 'block';

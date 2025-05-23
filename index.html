@@ -44,8 +44,23 @@
             </ul>
 			<ul class="nav navbar-nav navbar-right">
 				<li class="navbar-text" id="current-date-display"></li>
-				<li><a href="#/settings">Configurações</a></li> 
-				<li><a href="#" target="_blank">Fulano de Tal <img class="img-circle" src="http://sozialreferat.com/wp-content/uploads/2016/09/Profile-Picture-43-150x150.jpg" alt="Profile Photo" style="width=: 20px; height: 20px"></a></li>               
+enhancement/adhd-productivity-tools
+				<li>
+                    <select id="categoryFilterDropdown" class="form-control" style="margin-top: 8px; margin-right: 5px; width: auto; display: inline-block;">
+                        <option value="all" selected>All Categories</option>
+                        <option value="Chemistry">Chemistry</option>
+                        <option value="Physics">Physics</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Biology">Biology</option>
+                        <option value="Natural Sciences">Natural Sciences</option>
+                        <option value="Robotics">Robotics</option>
+                        <option value="Programming">Programming</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </li>
+				<li><a href="#/settings">Settings</a></li> 
+				<li><a href="#" target="_blank">Jon Doe <img class="img-circle" src="http://sozialreferat.com/wp-content/uploads/2016/09/Profile-Picture-43-150x150.jpg" alt="Profile Photo" style="width=: 20px; height: 20px"></a></li>               
+
 			</ul>
 		</div>
 	</div>
@@ -53,162 +68,19 @@
 
 <div id="main-content-area">
   <!-- Content for different views will be loaded here by the router -->
-  <div id="question-bank-view" style="display: none;">
-    <div id="question-bank-general-feedback" role="alert" style="margin-bottom: 15px;"></div>
-    <h2>Banco de Perguntas</h2>
 
-    <!-- Add Question Form -->
-    <section id="add-question-section">
-        <h3>Adicionar Nova Pergunta</h3>
-        <form id="add-question-form">
-            <div class="form-group">
-                <label for="question-text">Texto da Pergunta:</label>
-                <textarea id="question-text" class="form-control" rows="3" required></textarea>
-            </div>
-            <div class="form-group">
-                <label for="question-subject">Assunto:</label>
-                <input type="text" id="question-subject" class="form-control" required />
-            </div>
-            <div class="form-group">
-                <label for="question-difficulty">Dificuldade:</label>
-                <select id="question-difficulty" class="form-control">
-                    <option value="Easy">Fácil</option>
-                    <option value="Medium">Médio</option>
-                    <option value="Hard">Difícil</option>
-                </select>
-            </div>
-            <fieldset>
-                <legend>Opções (para múltipla escolha)</legend>
-                <div id="question-options-container">
-                    <!-- Option input fields will be dynamically added here -->
-                    <div class="form-group dynamic-option">
-                        <label>Opção 1:</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control question-option-input" placeholder="Texto da opção">
-                            <span class="input-group-btn">
-                                <button type="button" class="btn btn-danger remove-option-btn" style="display:none;">Remover</button>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <button type="button" id="add-option-btn" class="btn btn-success btn-sm">Adicionar Opção</button>
-            </fieldset>
-            <div class="form-group">
-                <label for="question-answer">Resposta:</label>
-                <input type="text" id="question-answer" class="form-control" placeholder="ex: 'Opção 1' ou o texto da resposta correta" required />
-            </div>
-            <div id="add-question-feedback" role="alert" style="margin-bottom: 15px;"></div>
-            <button type="submit" class="btn btn-primary">Adicionar Pergunta</button>
-        </form>
-    </section>
-
-    <hr />
-
-    <!-- Filter Questions Section -->
-    <section id="filter-questions-section">
-        <h3>Filtrar Perguntas</h3>
-        <form id="question-filters" class="form-inline">
-            <div class="form-group">
-                <label for="filter-subject">Assunto:</label>
-                <input type="text" id="filter-subject" class="form-control" list="subject-datalist" />
-                <datalist id="subject-datalist"></datalist>
-            </div>
-            <div class="form-group">
-                <label for="filter-difficulty">Dificuldade:</label>
-                <select id="filter-difficulty" class="form-control">
-                    <option value="">Todos</option>
-                    <option value="Easy">Fácil</option>
-                    <option value="Medium">Médio</option>
-                    <option value="Hard">Difícil</option>
-                </select>
-            </div>
-            <button type="button" id="apply-filters-button" class="btn btn-info">Aplicar Filtros</button>
-        </form>
-    </section>
-
-    <hr />
-
-    <!-- Questions List Section -->
-    <section id="questions-list-section">
-        <h3>Perguntas</h3>
-        <div id="questions-list">
-            <!-- Questions will be dynamically inserted here -->
-            <p>Nenhuma pergunta ainda. Adicione algumas!</p>
-        </div>
-    </section>
-  </div>
-
-  <div id="quiz-config-view" style="display: none;">
-    <h2>Configurar Seu Quiz</h2>
-    <form id="quiz-config-form">
-        <div class="form-group">
-            <label for="quiz-num-questions">Número de Perguntas:</label>
-            <input type="number" id="quiz-num-questions" class="form-control" value="10" min="1" required>
-        </div>
-        <div class="form-group">
-            <label for="quiz-subject">Assunto:</label>
-            <select id="quiz-subject" class="form-control">
-                <option value="">Todos os Assuntos</option>
-                <!-- Subjects will be populated by JavaScript -->
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="quiz-difficulty">Dificuldade:</label>
-            <select id="quiz-difficulty" class="form-control">
-                <option value="">Qualquer Dificuldade</option>
-                <option value="Easy">Fácil</option>
-                <option value="Medium">Médio</option>
-                <option value="Hard">Difícil</option>
-            </select>
-        </div>
-        <button type="submit" id="start-quiz-btn" class="btn btn-primary">Iniciar Quiz</button>
-    </form>
-    <div id="quiz-config-feedback" role="alert" style="margin-top: 15px;"></div>
-  </div>
-
-  <div id="quiz-taking-view" style="display: none;">
-    <h2>Quiz em Andamento</h2>
-    
-    <div id="quiz-progress-indicator" style="margin-bottom: 15px; font-weight: bold;">
-        <!-- e.g., Question 1 of 10 -->
+  <div class="container" id="todo-list-container" style="margin-top: 20px;">
+    <h2>My Tasks</h2>
+    <div class="input-group" style="margin-bottom: 10px;">
+      <input type="text" id="taskInput" class="form-control" placeholder="Add a new task">
+      <span class="input-group-btn">
+        <button id="addTaskButton" class="btn btn-primary">Add Task</button>
+      </span>
     </div>
-    
-    <div id="quiz-question-area" style="margin-bottom: 20px;">
-        <h4 id="quiz-question-text">
-            <!-- Question text will be loaded here -->
-        </h4>
-        <div id="quiz-options-container">
-            <!-- Options (e.g., radio buttons for multiple choice) will be loaded here -->
-        </div>
-    </div>
-    
-    <div id="quiz-navigation-area">
-        <button type="button" id="quiz-prev-btn" class="btn btn-info" style="display: none;">Pergunta Anterior</button>
-        <button type="button" id="quiz-next-btn" class="btn btn-primary">Próxima Pergunta</button>
-        <button type="button" id="quiz-submit-btn" class="btn btn-success" style="display: none;">Enviar Quiz</button>
-    </div>
-    
-    <div id="quiz-taking-feedback" role="alert" style="margin-top: 15px;">
-        <!-- Feedback specific to the quiz taking process -->
-    </div>
-  </div>
+    <ul id="taskList" class="list-group">
+      <!-- Tasks will be rendered here by todo.js -->
+    </ul>
 
-  <div id="quiz-results-view" style="display: none;">
-    <h2>Resultados do Quiz</h2>
-    
-    <div id="quiz-score-summary" style="margin-bottom: 20px; font-size: 1.5em; font-weight: bold;">
-        <!-- e.g., Your Score: 8 / 10 (80%) -->
-    </div>
-    
-    <div id="quiz-detailed-review-area">
-        <h3>Revisão Detalhada:</h3>
-        <!-- Detailed question-by-question review will be rendered here -->
-    </div>
-    
-    <div id="quiz-results-navigation" style="margin-top: 30px;">
-        <button type="button" id="retake-quiz-btn" class="btn btn-primary">Fazer Outro Quiz</button>
-        <button type="button" id="back-to-qbank-btn" class="btn btn-info">Voltar para o Banco de Perguntas</button>
-    </div>
   </div>
 </div>
 
@@ -227,6 +99,9 @@
         <script src="js/app/ui.js"></script>
         <script src="js/app/calendar.js"></script>
         <script src="js/app/router.js"></script>
+        <script src="js/app/todo.js"></script>
+        <script src="js/app/notificationService.js"></script>
+        <script src="js/app/settingsService.js"></script>
 
     <!-- Event Input Modal -->
     <div class="modal fade" id="eventModal" tabindex="-1" role="dialog" aria-labelledby="eventModalLabel">
@@ -258,6 +133,49 @@
               <div class="form-group">
                 <label for="eventDescriptionInput">Descrição</label>
                 <textarea class="form-control" id="eventDescriptionInput" rows="3" placeholder="Descrição do Evento"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="eventCategoryInput">Category</label>
+                <select class="form-control" id="eventCategoryInput">
+                  <option selected>Chemistry</option>
+                  <option>Physics</option>
+                  <option>Mathematics</option>
+                  <option>Biology</option>
+                  <option>Natural Sciences</option>
+                  <option>Robotics</option>
+                  <option>Programming</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <!-- Reminders Section -->
+              <div class="form-group">
+                <h5 style="margin-top: 15px; margin-bottom: 5px;">Reminders</h5>
+                <div id="configuredRemindersList" class="list-group mb-2" style="margin-bottom: 10px;">
+                  <!-- Configured reminders will be displayed here by calendar.js -->
+                </div>
+                <div class="row">
+                  <div class="col-xs-5">
+                    <label for="reminderValueInput" class="sr-only">Reminder Value</label>
+                    <select id="reminderValueInput" class="form-control">
+                      <option value="10">10</option>
+                      <option value="15">15</option>
+                      <option value="20">20</option>
+                      <option value="30">30</option>
+                    </select>
+                  </div>
+                  <div class="col-xs-5">
+                    <label for="reminderUnitInput" class="sr-only">Reminder Unit</label>
+                    <select id="reminderUnitInput" class="form-control">
+                      <option value="minutes" selected>Minutes Before</option>
+                      <option value="hours">Hours Before</option>
+                    </select>
+                  </div>
+                  <div class="col-xs-2">
+                    <button type="button" id="addReminderButton" class="btn btn-info btn-sm" title="Add Reminder" style="padding: 7px 10px;">
+                        <span class="glyphicon glyphicon-plus"></span> Add
+                    </button>
+                  </div>
+                </div>
               </div>
             </form>
           </div>
