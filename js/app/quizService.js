@@ -54,7 +54,7 @@ const quizService = (() => {
         if (questionIndex >= 0 && questionIndex < currentQuiz.userAnswers.length) {
             currentQuiz.userAnswers[questionIndex] = answer;
         } else {
-            console.error("Invalid question index for recording answer:", questionIndex);
+            console.error("Índice de pergunta inválido para registrar resposta:", questionIndex);
         }
     }
 
@@ -111,7 +111,7 @@ const quizService = (() => {
         // Store the detailed results if needed for later retrieval by getQuizResults
         currentQuiz.detailedResults = detailedResults; 
 
-        console.log("Quiz submitted. Score:", currentQuiz.score, "/", currentQuiz.questions.length);
+        console.log("Quiz enviado. Pontuação:", currentQuiz.score, "/", currentQuiz.questions.length);
         
         return {
             score: currentQuiz.score,
