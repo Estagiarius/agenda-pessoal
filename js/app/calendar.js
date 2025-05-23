@@ -104,6 +104,7 @@ function initCalendar() {
             }
         }
     });
+    calendar.lang = 'pt-br'; // Explicitly set lang again after instantiation
     calendarDiv.classList.add('datepickk-initialized');
 
     // Add Event Listener for the "Save Event" button
