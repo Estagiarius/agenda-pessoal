@@ -58,6 +58,7 @@ function initCalendar() {
     var calendar = new Datepickk({
         container: calendarDiv,
         inline: true,
+        lang: 'pt-br', // Set language to Brazilian Portuguese
         range: true, // Note: Range true might affect onSelect behavior for single date selection intent
         tooltips: datepickkTooltips, // Use dynamically generated tooltips
         highlight: { // Keep existing highlight logic or adjust as needed
