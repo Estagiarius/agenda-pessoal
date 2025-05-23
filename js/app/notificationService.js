@@ -83,21 +83,31 @@
             // requireInteraction: true, // Optional: keeps notification visible until user interacts
         };
 
-        // Check sound setting
-        if (window.settingsService && typeof window.settingsService.getNotificationSettings === 'function') {
-            const currentSettings = window.settingsService.getNotificationSettings();
-            if (currentSettings.enableSound) {
-                console.log("Notification sound should play (based on settings).");
-                // Actual sound playback would go here in a future task.
-                // options.sound = 'path/to/sound.mp3'; // Not standard, but some browsers might support
-                // Or use Audio API: new Audio('path/to/sound.mp3').play();
-            }
-        } else {
-            console.warn('settingsService not available to check sound preferences.');
-        }
-
+        // Sound setting check and playback logic moved to after notification creation
         try {
             const notification = new Notification(title, options);
+
+            // Play sound if enabled in settings
+            if (window.settingsService && typeof window.settingsService.getNotificationSettings === 'function') {
+                const settings = window.settingsService.getNotificationSettings();
+                // The existing log: console.log('notificationService: Configuração de som ao mostrar notificação:', settings.enableSound);
+                // is well-placed and can be kept. The new logs provide more detail on playback attempt.
+                if (settings.enableSound) {
+                    console.log('notificationService: Configuração de som ativa. Tentando reproduzir som...');
+                    const audio = new Audio('sounds/notification.mp3'); // Path to the sound file
+                    audio.play()
+                        .then(() => {
+                            console.log('notificationService: Som da notificação iniciado com sucesso.');
+                        })
+                        .catch(error => {
+                            console.error('notificationService: Erro ao tentar reproduzir o som da notificação:', error);
+                        });
+                } else {
+                    // console.log('notificationService: Configuração de som desativada.'); // Covered by the existing log
+                }
+            } else {
+                console.warn('settingsService not available to check sound preferences for playback.');
+            }
 
             notification.onclick = () => {
                 console.log(`Notification for "${eventTitle}" clicked.`);

@@ -1,11 +1,7 @@
-
 // Variable to store the current filter category
 let currentFilterCategory = 'all';
 // Variable to store reminders for the event currently being edited/created in the modal
 let currentModalReminders = [];
-
-moment.locale('pt-br');
-
 
 function initCalendar() {
     const calendarDiv = document.querySelector('#calendar');
@@ -23,7 +19,7 @@ function initCalendar() {
     if (window.eventService && typeof window.eventService.getEvents === 'function') {
         allEvents = window.eventService.getEvents();
     } else {
-        console.error('eventService não disponível ou getEvents não é uma função.');
+        console.error('eventService not available or getEvents is not a function.');
     }
 
     // Filter events based on currentFilterCategory
@@ -53,7 +49,7 @@ function initCalendar() {
             }
             eventsByDate[dateKey].eventDetails.push({ title: event.title, category: event.category });
         } else {
-            console.warn('Formato de data inválido para o evento:', event);
+            console.warn('Invalid date format for event:', event);
         }
     });
 
@@ -86,42 +82,36 @@ function initCalendar() {
         inline: true,
         range: true, 
         tooltips: datepickkTooltips, 
-        lang: 'pt-br', // Set language to Brazilian Portuguese
-        range: true, // Note: Range true might affect onSelect behavior for single date selection intent
-        tooltips: datepickkTooltips, // Use dynamically generated tooltips
         highlight: { // Keep existing highlight logic or adjust as needed
             start: new Date(now.getFullYear(), now.getMonth(), 4),
             end: new Date(now.getFullYear(), now.getMonth(), 6),
             backgroundColor: '#05676E',
             color: '#fff',
-            legend: 'Destaque'
+            legend: 'Highlight'
         },
         onSelect: function(isSelected) {
             // 'this' refers to the date object in Datepickk's onSelect
             const selectedDate = this; 
             
             // Attempt to format date using moment if available, otherwise manual.
-            let formattedDate; // For hidden input, keep YYYY-MM-DD
-            let displayDate;   // For user display, use DD/MM/YYYY
+            let formattedDate;
             if (typeof moment === 'function') {
                 formattedDate = moment(selectedDate).format('YYYY-MM-DD');
-                displayDate = moment(selectedDate).format('DD/MM/YYYY');
             } else {
                 const year = selectedDate.getFullYear();
                 const month = ('0' + (selectedDate.getMonth() + 1)).slice(-2); // Months are 0-indexed
                 const day = ('0' + selectedDate.getDate()).slice(-2);
                 formattedDate = year + '-' + month + '-' + day;
-                displayDate = day + '/' + month + '/' + year;
             }
 
             const selectedDateDisplay = document.getElementById('selectedDateDisplay');
             const eventDateInput = document.getElementById('eventDateInput');
 
             if (selectedDateDisplay) {
-                selectedDateDisplay.textContent = displayDate; // Use DD/MM/YYYY for display
+                selectedDateDisplay.textContent = formattedDate;
             }
             if (eventDateInput) {
-                eventDateInput.value = formattedDate; // Keep YYYY-MM-DD for hidden input
+                eventDateInput.value = formattedDate;
             }
             
             // Using jQuery to show the Bootstrap modal, as per Bootstrap's JS requirements
@@ -131,11 +121,10 @@ function initCalendar() {
                 renderConfiguredReminders(); 
                 $('#eventModal').modal('show');
             } else {
-                console.error('jQuery ou função modal do Bootstrap não disponível.');
+                console.error('jQuery or Bootstrap modal function not available.');
             }
         }
     });
-    calendar.lang = 'pt-br'; // Explicitly set lang again after instantiation
     calendarDiv.classList.add('datepickk-initialized');
 
     // Add Event Listener for the "Save Event" button - moved to DOMContentLoaded
@@ -228,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const category = document.getElementById('eventCategoryInput').value;
 
             if (!title || !date) {
-                alert('Por favor, insira pelo menos um título e certifique-se de que uma data seja selecionada.');
+                alert('Please enter at least a title and ensure a date is selected.');
                 return;
             }
 
@@ -246,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 initCalendar(); 
             } else {
-                console.error('eventService não disponível ou addEvent não é uma função.');
+                console.error('eventService not available or addEvent is not a function.');
             }
             
             const eventForm = document.getElementById('eventForm');

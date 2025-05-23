@@ -11,14 +11,14 @@ document.addEventListener('DOMContentLoaded', function() {
             <!-- / College Timetable -->
             <div class='tab'>
                 <table border='0' cellpadding='0' cellspacing='0'>
-                    <caption class='title'>Eventos de Hoje</caption>
+                    <caption class='title'>Today Events</caption>
                     <tr class='days'>
                         <th></th>
-                        <th>Segunda-feira</th>
-                        <th>Terça-feira</th>
-                        <th>Quarta-feira</th>
-                        <th>Quinta-feira</th>
-                        <th>Sexta-feira</th>
+                        <th>Monday</th>
+                        <th>Tuesday</th>
+                        <th>Wednesday</th>
+                        <th>Thursday</th>
+                        <th>Friday</th>
                     </tr>
                     <tr>
                         <td class='time'>9.00</td>
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const views = {
         '#/home': homeViewHtml,
-        '#/settings': '<h2>Página de Configurações</h2><p>As configurações ficarão aqui. Isto é carregado pelo roteador.</p>',
+        // Settings view HTML will be defined below
     };
 
     const settingsViewHtml = `
@@ -143,95 +143,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loadView(hash) {
-        // Always try to hide the question bank first if ui.js is loaded
-        if (typeof ui !== 'undefined' && typeof ui.hideQuestionBank === 'function') {
-            ui.hideQuestionBank();
-        }
-        if (typeof ui !== 'undefined' && typeof ui.hideQuizConfigView === 'function') { 
-            ui.hideQuizConfigView();
-        }
-        if (typeof ui !== 'undefined' && typeof ui.hideQuizTakingView === 'function') { 
-            ui.hideQuizTakingView();
-        }
-        if (typeof ui !== 'undefined' && typeof ui.hideQuizResultsView === 'function') { // New hide call
-            ui.hideQuizResultsView();
-        }
-        // Fallback hiding for views if ui object or specific hide functions are not yet available
-        // This helps prevent multiple views from showing during initial load or if scripts are out of sync.
-        const qbView = document.getElementById('question-bank-view');
-        if (qbView && (!ui || !ui.hideQuestionBank)) qbView.style.display = 'none';
-        const qcView = document.getElementById('quiz-config-view');
-        if (qcView && (!ui || !ui.hideQuizConfigView)) qcView.style.display = 'none';
-        const qtkView = document.getElementById('quiz-taking-view'); // Fallback for quiz taking view
-        if (qtkView && (!ui || !ui.hideQuizTakingView)) qtkView.style.display = 'none';
-        const qrsView = document.getElementById('quiz-results-view'); // Fallback for quiz results view
-        if (qrsView && (!ui || !ui.hideQuizResultsView)) qrsView.style.display = 'none';
-
-
         let viewKey = hash;
         if (hash === '#/' || hash === '' || !hash) {
             viewKey = '#/home'; // Default to home
         }
 
-        if (viewKey === '#/questions') {
-            mainContentArea.innerHTML = ''; // Clear the area used by other views
-            mainContentArea.style.display = 'none'; // Hide it
-            if (typeof ui !== 'undefined' && typeof ui.showQuestionBank === 'function') {
-                ui.showQuestionBank();
-            } else {
-                console.error('ui.showQuestionBank() não está disponível. Verifique a ordem de carregamento dos scripts e a implementação de ui.js.');
-                // Show a fallback message in mainContentArea if Question Bank UI can't be loaded
-                mainContentArea.innerHTML = '<h2>Erro</h2><p>Não foi possível carregar o Banco de Perguntas.</p>';
-                mainContentArea.style.display = 'block';
-            }
-        } else if (viewKey === '#/quiz-config') {
-            mainContentArea.innerHTML = ''; // Clear the area used by other HTML-string views
-            mainContentArea.style.display = 'none'; // Hide it
-     
-            // Call a new function in ui.js to show this specific view
-            if (typeof ui !== 'undefined' && typeof ui.showQuizConfigView === 'function') {
-                ui.showQuizConfigView();
-            } else {
-                console.error('ui.showQuizConfigView() não está disponível.');
-                mainContentArea.innerHTML = '<h2>Erro</h2><p>Não foi possível carregar a Configuração do Quiz.</p>';
-                mainContentArea.style.display = 'block';
-            }
-        } else if (viewKey === '#/quiz/take') { 
-            mainContentArea.innerHTML = ''; 
-            mainContentArea.style.display = 'none';
-            if (typeof ui !== 'undefined' && typeof ui.showQuizTakingView === 'function') {
-                ui.showQuizTakingView();
-            } else {
-                console.error('ui.showQuizTakingView() não está disponível.');
-                mainContentArea.innerHTML = '<h2>Erro</h2><p>Não foi possível carregar o Quiz.</p>';
-                mainContentArea.style.display = 'block';
-            }
-        } else if (viewKey === '#/quiz/results') { // New route
-            mainContentArea.innerHTML = ''; 
-            mainContentArea.style.display = 'none';
-            if (typeof ui !== 'undefined' && typeof ui.showQuizResultsView === 'function') {
-                ui.showQuizResultsView();
-            } else {
-                console.error('ui.showQuizResultsView() não está disponível.');
-                mainContentArea.innerHTML = '<h2>Erro</h2><p>Não foi possível carregar os Resultados do Quiz.</p>';
-                mainContentArea.style.display = 'block';
-            }
-        } else if (views[viewKey]) {
+        if (views[viewKey]) {
             mainContentArea.innerHTML = views[viewKey];
             mainContentArea.style.display = 'block';
             
             if (viewKey === '#/home') {
-
                 // Hide To-Do list when on home/calendar view if it exists
                 const todoListContainer = document.getElementById('todo-list-container');
                 if (todoListContainer) {
                     todoListContainer.style.display = 'none'; 
                 }
-                // Initialize calendar only if home view is active and initCalendar is defined
                 if (typeof initCalendar === 'function') {
                     initCalendar();
                 } else {
-                    console.error('A função initCalendar não está definida. Certifique-se de que calendar.js seja carregado antes de router.js.');
+                    console.error('initCalendar function is not defined. Make sure calendar.js is loaded before router.js.');
                 }
             } else if (viewKey === '#/settings') {
                 // Hide To-Do list when on settings view
@@ -245,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // For now, it's part of the default content in index.html and hidden on other views.
 
         } else {
-            mainContentArea.innerHTML = '<h2>404 - Página Não Encontrada</h2><p>A página que você solicitou não pôde ser encontrada.</p>';
+            mainContentArea.innerHTML = '<h2>404 - Page Not Found</h2><p>The page you requested could not be found.</p>';
             mainContentArea.style.display = 'block';
         }
     }
