@@ -9,7 +9,7 @@
     // eventObject is expected to have: title, date, startTime, endTime, description
     function addEvent(eventObject) {
         if (!eventObject || !eventObject.title || !eventObject.date) {
-            console.error('Event object must have at least a title and a date.');
+            console.error('O objeto do evento deve ter pelo menos um título e uma data.');
             return null;
         }
         const newEvent = {
@@ -21,8 +21,8 @@
             description: eventObject.description || ''
         };
         events.push(newEvent);
-        console.log('Event added:', newEvent);
-        console.log('All events:', events); // For debugging
+        console.log('Evento adicionado:', newEvent);
+        console.log('Todos os eventos:', events); // For debugging
         return newEvent;
     }
 

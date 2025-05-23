@@ -76,7 +76,7 @@ const ui = (() => {
         questionsListDiv.innerHTML = ''; 
 
         if (!questionsToRender || questionsToRender.length === 0) {
-            questionsListDiv.innerHTML = '<p>No questions found matching your criteria. Try adding some!</p>';
+            questionsListDiv.innerHTML = '<p>Nenhuma pergunta encontrada com os seus critérios. Tente adicionar algumas!</p>';
             return;
         }
 
@@ -89,17 +89,17 @@ const ui = (() => {
             li.innerHTML = `
                 <h5 class="question-text-display">${question.text}</h5>
                 <div class="question-metadata">
-                    <span><strong>Subject:</strong> ${question.subject}</span> | 
-                    <span><strong>Difficulty:</strong> ${question.difficulty}</span>
+                    <span><strong>Assunto:</strong> ${question.subject}</span> | 
+                    <span><strong>Dificuldade:</strong> ${question.difficulty}</span>
                     <span style="float: right;"><em>ID: ${question.id}</em></span>
                 </div>
                 ${question.options && question.options.length > 0 ? 
-                    '<div class="question-options-display"><strong>Options:</strong><ul>' + 
+                    '<div class="question-options-display"><strong>Opções:</strong><ul>' + 
                     question.options.map(opt => `<li>${opt}</li>`).join('') + 
                     '</ul></div>' 
                     : ''}
                 <div class="question-answer-display">
-                    <strong>Answer:</strong> ${question.answer}
+                    <strong>Resposta:</strong> ${question.answer}
                 </div>
             `;
             ul.appendChild(li);
@@ -128,7 +128,7 @@ const ui = (() => {
         optionDivs.forEach((div, index) => {
             const label = div.querySelector('label');
             if (label) {
-                label.textContent = `Option ${index + 1}:`;
+                label.textContent = `Opção ${index + 1}:`;
             }
             const removeBtn = div.querySelector('.remove-option-btn');
             if (removeBtn) {
@@ -144,11 +144,11 @@ const ui = (() => {
         const newOptionDiv = document.createElement('div');
         newOptionDiv.className = 'form-group dynamic-option';
         newOptionDiv.innerHTML = `
-            <label>Option X:</label> 
+            <label>Opção X:</label> 
             <div class="input-group">
-                <input type="text" class="form-control question-option-input" placeholder="Option text">
+                <input type="text" class="form-control question-option-input" placeholder="Texto da opção">
                 <span class="input-group-btn">
-                    <button type="button" class="btn btn-danger remove-option-btn">Remove</button>
+                    <button type="button" class="btn btn-danger remove-option-btn">Remover</button>
                 </span>
             </div>
         `;
@@ -177,10 +177,10 @@ const ui = (() => {
                 const answer = document.getElementById('question-answer').value;
 
                 const requiredFields = [
-                    { id: 'question-text', name: 'Question Text' },
-                    { id: 'question-subject', name: 'Subject' },
-                    { id: 'question-difficulty', name: 'Difficulty' },
-                    { id: 'question-answer', name: 'Answer' }
+                    { id: 'question-text', name: 'Texto da Pergunta' },
+                    { id: 'question-subject', name: 'Assunto' },
+                    { id: 'question-difficulty', name: 'Dificuldade' },
+                    { id: 'question-answer', name: 'Resposta' }
                 ];
                 let isValid = true;
                 let missingFields = [];
@@ -220,11 +220,11 @@ const ui = (() => {
                     if (optionsContainer) {
                         optionsContainer.innerHTML = `
                             <div class="form-group dynamic-option">
-                                <label>Option 1:</label>
+                                <label>Opção 1:</label>
                                 <div class="input-group">
-                                    <input type="text" class="form-control question-option-input" placeholder="Option text">
+                                    <input type="text" class="form-control question-option-input" placeholder="Texto da opção">
                                     <span class="input-group-btn">
-                                        <button type="button" class="btn btn-danger remove-option-btn" style="display:none;">Remove</button>
+                                        <button type="button" class="btn btn-danger remove-option-btn" style="display:none;">Remover</button>
                                     </span>
                                 </div>
                             </div>
@@ -232,9 +232,9 @@ const ui = (() => {
                         updateOptionLabels(); 
                     }
                     
-                    displayFeedback('Question added successfully!', 'success', 'add-question-feedback');
+                    displayFeedback('Pergunta adicionada com sucesso!', 'success', 'add-question-feedback');
                 } else {
-                    displayFeedback(`Please fill in all required fields: ${missingFields.join(', ')}.`, 'danger', 'add-question-feedback');
+                    displayFeedback(`Por favor, preencha todos os campos obrigatórios: ${missingFields.join(', ')}.`, 'danger', 'add-question-feedback');
                 }
             });
         }
@@ -336,9 +336,9 @@ const ui = (() => {
         const subjectSelect = document.getElementById('quiz-subject');
         if (!subjectSelect) return;
 
-        subjectSelect.innerHTML = '<option value="">All Subjects</option>'; 
+        subjectSelect.innerHTML = '<option value="">Todos os Assuntos</option>'; 
         if (typeof questionService === 'undefined' || typeof questionService.getAllSubjects !== 'function') {
-            console.error('questionService or getAllSubjects is not available for populating quiz subjects.');
+            console.error('questionService ou getAllSubjects não está disponível para popular os assuntos do quiz.');
             return;
         }
         const subjects = questionService.getAllSubjects();
@@ -370,7 +370,7 @@ const ui = (() => {
                 if (generatedQuestions && generatedQuestions.length > 0) {
                     window.location.hash = '#/quiz/take'; 
                 } else {
-                    displayFeedback('No questions found matching your criteria. Please try different options or add more questions.', 'warning', 'quiz-config-feedback');
+                    displayFeedback('Nenhuma pergunta encontrada com os seus critérios. Por favor, tente opções diferentes ou adicione mais perguntas.', 'warning', 'quiz-config-feedback');
                 }
             });
             quizConfigForm.dataset.listenerAttached = 'true'; 
@@ -403,7 +403,7 @@ const ui = (() => {
     function renderCurrentQuizQuestion() {
         const questions = quizService.getCurrentQuizQuestions();
         if (!questions || questions.length === 0 || currentQuestionIndex < 0 || currentQuestionIndex >= questions.length) {
-            displayFeedback("Error: No questions in quiz or index out of bounds.", "danger", "quiz-taking-feedback");
+            displayFeedback("Erro: Nenhuma pergunta no quiz ou índice fora dos limites.", "danger", "quiz-taking-feedback");
             return;
         }
 
@@ -413,7 +413,7 @@ const ui = (() => {
         const optionsContainerEl = document.getElementById('quiz-options-container');
 
         if(questionTextEl) questionTextEl.textContent = question.text;
-        if(progressIndicatorEl) progressIndicatorEl.textContent = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
+        if(progressIndicatorEl) progressIndicatorEl.textContent = `Questão ${currentQuestionIndex + 1} de ${questions.length}`;
 
         if(optionsContainerEl) {
             optionsContainerEl.innerHTML = ''; 
@@ -431,7 +431,7 @@ const ui = (() => {
                     optionsContainerEl.appendChild(div);
                 });
             } else {
-                optionsContainerEl.innerHTML = '<p>This question may require a different answer format (not multiple choice).</p>';
+                optionsContainerEl.innerHTML = '<p>Esta pergunta pode exigir um formato de resposta diferente (não de múltipla escolha).</p>';
             }
             
             const userAnswers = quizService.getUserAnswers();
@@ -490,7 +490,7 @@ const ui = (() => {
         const questions = quizService.getCurrentQuizQuestions();
 
         if (!questions || questions.length === 0) {
-            displayFeedback("No quiz loaded. Please configure a quiz first.", "warning", "quiz-config-feedback");
+            displayFeedback("Nenhum quiz carregado. Por favor, configure um quiz primeiro.", "warning", "quiz-config-feedback");
             window.location.hash = '#/quiz-config';
             return; 
         }
@@ -520,16 +520,16 @@ const ui = (() => {
         const reviewAreaEl = document.getElementById('quiz-detailed-review-area');
 
         if (!resultsData || !scoreSummaryEl || !reviewAreaEl) {
-            console.error("Results data or DOM elements missing for rendering results.");
+            console.error("Dados de resultados ou elementos DOM ausentes para renderizar os resultados.");
             if (scoreSummaryEl) scoreSummaryEl.innerHTML = '';
-            if (reviewAreaEl) reviewAreaEl.innerHTML = '<h3>Detailed Review:</h3><p>Could not load results data.</p>';
+            if (reviewAreaEl) reviewAreaEl.innerHTML = '<h3>Revisão Detalhada:</h3><p>Não foi possível carregar os dados dos resultados.</p>';
             return;
         }
 
         const percentage = resultsData.totalQuestions > 0 ? (resultsData.score / resultsData.totalQuestions * 100).toFixed(0) : 0;
-        scoreSummaryEl.innerHTML = `Your Score: ${resultsData.score} / ${resultsData.totalQuestions} (${percentage}%)`;
+        scoreSummaryEl.innerHTML = `Sua Pontuação: ${resultsData.score} / ${resultsData.totalQuestions} (${percentage}%)`;
 
-        reviewAreaEl.innerHTML = '<h3>Detailed Review:</h3>'; 
+        reviewAreaEl.innerHTML = '<h3>Revisão Detalhada:</h3>'; 
         const ul = document.createElement('ul');
         ul.className = 'list-group';
 
@@ -548,27 +548,27 @@ const ui = (() => {
                     let indicators = '';
                     if (opt === item.userAnswer && item.userAnswer === item.correctAnswer) {
                         optClass = 'text-success font-weight-bold';
-                        indicators = ' <em>(Correct, Your Answer)</em>';
+                        indicators = ' <em>(Correta, Sua Resposta)</em>';
                     } else if (opt === item.userAnswer && item.userAnswer !== item.correctAnswer) {
                         optClass = 'text-danger font-weight-bold';
-                        indicators = ' <em>(Your Answer)</em>';
+                        indicators = ' <em>(Sua Resposta)</em>';
                     } else if (opt === item.correctAnswer) {
                         optClass = 'text-info'; 
-                        indicators = ' <em>(Correct Answer)</em>';
+                        indicators = ' <em>(Resposta Correta)</em>';
                     }
                     optionsHtml += `<li class="${optClass}">${escapedOpt}${indicators}</li>`;
                 });
                 optionsHtml += '</ul>';
             }
             
-            const userAnswerDisplay = item.userAnswer ? escapeHTML(item.userAnswer) : 'Not answered';
+            const userAnswerDisplay = item.userAnswer ? escapeHTML(item.userAnswer) : 'Não respondida';
             const correctAnswerDisplay = escapeHTML(item.correctAnswer);
 
             li.innerHTML = `
-                <p class="font-weight-bold mb-1"><strong>Q${index + 1}: ${escapeHTML(item.questionText)}</strong></p>
+                <p class="font-weight-bold mb-1"><strong>P${index + 1}: ${escapeHTML(item.questionText)}</strong></p>
                 ${optionsHtml}
-                <p class="mt-2 mb-1">Your answer: <span class="${item.isCorrect ? 'text-success' : 'text-danger'} font-weight-bold">${userAnswerDisplay}</span></p>
-                ${!item.isCorrect ? `<p class="mb-0">Correct answer: <span class="text-info font-weight-bold">${correctAnswerDisplay}</span></p>` : ''}
+                <p class="mt-2 mb-1">Sua resposta: <span class="${item.isCorrect ? 'text-success' : 'text-danger'} font-weight-bold">${userAnswerDisplay}</span></p>
+                ${!item.isCorrect ? `<p class="mb-0">Resposta correta: <span class="text-info font-weight-bold">${correctAnswerDisplay}</span></p>` : ''}
             `;
             
             li.classList.add(item.isCorrect ? 'border-success' : 'border-danger');
@@ -600,7 +600,7 @@ const ui = (() => {
         const resultsData = quizService.getQuizResults();
 
         if (!resultsData) {
-            displayFeedback("No quiz results found. Please take a quiz first.", "warning", "quiz-config-feedback");
+            displayFeedback("Nenhum resultado de quiz encontrado. Por favor, faça um quiz primeiro.", "warning", "quiz-config-feedback");
             window.location.hash = '#/quiz-config';
             return;
         }

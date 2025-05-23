@@ -28,24 +28,24 @@
 	<div class="container-fluid">
 		<div class="navbar-header">
 			<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbarCollapse" aria-expanded="false" aria-controls="navbar">
-				<span class="sr-only">Toggle navigation</span>
+				<span class="sr-only">Alternar navegação</span>
 				<span class="icon-bar"></span>
 				<span class="icon-bar"></span>
 				<span class="icon-bar"></span>
 			</button>
-			<a class="navbar-brand" href="#">Personal Journal</a>
+			<a class="navbar-brand" href="#">Diário Pessoal</a>
 		</div>
 		<!-- Collect the nav links, forms, and other content for toggling -->
 		<div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="nav navbar-nav"> <!-- Added Home link to the left -->
-                <li><a href="#/home">Home</a></li>
-                <li><a href="#/questions">Question Bank</a></li>
-                <li><a href="#/quiz-config">Take a Quiz</a></li>
+                <li><a href="#/home">Início</a></li>
+                <li><a href="#/questions">Banco de Perguntas</a></li>
+                <li><a href="#/quiz-config">Fazer um Quiz</a></li>
             </ul>
 			<ul class="nav navbar-nav navbar-right">
 				<li class="navbar-text" id="current-date-display"></li>
-				<li><a href="#/settings">Settings</a></li> 
-				<li><a href="#" target="_blank">Jon Doe <img class="img-circle" src="http://sozialreferat.com/wp-content/uploads/2016/09/Profile-Picture-43-150x150.jpg" alt="Profile Photo" style="width=: 20px; height: 20px"></a></li>               
+				<li><a href="#/settings">Configurações</a></li> 
+				<li><a href="#" target="_blank">Fulano de Tal <img class="img-circle" src="http://sozialreferat.com/wp-content/uploads/2016/09/Profile-Picture-43-150x150.jpg" alt="Profile Photo" style="width=: 20px; height: 20px"></a></li>               
 			</ul>
 		</div>
 	</div>
@@ -55,50 +55,50 @@
   <!-- Content for different views will be loaded here by the router -->
   <div id="question-bank-view" style="display: none;">
     <div id="question-bank-general-feedback" role="alert" style="margin-bottom: 15px;"></div>
-    <h2>Question Bank</h2>
+    <h2>Banco de Perguntas</h2>
 
     <!-- Add Question Form -->
     <section id="add-question-section">
-        <h3>Add New Question</h3>
+        <h3>Adicionar Nova Pergunta</h3>
         <form id="add-question-form">
             <div class="form-group">
-                <label for="question-text">Question Text:</label>
+                <label for="question-text">Texto da Pergunta:</label>
                 <textarea id="question-text" class="form-control" rows="3" required></textarea>
             </div>
             <div class="form-group">
-                <label for="question-subject">Subject:</label>
+                <label for="question-subject">Assunto:</label>
                 <input type="text" id="question-subject" class="form-control" required />
             </div>
             <div class="form-group">
-                <label for="question-difficulty">Difficulty:</label>
+                <label for="question-difficulty">Dificuldade:</label>
                 <select id="question-difficulty" class="form-control">
-                    <option value="Easy">Easy</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Hard">Hard</option>
+                    <option value="Easy">Fácil</option>
+                    <option value="Medium">Médio</option>
+                    <option value="Hard">Difícil</option>
                 </select>
             </div>
             <fieldset>
-                <legend>Options (for multiple choice)</legend>
+                <legend>Opções (para múltipla escolha)</legend>
                 <div id="question-options-container">
                     <!-- Option input fields will be dynamically added here -->
                     <div class="form-group dynamic-option">
-                        <label>Option 1:</label>
+                        <label>Opção 1:</label>
                         <div class="input-group">
-                            <input type="text" class="form-control question-option-input" placeholder="Option text">
+                            <input type="text" class="form-control question-option-input" placeholder="Texto da opção">
                             <span class="input-group-btn">
-                                <button type="button" class="btn btn-danger remove-option-btn" style="display:none;">Remove</button>
+                                <button type="button" class="btn btn-danger remove-option-btn" style="display:none;">Remover</button>
                             </span>
                         </div>
                     </div>
                 </div>
-                <button type="button" id="add-option-btn" class="btn btn-success btn-sm">Add Option</button>
+                <button type="button" id="add-option-btn" class="btn btn-success btn-sm">Adicionar Opção</button>
             </fieldset>
             <div class="form-group">
-                <label for="question-answer">Answer:</label>
-                <input type="text" id="question-answer" class="form-control" placeholder="e.g., 'Option 1' or the text of the correct answer" required />
+                <label for="question-answer">Resposta:</label>
+                <input type="text" id="question-answer" class="form-control" placeholder="ex: 'Opção 1' ou o texto da resposta correta" required />
             </div>
             <div id="add-question-feedback" role="alert" style="margin-bottom: 15px;"></div>
-            <button type="submit" class="btn btn-primary">Add Question</button>
+            <button type="submit" class="btn btn-primary">Adicionar Pergunta</button>
         </form>
     </section>
 
@@ -106,23 +106,23 @@
 
     <!-- Filter Questions Section -->
     <section id="filter-questions-section">
-        <h3>Filter Questions</h3>
+        <h3>Filtrar Perguntas</h3>
         <form id="question-filters" class="form-inline">
             <div class="form-group">
-                <label for="filter-subject">Subject:</label>
+                <label for="filter-subject">Assunto:</label>
                 <input type="text" id="filter-subject" class="form-control" list="subject-datalist" />
                 <datalist id="subject-datalist"></datalist>
             </div>
             <div class="form-group">
-                <label for="filter-difficulty">Difficulty:</label>
+                <label for="filter-difficulty">Dificuldade:</label>
                 <select id="filter-difficulty" class="form-control">
-                    <option value="">All</option>
-                    <option value="Easy">Easy</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Hard">Hard</option>
+                    <option value="">Todos</option>
+                    <option value="Easy">Fácil</option>
+                    <option value="Medium">Médio</option>
+                    <option value="Hard">Difícil</option>
                 </select>
             </div>
-            <button type="button" id="apply-filters-button" class="btn btn-info">Apply Filters</button>
+            <button type="button" id="apply-filters-button" class="btn btn-info">Aplicar Filtros</button>
         </form>
     </section>
 
@@ -130,44 +130,44 @@
 
     <!-- Questions List Section -->
     <section id="questions-list-section">
-        <h3>Questions</h3>
+        <h3>Perguntas</h3>
         <div id="questions-list">
             <!-- Questions will be dynamically inserted here -->
-            <p>No questions yet. Add some!</p>
+            <p>Nenhuma pergunta ainda. Adicione algumas!</p>
         </div>
     </section>
   </div>
 
   <div id="quiz-config-view" style="display: none;">
-    <h2>Configure Your Quiz</h2>
+    <h2>Configurar Seu Quiz</h2>
     <form id="quiz-config-form">
         <div class="form-group">
-            <label for="quiz-num-questions">Number of Questions:</label>
+            <label for="quiz-num-questions">Número de Perguntas:</label>
             <input type="number" id="quiz-num-questions" class="form-control" value="10" min="1" required>
         </div>
         <div class="form-group">
-            <label for="quiz-subject">Subject:</label>
+            <label for="quiz-subject">Assunto:</label>
             <select id="quiz-subject" class="form-control">
-                <option value="">All Subjects</option>
+                <option value="">Todos os Assuntos</option>
                 <!-- Subjects will be populated by JavaScript -->
             </select>
         </div>
         <div class="form-group">
-            <label for="quiz-difficulty">Difficulty:</label>
+            <label for="quiz-difficulty">Dificuldade:</label>
             <select id="quiz-difficulty" class="form-control">
-                <option value="">Any Difficulty</option>
-                <option value="Easy">Easy</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
+                <option value="">Qualquer Dificuldade</option>
+                <option value="Easy">Fácil</option>
+                <option value="Medium">Médio</option>
+                <option value="Hard">Difícil</option>
             </select>
         </div>
-        <button type="submit" id="start-quiz-btn" class="btn btn-primary">Start Quiz</button>
+        <button type="submit" id="start-quiz-btn" class="btn btn-primary">Iniciar Quiz</button>
     </form>
     <div id="quiz-config-feedback" role="alert" style="margin-top: 15px;"></div>
   </div>
 
   <div id="quiz-taking-view" style="display: none;">
-    <h2>Quiz in Progress</h2>
+    <h2>Quiz em Andamento</h2>
     
     <div id="quiz-progress-indicator" style="margin-bottom: 15px; font-weight: bold;">
         <!-- e.g., Question 1 of 10 -->
@@ -183,9 +183,9 @@
     </div>
     
     <div id="quiz-navigation-area">
-        <button type="button" id="quiz-prev-btn" class="btn btn-info" style="display: none;">Previous Question</button>
-        <button type="button" id="quiz-next-btn" class="btn btn-primary">Next Question</button>
-        <button type="button" id="quiz-submit-btn" class="btn btn-success" style="display: none;">Submit Quiz</button>
+        <button type="button" id="quiz-prev-btn" class="btn btn-info" style="display: none;">Pergunta Anterior</button>
+        <button type="button" id="quiz-next-btn" class="btn btn-primary">Próxima Pergunta</button>
+        <button type="button" id="quiz-submit-btn" class="btn btn-success" style="display: none;">Enviar Quiz</button>
     </div>
     
     <div id="quiz-taking-feedback" role="alert" style="margin-top: 15px;">
@@ -194,20 +194,20 @@
   </div>
 
   <div id="quiz-results-view" style="display: none;">
-    <h2>Quiz Results</h2>
+    <h2>Resultados do Quiz</h2>
     
     <div id="quiz-score-summary" style="margin-bottom: 20px; font-size: 1.5em; font-weight: bold;">
         <!-- e.g., Your Score: 8 / 10 (80%) -->
     </div>
     
     <div id="quiz-detailed-review-area">
-        <h3>Detailed Review:</h3>
+        <h3>Revisão Detalhada:</h3>
         <!-- Detailed question-by-question review will be rendered here -->
     </div>
     
     <div id="quiz-results-navigation" style="margin-top: 30px;">
-        <button type="button" id="retake-quiz-btn" class="btn btn-primary">Take Another Quiz</button>
-        <button type="button" id="back-to-qbank-btn" class="btn btn-info">Back to Question Bank</button>
+        <button type="button" id="retake-quiz-btn" class="btn btn-primary">Fazer Outro Quiz</button>
+        <button type="button" id="back-to-qbank-btn" class="btn btn-info">Voltar para o Banco de Perguntas</button>
     </div>
   </div>
 </div>
@@ -233,37 +233,37 @@
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title" id="eventModalLabel">Add New Event</h4>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="eventModalLabel">Adicionar Novo Evento</h4>
           </div>
           <div class="modal-body">
             <form id="eventForm">
               <div class="form-group">
-                <label for="eventTitleInput">Title</label>
-                <input type="text" class="form-control" id="eventTitleInput" placeholder="Event Title" required>
+                <label for="eventTitleInput">Título</label>
+                <input type="text" class="form-control" id="eventTitleInput" placeholder="Título do Evento" required>
               </div>
               <div class="form-group">
-                <label for="selectedDateDisplay">Date</label>
+                <label for="selectedDateDisplay">Data</label>
                 <p class="form-control-static" id="selectedDateDisplay">YYYY-MM-DD</p>
                 <input type="hidden" id="eventDateInput">
               </div>
               <div class="form-group">
-                <label for="eventStartTimeInput">Start Time</label>
+                <label for="eventStartTimeInput">Hora de Início</label>
                 <input type="time" class="form-control" id="eventStartTimeInput">
               </div>
               <div class="form-group">
-                <label for="eventEndTimeInput">End Time</label>
+                <label for="eventEndTimeInput">Hora de Término</label>
                 <input type="time" class="form-control" id="eventEndTimeInput">
               </div>
               <div class="form-group">
-                <label for="eventDescriptionInput">Description</label>
-                <textarea class="form-control" id="eventDescriptionInput" rows="3" placeholder="Event Description"></textarea>
+                <label for="eventDescriptionInput">Descrição</label>
+                <textarea class="form-control" id="eventDescriptionInput" rows="3" placeholder="Descrição do Evento"></textarea>
               </div>
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary" id="saveEventButton">Save Event</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
+            <button type="button" class="btn btn-primary" id="saveEventButton">Salvar Evento</button>
           </div>
         </div>
       </div>

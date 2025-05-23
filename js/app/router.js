@@ -11,14 +11,14 @@ document.addEventListener('DOMContentLoaded', function() {
             <!-- / College Timetable -->
             <div class='tab'>
                 <table border='0' cellpadding='0' cellspacing='0'>
-                    <caption class='title'>Today Events</caption>
+                    <caption class='title'>Eventos de Hoje</caption>
                     <tr class='days'>
                         <th></th>
-                        <th>Monday</th>
-                        <th>Tuesday</th>
-                        <th>Wednesday</th>
-                        <th>Thursday</th>
-                        <th>Friday</th>
+                        <th>Segunda-feira</th>
+                        <th>Terça-feira</th>
+                        <th>Quarta-feira</th>
+                        <th>Quinta-feira</th>
+                        <th>Sexta-feira</th>
                     </tr>
                     <tr>
                         <td class='time'>9.00</td>
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const views = {
         '#/home': homeViewHtml,
-        '#/settings': '<h2>Settings Page</h2><p>Settings will go here. This is loaded by the router.</p>',
+        '#/settings': '<h2>Página de Configurações</h2><p>As configurações ficarão aqui. Isto é carregado pelo roteador.</p>',
     };
 
     function loadView(hash) {
@@ -141,9 +141,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (typeof ui !== 'undefined' && typeof ui.showQuestionBank === 'function') {
                 ui.showQuestionBank();
             } else {
-                console.error('ui.showQuestionBank() is not available. Check script loading order and ui.js implementation.');
+                console.error('ui.showQuestionBank() não está disponível. Verifique a ordem de carregamento dos scripts e a implementação de ui.js.');
                 // Show a fallback message in mainContentArea if Question Bank UI can't be loaded
-                mainContentArea.innerHTML = '<h2>Error</h2><p>Could not load Question Bank.</p>';
+                mainContentArea.innerHTML = '<h2>Erro</h2><p>Não foi possível carregar o Banco de Perguntas.</p>';
                 mainContentArea.style.display = 'block';
             }
         } else if (viewKey === '#/quiz-config') {
@@ -154,8 +154,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (typeof ui !== 'undefined' && typeof ui.showQuizConfigView === 'function') {
                 ui.showQuizConfigView();
             } else {
-                console.error('ui.showQuizConfigView() is not available.');
-                mainContentArea.innerHTML = '<h2>Error</h2><p>Could not load Quiz Configuration.</p>';
+                console.error('ui.showQuizConfigView() não está disponível.');
+                mainContentArea.innerHTML = '<h2>Erro</h2><p>Não foi possível carregar a Configuração do Quiz.</p>';
                 mainContentArea.style.display = 'block';
             }
         } else if (viewKey === '#/quiz/take') { 
@@ -164,8 +164,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (typeof ui !== 'undefined' && typeof ui.showQuizTakingView === 'function') {
                 ui.showQuizTakingView();
             } else {
-                console.error('ui.showQuizTakingView() is not available.');
-                mainContentArea.innerHTML = '<h2>Error</h2><p>Could not load Quiz.</p>';
+                console.error('ui.showQuizTakingView() não está disponível.');
+                mainContentArea.innerHTML = '<h2>Erro</h2><p>Não foi possível carregar o Quiz.</p>';
                 mainContentArea.style.display = 'block';
             }
         } else if (viewKey === '#/quiz/results') { // New route
@@ -174,8 +174,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (typeof ui !== 'undefined' && typeof ui.showQuizResultsView === 'function') {
                 ui.showQuizResultsView();
             } else {
-                console.error('ui.showQuizResultsView() is not available.');
-                mainContentArea.innerHTML = '<h2>Error</h2><p>Could not load Quiz Results.</p>';
+                console.error('ui.showQuizResultsView() não está disponível.');
+                mainContentArea.innerHTML = '<h2>Erro</h2><p>Não foi possível carregar os Resultados do Quiz.</p>';
                 mainContentArea.style.display = 'block';
             }
         } else if (views[viewKey]) {
@@ -187,11 +187,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (typeof initCalendar === 'function') {
                     initCalendar();
                 } else {
-                    console.error('initCalendar function is not defined. Make sure calendar.js is loaded before router.js.');
+                    console.error('A função initCalendar não está definida. Certifique-se de que calendar.js seja carregado antes de router.js.');
                 }
             }
         } else {
-            mainContentArea.innerHTML = '<h2>404 - Page Not Found</h2><p>The page you requested could not be found.</p>';
+            mainContentArea.innerHTML = '<h2>404 - Página Não Encontrada</h2><p>A página que você solicitou não pôde ser encontrada.</p>';
             mainContentArea.style.display = 'block';
         }
     }
