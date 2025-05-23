@@ -53,6 +53,7 @@
 <div id="main-content-area">
   <!-- Content for different views will be loaded here by the router -->
   <div id="question-bank-view" style="display: none;">
+    <div id="question-bank-general-feedback" role="alert" style="margin-bottom: 15px;"></div>
     <h2>Question Bank</h2>
 
     <!-- Add Question Form -->
@@ -76,28 +77,26 @@
                 </select>
             </div>
             <fieldset>
-                <legend>Options (for multiple choice):</legend>
-                <div class="form-group">
-                    <label for="question-option-1">Option 1:</label>
-                    <input type="text" id="question-option-1" class="form-control" />
+                <legend>Options (for multiple choice)</legend>
+                <div id="question-options-container">
+                    <!-- Option input fields will be dynamically added here -->
+                    <div class="form-group dynamic-option">
+                        <label>Option 1:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control question-option-input" placeholder="Option text">
+                            <span class="input-group-btn">
+                                <button type="button" class="btn btn-danger remove-option-btn" style="display:none;">Remove</button>
+                            </span>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="question-option-2">Option 2:</label>
-                    <input type="text" id="question-option-2" class="form-control" />
-                </div>
-                <div class="form-group">
-                    <label for="question-option-3">Option 3:</label>
-                    <input type="text" id="question-option-3" class="form-control" />
-                </div>
-                <div class="form-group">
-                    <label for="question-option-4">Option 4:</label>
-                    <input type="text" id="question-option-4" class="form-control" />
-                </div>
+                <button type="button" id="add-option-btn" class="btn btn-success btn-sm">Add Option</button>
             </fieldset>
             <div class="form-group">
                 <label for="question-answer">Answer:</label>
                 <input type="text" id="question-answer" class="form-control" placeholder="e.g., 'Option 1' or the text of the correct answer" required />
             </div>
+            <div id="add-question-feedback" role="alert" style="margin-bottom: 15px;"></div>
             <button type="submit" class="btn btn-primary">Add Question</button>
         </form>
     </section>

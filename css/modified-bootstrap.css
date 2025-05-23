@@ -6789,3 +6789,107 @@ button.close {
 #main-content-area > h2 { 
     margin-top: 20px;
 } */
+
+/* Hide the Apply Filters button as filtering is now interactive */
+#apply-filters-button {
+    display: none !important; /* Using !important to ensure it's hidden if other styles apply */
+}
+
+/* Enhanced Question List Display Styles */
+.question-item-display {
+    padding: 15px;
+    margin-bottom: 15px; /* Increased margin between items */
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    background-color: #f9f9f9; /* Slightly off-white background */
+}
+
+.question-item-display .question-text-display {
+    font-size: 1.2em; /* Larger font for question text */
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.question-item-display .question-metadata {
+    font-size: 0.9em;
+    color: #555;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px dashed #eee; /* Separator line */
+}
+
+.question-item-display .question-metadata span {
+    margin-right: 10px; /* Spacing between metadata items */
+}
+
+.question-item-display .question-metadata em { /* Style for Question ID */
+    color: #777;
+}
+
+.question-item-display .question-options-display {
+    margin-bottom: 10px;
+    padding-left: 20px; /* Indent options slightly */
+}
+
+.question-item-display .question-options-display ul {
+    list-style-type: disc; /* Standard bullet points */
+    margin-top: 5px;
+    padding-left: 20px; /* Indent list items */
+}
+
+.question-item-display .question-options-display li {
+    padding: 2px 0; /* Small padding for option items */
+}
+
+.question-item-display .question-answer-display {
+    font-weight: bold;
+    color: #28a745; /* Green color for the answer, for emphasis */
+    margin-top: 10px;
+    padding-top: 5px;
+    border-top: 1px dashed #eee; /* Separator line */
+}
+
+/* Sticky Filter Controls */
+#filter-questions-section {
+    position: -webkit-sticky; /* For Safari */
+    position: sticky;
+    top: 60px; /* Adjust this value based on the actual height of the fixed navbar. Assuming 50px navbar + 10px spacing. */
+    background-color: #ffffff; /* White background to prevent content overlap */
+    padding-top: 15px;
+    padding-bottom: 10px;
+    z-index: 1000; /* Ensure it's above most other content but below the main navbar (Bootstrap fixed navbar z-index is typically 1030) */
+    border-bottom: 1px solid #ccc; /* Add a subtle border to distinguish the sticky bar */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Optional: add a slight shadow for better separation */
+}
+
+/* Add some top margin to the questions list section to prevent initial overlap 
+   when the filter section is not yet sticky but takes up space due to padding.
+   The height of the filter section with padding is approx 45px (form-inline) + 15px (padding-top) + 10px (padding-bottom) + borders/margins
+   Let's add a bit more margin to the list to account for this.
+*/
+#questions-list-section {
+    margin-top: 20px; /* Adjust as needed, this is to prevent content jump or overlap */
+}
+
+/* Custom styles for is-invalid class if not fully supported by theme */
+.form-control.is-invalid {
+    border-color: #dc3545; /* Bootstrap danger color */
+    /* box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25); Optional: add focus shadow */
+}
+
+select.form-control.is-invalid {
+    border-color: #dc3545;
+}
+
+textarea.form-control.is-invalid {
+    border-color: #dc3545;
+}
+
+/* If using .form-group for context (Bootstrap 3 style) */
+/* .form-group.has-error .form-control {
+    border-color: #a94442;
+}
+.form-group.has-error .help-block {
+    color: #a94442;
+} */

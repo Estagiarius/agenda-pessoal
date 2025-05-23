@@ -7,6 +7,70 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // --- Question Bank UI Logic ---
 const ui = (() => {
+    let feedbackTimeout = null; // To manage clearing the feedback
+
+    function debounce(func, delay) {
+        let timeoutId;
+        return function(...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                func.apply(this, args);
+            }, delay);
+        };
+    }
+
+    function handleFilterChange() {
+        const subjectFilter = document.getElementById('filter-subject').value;
+        const difficultyFilter = document.getElementById('filter-difficulty').value;
+
+        const filters = {};
+        if (subjectFilter) filters.subject = subjectFilter;
+        if (difficultyFilter) filters.difficulty = difficultyFilter;
+
+        // Assuming renderQuestions and questionService are accessible
+        renderQuestions(questionService.getQuestions(filters));
+        // No need to call populateSubjectFilter here unless new subjects can be created by filtering.
+    }
+
+    function displayFeedback(message, type, containerId) {
+        const feedbackContainer = document.getElementById(containerId);
+        if (!feedbackContainer) return;
+
+        // Clear any existing timeout
+        if (feedbackTimeout) {
+            clearTimeout(feedbackTimeout);
+        }
+
+        // Set message and classes
+        feedbackContainer.textContent = message;
+        feedbackContainer.className = ''; // Clear existing classes
+        feedbackContainer.classList.add('alert'); // Base alert class
+        feedbackContainer.style.display = 'block'; // Make it visible
+
+        switch (type) {
+            case 'success':
+                feedbackContainer.classList.add('alert-success');
+                break;
+            case 'danger':
+            case 'error': // Allow 'error' as an alias for 'danger'
+                feedbackContainer.classList.add('alert-danger');
+                break;
+            case 'warning':
+                feedbackContainer.classList.add('alert-warning');
+                break;
+            default:
+                feedbackContainer.classList.add('alert-info');
+                break;
+        }
+
+        // Automatically clear the message after 5 seconds
+        feedbackTimeout = setTimeout(() => {
+            feedbackContainer.textContent = '';
+            feedbackContainer.style.display = 'none';
+            feedbackContainer.className = ''; // Clear classes
+        }, 5000);
+    }
+
     // Helper function to render questions
     function renderQuestions(questionsToRender) {
         const questionsListDiv = document.getElementById('questions-list');
@@ -24,17 +88,23 @@ const ui = (() => {
 
         questionsToRender.forEach(question => {
             const li = document.createElement('li');
-            li.className = 'list-group-item';
+            // li.className = 'list-group-item'; // Old class
+            li.className = 'list-group-item question-item-display'; // Added a new class for overall styling
             li.innerHTML = `
-                <h4>${question.text} (ID: ${question.id})</h4>
-                <p><strong>Subject:</strong> ${question.subject}</p>
-                <p><strong>Difficulty:</strong> ${question.difficulty}</p>
-                ${question.options && question.options.length > 0 ?
-                    '<p><strong>Options:</strong></p><ul>' +
-                    question.options.map(opt => `<li>${opt}</li>`).join('') +
-                    '</ul>'
+                <h5 class="question-text-display">${question.text}</h5>
+                <div class="question-metadata">
+                    <span><strong>Subject:</strong> ${question.subject}</span> | 
+                    <span><strong>Difficulty:</strong> ${question.difficulty}</span>
+                    <span style="float: right;"><em>ID: ${question.id}</em></span>
+                </div>
+                ${question.options && question.options.length > 0 ? 
+                    '<div class="question-options-display"><strong>Options:</strong><ul>' + 
+                    question.options.map(opt => `<li>${opt}</li>`).join('') + 
+                    '</ul></div>' 
                     : ''}
-                <p><strong>Answer:</strong> ${question.answer}</p>
+                <div class="question-answer-display">
+                    <strong>Answer:</strong> ${question.answer}
+                </div>
             `;
             ul.appendChild(li);
         });
@@ -58,6 +128,43 @@ const ui = (() => {
         }
         // console.log("Available subjects for filter:", subjects);
     }
+
+    // Helper function to update option labels and remove button visibility
+    function updateOptionLabels() {
+        const optionsContainer = document.getElementById('question-options-container');
+        if (!optionsContainer) return;
+        const optionDivs = optionsContainer.querySelectorAll('.dynamic-option');
+        optionDivs.forEach((div, index) => {
+            const label = div.querySelector('label');
+            if (label) {
+                label.textContent = `Option ${index + 1}:`;
+            }
+            const removeBtn = div.querySelector('.remove-option-btn');
+            if (removeBtn) {
+                removeBtn.style.display = optionDivs.length > 1 ? 'inline-block' : 'none';
+            }
+        });
+    }
+
+    // Function to handle adding a new option
+    function addOption() {
+        const optionsContainer = document.getElementById('question-options-container');
+        if (!optionsContainer) return;
+
+        const newOptionDiv = document.createElement('div');
+        newOptionDiv.className = 'form-group dynamic-option';
+        newOptionDiv.innerHTML = `
+            <label>Option X:</label> <!-- Label will be updated by updateOptionLabels -->
+            <div class="input-group">
+                <input type="text" class="form-control question-option-input" placeholder="Option text">
+                <span class="input-group-btn">
+                    <button type="button" class="btn btn-danger remove-option-btn">Remove</button>
+                </span>
+            </div>
+        `;
+        optionsContainer.appendChild(newOptionDiv);
+        updateOptionLabels();
+    }
     
     // Function to set up event listeners for the Question Bank
     function initQuestionBankEventListeners() {
@@ -69,25 +176,149 @@ const ui = (() => {
                 const text = document.getElementById('question-text').value;
                 const subject = document.getElementById('question-subject').value;
                 const difficulty = document.getElementById('question-difficulty').value;
-                const options = [
-                    document.getElementById('question-option-1').value,
-                    document.getElementById('question-option-2').value,
-                    document.getElementById('question-option-3').value,
-                    document.getElementById('question-option-4').value,
-                ].filter(opt => opt.trim() !== ''); // Only include non-empty options
+                
+                const options = [];
+                const optionInputs = document.querySelectorAll('#question-options-container .question-option-input');
+                optionInputs.forEach(input => {
+                    if (input.value.trim() !== '') {
+                        options.push(input.value.trim());
+                    }
+                });
+                
                 const answer = document.getElementById('question-answer').value;
 
-                if (text && subject && difficulty && answer) {
+                const requiredFields = [
+                    { id: 'question-text', name: 'Question Text' },
+                    { id: 'question-subject', name: 'Subject' },
+                    { id: 'question-difficulty', name: 'Difficulty' },
+                    { id: 'question-answer', name: 'Answer' }
+                ];
+                let isValid = true;
+                let missingFields = [];
+            
+                // Clear previous validation states
+                requiredFields.forEach(fieldConfig => {
+                    const element = document.getElementById(fieldConfig.id);
+                    if (element) {
+                        element.classList.remove('is-invalid');
+                    }
+                });
+                 // Also clear feedback for any previous general message
+                 const feedbackContainer = document.getElementById('add-question-feedback');
+                 if (feedbackContainer) {
+                     feedbackContainer.textContent = '';
+                     feedbackContainer.style.display = 'none';
+                     feedbackContainer.className = '';
+                     if (feedbackTimeout) { // feedbackTimeout is the global var for displayFeedback
+                         clearTimeout(feedbackTimeout);
+                     }
+                 }
+            
+            
+                // Check each required field
+                requiredFields.forEach(fieldConfig => {
+                    const element = document.getElementById(fieldConfig.id);
+                    if (element && element.value.trim() === '') {
+                        isValid = false;
+                        element.classList.add('is-invalid');
+                        missingFields.push(fieldConfig.name);
+                    }
+                });
+            
+                if (isValid) {
+                    // Values are already captured (text, subject, difficulty, options, answer)
                     questionService.addQuestion(text, subject, difficulty, options, answer);
-                    renderQuestions(questionService.getQuestions()); // Refresh list
-                    populateSubjectFilter(); // Update subject suggestions
-                    addQuestionForm.reset(); // Clear form
+                    renderQuestions(questionService.getQuestions());
+                    populateSubjectFilter(); // To update subject suggestions if a new subject was added
+                    addQuestionForm.reset(); // Resets basic form inputs
+            
+                    // Custom reset for dynamic options (ensure this is handled correctly)
+                    const optionsContainer = document.getElementById('question-options-container');
+                    if (optionsContainer) {
+                        optionsContainer.innerHTML = `
+                            <div class="form-group dynamic-option">
+                                <label>Option 1:</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control question-option-input" placeholder="Option text">
+                                    <span class="input-group-btn">
+                                        <button type="button" class="btn btn-danger remove-option-btn" style="display:none;">Remove</button>
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                        updateOptionLabels(); // Ensure this function is accessible and correctly updates the single option
+                    }
+                    
+                    displayFeedback('Question added successfully!', 'success', 'add-question-feedback');
                 } else {
-                    alert('Please fill in all required fields (Question Text, Subject, Difficulty, Answer).');
+                    displayFeedback(`Please fill in all required fields: ${missingFields.join(', ')}.`, 'danger', 'add-question-feedback');
                 }
             });
         }
 
+        const formInputsToClearFeedback = ['question-text', 'question-subject', 'question-difficulty', 'question-answer'];
+        formInputsToClearFeedback.forEach(inputId => {
+            const inputElement = document.getElementById(inputId);
+            if (inputElement) {
+                inputElement.addEventListener('focus', () => {
+                    const feedbackContainer = document.getElementById('add-question-feedback');
+                    if (feedbackContainer) {
+                        feedbackContainer.textContent = '';
+                        feedbackContainer.style.display = 'none';
+                        feedbackContainer.className = '';
+                        if (feedbackTimeout) {
+                            clearTimeout(feedbackTimeout); // Also cancel auto-clear
+                        }
+                    }
+                });
+            }
+        });
+        // Listener for dynamically added option inputs
+        const optionsContainerClearFeedback = document.getElementById('question-options-container');
+        if (optionsContainerClearFeedback) {
+            optionsContainerClearFeedback.addEventListener('focusin', (event) => { // focusin bubbles
+                if (event.target.classList.contains('question-option-input')) {
+                    const feedbackContainer = document.getElementById('add-question-feedback');
+                    if (feedbackContainer && feedbackContainer.style.display !== 'none') {
+                        feedbackContainer.textContent = '';
+                        feedbackContainer.style.display = 'none';
+                        feedbackContainer.className = '';
+                        if (feedbackTimeout) {
+                            clearTimeout(feedbackTimeout);
+                        }
+                    }
+                }
+            });
+        }
+
+
+        const addOptionBtn = document.getElementById('add-option-btn');
+        if (addOptionBtn) {
+            addOptionBtn.addEventListener('click', addOption);
+        }
+
+        const optionsContainerElement = document.getElementById('question-options-container');
+        if (optionsContainerElement) {
+            optionsContainerElement.addEventListener('click', event => {
+                if (event.target.classList.contains('remove-option-btn')) {
+                    // Check if it's not the last option before removing
+                    const currentOptions = optionsContainerElement.querySelectorAll('.dynamic-option');
+                    if (currentOptions.length > 1) {
+                        const optionToRemove = event.target.closest('.dynamic-option');
+                        if (optionToRemove) {
+                            optionToRemove.remove();
+                            updateOptionLabels();
+                        }
+                    } else {
+                        // Optionally, clear the input if it's the last one instead of removing
+                        const inputToClear = event.target.closest('.dynamic-option').querySelector('.question-option-input');
+                        if (inputToClear) inputToClear.value = '';
+                    }
+                }
+            });
+        }
+
+        /*
         const applyFiltersButton = document.getElementById('apply-filters-button');
         if (applyFiltersButton) {
             applyFiltersButton.addEventListener('click', () => {
@@ -101,6 +332,19 @@ const ui = (() => {
                 renderQuestions(questionService.getQuestions(filters));
             });
         }
+        */
+
+        const subjectFilterInput = document.getElementById('filter-subject');
+        if (subjectFilterInput) {
+            subjectFilterInput.addEventListener('input', debounce(handleFilterChange, 300));
+        }
+
+        const difficultyFilterSelect = document.getElementById('filter-difficulty');
+        if (difficultyFilterSelect) {
+            difficultyFilterSelect.addEventListener('change', handleFilterChange);
+        }
+        // Initial call to set up labels and remove button visibility for the first option
+        updateOptionLabels();
     }
 
     // Function to be called by the router when the question bank view is shown
