@@ -108,11 +108,27 @@ document.addEventListener('DOMContentLoaded', function() {
         // Always try to hide the question bank first if ui.js is loaded
         if (typeof ui !== 'undefined' && typeof ui.hideQuestionBank === 'function') {
             ui.hideQuestionBank();
-        } else {
-            // Fallback if ui.js or hideQuestionBank is not ready yet, though this shouldn't happen with correct script order
-            const qbView = document.getElementById('question-bank-view');
-            if (qbView) qbView.style.display = 'none';
         }
+        if (typeof ui !== 'undefined' && typeof ui.hideQuizConfigView === 'function') { 
+            ui.hideQuizConfigView();
+        }
+        if (typeof ui !== 'undefined' && typeof ui.hideQuizTakingView === 'function') { 
+            ui.hideQuizTakingView();
+        }
+        if (typeof ui !== 'undefined' && typeof ui.hideQuizResultsView === 'function') { // New hide call
+            ui.hideQuizResultsView();
+        }
+        // Fallback hiding for views if ui object or specific hide functions are not yet available
+        // This helps prevent multiple views from showing during initial load or if scripts are out of sync.
+        const qbView = document.getElementById('question-bank-view');
+        if (qbView && (!ui || !ui.hideQuestionBank)) qbView.style.display = 'none';
+        const qcView = document.getElementById('quiz-config-view');
+        if (qcView && (!ui || !ui.hideQuizConfigView)) qcView.style.display = 'none';
+        const qtkView = document.getElementById('quiz-taking-view'); // Fallback for quiz taking view
+        if (qtkView && (!ui || !ui.hideQuizTakingView)) qtkView.style.display = 'none';
+        const qrsView = document.getElementById('quiz-results-view'); // Fallback for quiz results view
+        if (qrsView && (!ui || !ui.hideQuizResultsView)) qrsView.style.display = 'none';
+
 
         let viewKey = hash;
         if (hash === '#/' || hash === '' || !hash) {
@@ -128,6 +144,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('ui.showQuestionBank() is not available. Check script loading order and ui.js implementation.');
                 // Show a fallback message in mainContentArea if Question Bank UI can't be loaded
                 mainContentArea.innerHTML = '<h2>Error</h2><p>Could not load Question Bank.</p>';
+                mainContentArea.style.display = 'block';
+            }
+        } else if (viewKey === '#/quiz-config') {
+            mainContentArea.innerHTML = ''; // Clear the area used by other HTML-string views
+            mainContentArea.style.display = 'none'; // Hide it
+     
+            // Call a new function in ui.js to show this specific view
+            if (typeof ui !== 'undefined' && typeof ui.showQuizConfigView === 'function') {
+                ui.showQuizConfigView();
+            } else {
+                console.error('ui.showQuizConfigView() is not available.');
+                mainContentArea.innerHTML = '<h2>Error</h2><p>Could not load Quiz Configuration.</p>';
+                mainContentArea.style.display = 'block';
+            }
+        } else if (viewKey === '#/quiz/take') { 
+            mainContentArea.innerHTML = ''; 
+            mainContentArea.style.display = 'none';
+            if (typeof ui !== 'undefined' && typeof ui.showQuizTakingView === 'function') {
+                ui.showQuizTakingView();
+            } else {
+                console.error('ui.showQuizTakingView() is not available.');
+                mainContentArea.innerHTML = '<h2>Error</h2><p>Could not load Quiz.</p>';
+                mainContentArea.style.display = 'block';
+            }
+        } else if (viewKey === '#/quiz/results') { // New route
+            mainContentArea.innerHTML = ''; 
+            mainContentArea.style.display = 'none';
+            if (typeof ui !== 'undefined' && typeof ui.showQuizResultsView === 'function') {
+                ui.showQuizResultsView();
+            } else {
+                console.error('ui.showQuizResultsView() is not available.');
+                mainContentArea.innerHTML = '<h2>Error</h2><p>Could not load Quiz Results.</p>';
                 mainContentArea.style.display = 'block';
             }
         } else if (views[viewKey]) {
