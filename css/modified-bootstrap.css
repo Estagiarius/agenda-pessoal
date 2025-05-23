@@ -6743,3 +6743,49 @@ button.close {
 }
 
 /*# sourceMappingURL=bootstrap.css.map */
+
+/* Custom styles for Question Bank */
+
+#question-bank-view h2,
+#question-bank-view h3 {
+    margin-top: 20px;
+    margin-bottom: 15px;
+}
+
+#add-question-section,
+#filter-questions-section,
+#questions-list-section {
+    margin-bottom: 30px;
+}
+
+#add-question-form fieldset {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    padding-bottom: 15px; /* Add some padding at the bottom of the fieldset */
+}
+
+#add-question-form fieldset legend {
+    font-size: 1.2em; /* Make legend slightly larger */
+    font-weight: bold;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee; /* Add a subtle separator line */
+    padding-bottom: 5px;
+}
+
+#questions-list .list-group-item {
+    margin-top: 10px; /* Add a little space between question items */
+    border: 1px solid #ddd; /* Ensure border is visible */
+    padding: 15px; /* Add some padding inside each question item */
+}
+
+#questions-list .list-group-item h4 {
+    margin-top: 0; /* Remove default top margin from h4 inside list item */
+    margin-bottom: 10px;
+}
+
+/* Ensure the main content area for router-loaded views is also spaced nicely */
+/* This might already be handled by existing styles or bootstrap containers, but good to be mindful */
+/* #main-content-area > .container,
+#main-content-area > h2 { 
+    margin-top: 20px;
+} */

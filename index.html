@@ -39,6 +39,7 @@
 		<div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="nav navbar-nav"> <!-- Added Home link to the left -->
                 <li><a href="#/home">Home</a></li>
+                <li><a href="#/questions">Question Bank</a></li>
             </ul>
 			<ul class="nav navbar-nav navbar-right">
 				<li class="navbar-text" id="current-date-display"></li>
@@ -51,6 +52,91 @@
 
 <div id="main-content-area">
   <!-- Content for different views will be loaded here by the router -->
+  <div id="question-bank-view" style="display: none;">
+    <h2>Question Bank</h2>
+
+    <!-- Add Question Form -->
+    <section id="add-question-section">
+        <h3>Add New Question</h3>
+        <form id="add-question-form">
+            <div class="form-group">
+                <label for="question-text">Question Text:</label>
+                <textarea id="question-text" class="form-control" rows="3" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="question-subject">Subject:</label>
+                <input type="text" id="question-subject" class="form-control" required />
+            </div>
+            <div class="form-group">
+                <label for="question-difficulty">Difficulty:</label>
+                <select id="question-difficulty" class="form-control">
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
+                </select>
+            </div>
+            <fieldset>
+                <legend>Options (for multiple choice):</legend>
+                <div class="form-group">
+                    <label for="question-option-1">Option 1:</label>
+                    <input type="text" id="question-option-1" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="question-option-2">Option 2:</label>
+                    <input type="text" id="question-option-2" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="question-option-3">Option 3:</label>
+                    <input type="text" id="question-option-3" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="question-option-4">Option 4:</label>
+                    <input type="text" id="question-option-4" class="form-control" />
+                </div>
+            </fieldset>
+            <div class="form-group">
+                <label for="question-answer">Answer:</label>
+                <input type="text" id="question-answer" class="form-control" placeholder="e.g., 'Option 1' or the text of the correct answer" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Add Question</button>
+        </form>
+    </section>
+
+    <hr />
+
+    <!-- Filter Questions Section -->
+    <section id="filter-questions-section">
+        <h3>Filter Questions</h3>
+        <form id="question-filters" class="form-inline">
+            <div class="form-group">
+                <label for="filter-subject">Subject:</label>
+                <input type="text" id="filter-subject" class="form-control" list="subject-datalist" />
+                <datalist id="subject-datalist"></datalist>
+            </div>
+            <div class="form-group">
+                <label for="filter-difficulty">Difficulty:</label>
+                <select id="filter-difficulty" class="form-control">
+                    <option value="">All</option>
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
+                </select>
+            </div>
+            <button type="button" id="apply-filters-button" class="btn btn-info">Apply Filters</button>
+        </form>
+    </section>
+
+    <hr />
+
+    <!-- Questions List Section -->
+    <section id="questions-list-section">
+        <h3>Questions</h3>
+        <div id="questions-list">
+            <!-- Questions will be dynamically inserted here -->
+            <p>No questions yet. Add some!</p>
+        </div>
+    </section>
+  </div>
 </div>
 
 <!-- The static <section> has been removed. Its content is now in router.js -->
@@ -61,6 +147,8 @@
         <!-- The crucial part is the order of app scripts -->
 
         <!-- App specific scripts -->
+        <script src="js/app/models.js"></script>
+        <script src="js/app/questionService.js"></script> 
         <script src="js/app/eventService.js"></script>
         <script src="js/app/ui.js"></script>
         <script src="js/app/calendar.js"></script>

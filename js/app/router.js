@@ -105,16 +105,37 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     function loadView(hash) {
+        // Always try to hide the question bank first if ui.js is loaded
+        if (typeof ui !== 'undefined' && typeof ui.hideQuestionBank === 'function') {
+            ui.hideQuestionBank();
+        } else {
+            // Fallback if ui.js or hideQuestionBank is not ready yet, though this shouldn't happen with correct script order
+            const qbView = document.getElementById('question-bank-view');
+            if (qbView) qbView.style.display = 'none';
+        }
+
         let viewKey = hash;
         if (hash === '#/' || hash === '' || !hash) {
             viewKey = '#/home'; // Default to home
         }
 
-        if (views[viewKey]) {
+        if (viewKey === '#/questions') {
+            mainContentArea.innerHTML = ''; // Clear the area used by other views
+            mainContentArea.style.display = 'none'; // Hide it
+            if (typeof ui !== 'undefined' && typeof ui.showQuestionBank === 'function') {
+                ui.showQuestionBank();
+            } else {
+                console.error('ui.showQuestionBank() is not available. Check script loading order and ui.js implementation.');
+                // Show a fallback message in mainContentArea if Question Bank UI can't be loaded
+                mainContentArea.innerHTML = '<h2>Error</h2><p>Could not load Question Bank.</p>';
+                mainContentArea.style.display = 'block';
+            }
+        } else if (views[viewKey]) {
             mainContentArea.innerHTML = views[viewKey];
             mainContentArea.style.display = 'block';
             
             if (viewKey === '#/home') {
+                // Initialize calendar only if home view is active and initCalendar is defined
                 if (typeof initCalendar === 'function') {
                     initCalendar();
                 } else {
