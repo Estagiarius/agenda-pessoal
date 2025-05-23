@@ -101,8 +101,46 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const views = {
         '#/home': homeViewHtml,
-        '#/settings': '<h2>Settings Page</h2><p>Settings will go here. This is loaded by the router.</p>',
+        // Settings view HTML will be defined below
     };
+
+    const settingsViewHtml = `
+<div class="container" style="margin-top: 20px;">
+    <h2>Notification Settings</h2>
+    <form>
+        <div class="form-group">
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" id="enableSoundNotification">
+                    Enable sound for notifications
+                </label>
+            </div>
+        </div>
+        <!-- <button type="button" id="saveSettingsButton" class="btn btn-primary">Save Settings</button> -->
+        <p><small>Settings are saved automatically when changed.</small></p>
+    </form>
+</div>
+    `;
+    views['#/settings'] = settingsViewHtml; // Add settings view to the views object
+
+    function initSettingsViewLogic() {
+        const enableSoundCheckbox = document.getElementById('enableSoundNotification');
+        
+        if (enableSoundCheckbox && window.settingsService) {
+            // Load initial settings
+            const currentSettings = window.settingsService.getNotificationSettings();
+            enableSoundCheckbox.checked = currentSettings.enableSound;
+
+            // Save settings on change
+            enableSoundCheckbox.addEventListener('change', function() {
+                window.settingsService.saveNotificationSettings({ enableSound: this.checked });
+                // console.log('Notification sound setting saved:', this.checked); // For debugging
+            });
+        } else {
+            if (!enableSoundCheckbox) console.error('#enableSoundNotification checkbox not found.');
+            if (!window.settingsService) console.error('settingsService not available.');
+        }
+    }
 
     function loadView(hash) {
         let viewKey = hash;
@@ -115,12 +153,27 @@ document.addEventListener('DOMContentLoaded', function() {
             mainContentArea.style.display = 'block';
             
             if (viewKey === '#/home') {
+                // Hide To-Do list when on home/calendar view if it exists
+                const todoListContainer = document.getElementById('todo-list-container');
+                if (todoListContainer) {
+                    todoListContainer.style.display = 'none'; 
+                }
                 if (typeof initCalendar === 'function') {
                     initCalendar();
                 } else {
                     console.error('initCalendar function is not defined. Make sure calendar.js is loaded before router.js.');
                 }
+            } else if (viewKey === '#/settings') {
+                // Hide To-Do list when on settings view
+                const todoListContainer = document.getElementById('todo-list-container');
+                if (todoListContainer) {
+                    todoListContainer.style.display = 'none'; 
+                }
+                initSettingsViewLogic();
             }
+            // Potential: If To-Do list should be its own view, manage its visibility here too.
+            // For now, it's part of the default content in index.html and hidden on other views.
+
         } else {
             mainContentArea.innerHTML = '<h2>404 - Page Not Found</h2><p>The page you requested could not be found.</p>';
             mainContentArea.style.display = 'block';

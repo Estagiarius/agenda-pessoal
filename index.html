@@ -91,6 +91,8 @@
         <script src="js/app/calendar.js"></script>
         <script src="js/app/router.js"></script>
         <script src="js/app/todo.js"></script>
+        <script src="js/app/notificationService.js"></script>
+        <script src="js/app/settingsService.js"></script>
 
     <!-- Event Input Modal -->
     <div class="modal fade" id="eventModal" tabindex="-1" role="dialog" aria-labelledby="eventModalLabel">
@@ -135,6 +137,36 @@
                   <option>Programming</option>
                   <option>Other</option>
                 </select>
+              </div>
+              <!-- Reminders Section -->
+              <div class="form-group">
+                <h5 style="margin-top: 15px; margin-bottom: 5px;">Reminders</h5>
+                <div id="configuredRemindersList" class="list-group mb-2" style="margin-bottom: 10px;">
+                  <!-- Configured reminders will be displayed here by calendar.js -->
+                </div>
+                <div class="row">
+                  <div class="col-xs-5">
+                    <label for="reminderValueInput" class="sr-only">Reminder Value</label>
+                    <select id="reminderValueInput" class="form-control">
+                      <option value="10">10</option>
+                      <option value="15">15</option>
+                      <option value="20">20</option>
+                      <option value="30">30</option>
+                    </select>
+                  </div>
+                  <div class="col-xs-5">
+                    <label for="reminderUnitInput" class="sr-only">Reminder Unit</label>
+                    <select id="reminderUnitInput" class="form-control">
+                      <option value="minutes" selected>Minutes Before</option>
+                      <option value="hours">Hours Before</option>
+                    </select>
+                  </div>
+                  <div class="col-xs-2">
+                    <button type="button" id="addReminderButton" class="btn btn-info btn-sm" title="Add Reminder" style="padding: 7px 10px;">
+                        <span class="glyphicon glyphicon-plus"></span> Add
+                    </button>
+                  </div>
+                </div>
               </div>
             </form>
           </div>

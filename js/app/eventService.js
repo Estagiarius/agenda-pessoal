@@ -14,10 +14,11 @@
                 console.error('Invalid events data found in localStorage, defaulting to empty array.');
                 events = [];
             } else {
-                // Ensure all loaded events have a category, default if missing
+                // Ensure all loaded events have a category and reminders array, default if missing
                 events = events.map(event => ({
                     ...event,
-                    category: event.category || 'General'
+                    category: event.category || 'General',
+                    reminders: Array.isArray(event.reminders) ? event.reminders : []
                 }));
             }
         }
@@ -66,12 +67,14 @@
             startTime: eventObject.startTime || '',
             endTime: eventObject.endTime || '',
             description: eventObject.description || '',
-            category: eventObject.category || 'General' // Add category, default to 'General'
+            category: eventObject.category || 'General', // Add category, default to 'General'
+            reminders: eventObject.reminders || [] // Initialize reminders, expect array from calendar.js
         };
         events.push(newEvent);
+        console.log('eventService: Evento adicionado/atualizado:', JSON.stringify(newEvent));
         saveToLocalStorage(); // Save after adding an event
-        console.log('Event added:', newEvent);
-        console.log('All events:', events); // For debugging
+        // console.log('Event added:', newEvent); // Original log, can be kept or removed
+        // console.log('All events:', events); // Original log, can be kept or removed
         return newEvent;
     }
 
@@ -84,12 +87,32 @@
     function getEventsForDate(dateString) {
         return events.filter(event => event.date === dateString);
     }
+
+    // Function to update an existing event
+    function updateEvent(updatedEventObject) {
+        if (!updatedEventObject || typeof updatedEventObject.id === 'undefined') {
+            console.error('Event object must have an id to be updated.');
+            return false;
+        }
+        const eventIndex = events.findIndex(event => event.id === updatedEventObject.id);
+
+        if (eventIndex === -1) {
+            console.error('Event with id ' + updatedEventObject.id + ' not found for update.');
+            return false;
+        }
+
+        events[eventIndex] = updatedEventObject;
+        console.log('eventService: Evento atualizado (para lembrete mostrado):', JSON.stringify(updatedEventObject));
+        saveToLocalStorage();
+        return true;
+    }
     
     // Expose public functions
     window.eventService = {
         addEvent: addEvent,
         getEvents: getEvents,
-        getEventsForDate: getEventsForDate
+        getEventsForDate: getEventsForDate,
+        updateEvent: updateEvent // Expose the new function
     };
 
 })(window);
