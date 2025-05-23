@@ -134,10 +134,60 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 `;
 
+    const assignmentsViewHtml = `
+<div class="container-fluid">
+  <h2>Assignment & Homework Tracker</h2>
+
+  <!-- Grading Completion Panel -->
+  <div class="panel panel-default" style="margin-top: 20px;">
+    <div class="panel-body">
+      <div class="form-group">
+        <label for="classFilterSelect">Filter by Class / Mark Grading Complete:</label>
+        <select id="classFilterSelect" class="form-control">
+          <!-- Options will be populated by JS -->
+        </select>
+      </div>
+      <button id="markClassGradedButton" class="btn btn-success" style="margin-top: 10px;">Mark All Assignments as Graded for Selected Class</button>
+    </div>
+  </div>
+
+  <!-- Add New Assignment Form -->
+  <h3 style="margin-top: 30px;">Add New Assignment</h3>
+  <form id="addAssignmentForm">
+    <div class="form-group">
+      <label for="assignmentClassSelect">Class</label>
+      <select id="assignmentClassSelect" class="form-control" required>
+        <!-- Options will be populated by JS -->
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="assignmentTitleInput">Title</label>
+      <input type="text" id="assignmentTitleInput" class="form-control" placeholder="Assignment Title" required>
+    </div>
+    <div class="form-group">
+      <label for="assignmentDescriptionInput">Description</label>
+      <textarea id="assignmentDescriptionInput" class="form-control" placeholder="Assignment Description"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="assignmentDueDateInput">Due Date</label>
+      <input type="date" id="assignmentDueDateInput" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Add Assignment</button>
+  </form>
+
+  <!-- Assignment Display Area -->
+  <h3 style="margin-top: 30px;">Assignments for <span id="selectedClassNameDisplay">[Selected Class]</span></h3>
+  <div id="assignmentsListArea" style="margin-top: 20px;">
+    <!-- Assignments will be rendered here by JS -->
+  </div>
+</div>
+`;
+
     const views = {
         '#/home': homeViewHtml,
         '#/settings': '<h2>Settings Page</h2><p>Settings will go here. This is loaded by the router.</p>',
-        '#/todos': todoViewHtml
+        '#/todos': todoViewHtml,
+        '#/assignments': assignmentsViewHtml
     };
 
     function loadView(hash) {
@@ -156,11 +206,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     console.error('initCalendar function is not defined. Make sure calendar.js is loaded before router.js.');
                 }
-            } else if (viewKey === '#/todos') { // Added else if
+            } else if (viewKey === '#/todos') { 
                 if (typeof initTodoPage === 'function') {
                     initTodoPage();
                 } else {
                     console.error('initTodoPage function not defined. Make sure todo.js is loaded before router.js.');
+                }
+            } else if (viewKey === '#/assignments') {
+                if (typeof initAssignmentsPage === 'function') {
+                    initAssignmentsPage();
+                } else {
+                    console.error('initAssignmentsPage function not defined. Make sure assignment.js is loaded before router.js.');
                 }
             }
         } else {
