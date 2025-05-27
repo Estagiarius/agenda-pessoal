@@ -37,19 +37,21 @@ h2 {
 }
 
 .navbar-default .navbar-nav > li > a {
-    color: #495057; /* Mid-gray */
+    color: #343a40; /* Darker gray for better contrast */
 }
 
 .navbar-default .navbar-nav > li > a:hover,
 .navbar-default .navbar-nav > li > a:focus {
-    color: #007bff; /* Light blue on hover/focus */
+    color: #007bff; /* Light blue on hover/focus - kept for interaction feedback */
 }
 
+/* Active Navbar Link - Improved Contrast */
 .navbar-default .navbar-nav > .active > a,
-.navbar-default .navbar-nav > .active > a:hover,
+.navbar-default .navbar-nav > .active > a:hover, 
 .navbar-default .navbar-nav > .active > a:focus {
-    color: #007bff;
-    background-color: #e9ecef; /* Light gray background for active link */
+  color: #0056b3; /* Darker blue */
+  background-color: #e0e0e0; /* Slightly darker gray background for active state */
+  font-weight: 500; /* Medium weight for emphasis */
 }
 
 /* Buttons */
@@ -159,4 +161,34 @@ h2 {
 /* For example, to ensure body background is not #e74c3c */
 body {
     background-color: #f8f9fa !important; /* Use !important if strictly necessary to override, but prefer specificity */
+}
+
+/* Styles for Próximos Eventos (Upcoming Events) List */
+#todays-overview .list-group-item {
+    padding-top: 10px;    /* Existing Bootstrap padding is 10px 15px */
+    padding-bottom: 10px;
+    margin-bottom: 8px;  /* Add some space between event items */
+    border-radius: 4px; /* Ensure items have rounded corners if not already applied */
+    /* Consider adding a subtle border if not already distinct enough */
+    /* border: 1px solid #dee2e6; */ 
+}
+
+#todays-overview .list-group-item-heading {
+    margin-bottom: 5px; /* Space between title and time/description */
+    font-size: 1.1rem;  /* Slightly larger title if needed */
+    font-weight: 500;   /* Make title a bit bolder than normal text */
+}
+
+#todays-overview .list-group-item-text {
+    line-height: 1.4;     /* Adjust for readability */
+    overflow-wrap: break-word; /* Prevent long words from breaking layout */
+    word-wrap: break-word;     /* Older browsers */
+}
+
+#todays-overview .list-group-item-text.mb-0 { /* For the time paragraph */
+    margin-bottom: 3px !important; /* Small space between time and description if description exists */
+}
+
+#todays-overview .list-group-item-text small { /* For the description */
+    font-size: 0.85em; /* Ensure description text isn't too large */
 }
