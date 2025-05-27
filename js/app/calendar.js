@@ -154,7 +154,7 @@ function renderConfiguredReminders() {
         listItem.className = 'list-group-item d-flex justify-content-between align-items-center p-2'; // Added padding
         
         const text = document.createElement('span');
-        text.textContent = `${reminder.value} ${reminder.unit === 'minutes' ? 'Minutes Before' : 'Hours Before'}`;
+        text.textContent = `${reminder.value} ${reminder.unit === 'minutes' ? 'Minutos Antes' : 'Horas Antes'}`;
         
         const removeButton = document.createElement('button');
         removeButton.type = 'button';
@@ -276,29 +276,29 @@ document.addEventListener('DOMContentLoaded', function() {
             const unit = reminderUnitInput.value;
 
             if (isNaN(value)) {
-                alert('Please select a valid reminder value.');
+                alert('Por favor, selecione um valor de lembrete válido.');
                 return;
             }
             
             // Check for duplicate reminders (optional, but good UX)
             const exists = currentModalReminders.some(r => r.value === value && r.unit === unit);
             if (exists) {
-                alert('This reminder has already been added.');
+                alert('Este lembrete já foi adicionado.');
                 return;
             }
             if (currentModalReminders.length >= 5) { // Limit number of reminders
-                alert('You can add a maximum of 5 reminders.');
+                alert('Você pode adicionar no máximo 5 lembretes.');
                 return;
             }
-
-            currentModalReminders.push({
+            
+            const newReminder = {
                 id: Date.now(), // Unique ID for this reminder instance
                 value: value,
                 unit: unit,
                 shown: false // Default for future use
             };
-            currentModalReminders.push(newReminderObject);
-            console.log('Adicionando lembrete à UI:', newReminderObject);
+            currentModalReminders.push(newReminder);
+            console.log('Adicionando lembrete à UI:', newReminder);
             renderConfiguredReminders();
         });
     }

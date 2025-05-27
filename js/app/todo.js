@@ -1,7 +1,13 @@
-document.addEventListener('DOMContentLoaded', function() {
+function initTodoApp() {
     const taskInput = document.getElementById('taskInput');
     const addTaskButton = document.getElementById('addTaskButton');
     const taskList = document.getElementById('taskList');
+
+    // Check if essential elements are present. If not, this view might not be fully loaded or is incorrect.
+    if (!taskInput || !addTaskButton || !taskList) {
+        console.error('Todo app elements not found. Aborting initTodoApp.');
+        return;
+    }
 
     let tasks = []; // Holds the tasks
 
@@ -29,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Render tasks to the UI
     function renderTasks() {
+        if (!taskList) return; // Guard against taskList being null if init failed early
         taskList.innerHTML = ''; // Clear existing tasks
         tasks.forEach(task => {
             const li = document.createElement('li');
@@ -49,14 +56,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const deleteButton = document.createElement('button');
             deleteButton.className = 'btn btn-danger btn-sm delete-task';
-            deleteButton.textContent = 'Delete';
+            deleteButton.textContent = 'Excluir';
             deleteButton.dataset.id = task.id;
             
-            // Structure: li -> [checkbox, span, deleteButton]
-            // To make span take available space and button to the right:
             const textWrapper = document.createElement('div');
-            textWrapper.style.flexGrow = '1'; // Allow text to take available space
-            textWrapper.style.marginLeft = '10px'; // Space between checkbox and text
+            textWrapper.style.flexGrow = '1'; 
+            textWrapper.style.marginLeft = '10px'; 
             textWrapper.appendChild(span);
 
             li.appendChild(checkbox);
@@ -69,19 +74,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add a new task
     function addTask() {
+        if (!taskInput) return; // Guard
         const text = taskInput.value.trim();
         if (text === '') {
-            alert('Please enter a task.');
+            alert('Por favor, insira uma tarefa.');
             return;
         }
         tasks.push({
-            id: Date.now(), // Simple unique ID
+            id: Date.now(), 
             text: text,
             completed: false
         });
         saveTasks();
         renderTasks();
-        taskInput.value = ''; // Clear input
+        taskInput.value = ''; 
     }
 
     // Toggle task completion
@@ -90,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (task) {
             task.completed = !task.completed;
             saveTasks();
-            renderTasks(); // Re-render to update style
+            renderTasks(); 
         }
     }
 
@@ -102,21 +108,48 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Event Listeners
-    if (addTaskButton) {
-        addTaskButton.addEventListener('click', addTask);
+    // Remove previous listeners if any, to prevent multiple attachments if initTodoApp is called multiple times.
+    // A more robust way would be to use AbortController if listeners were more complex.
+    const newAddTaskButton = addTaskButton.cloneNode(true);
+    addTaskButton.parentNode.replaceChild(newAddTaskButton, addTaskButton);
+    newAddTaskButton.addEventListener('click', addTask);
+
+    const newTaskInput = taskInput.cloneNode(true);
+    taskInput.parentNode.replaceChild(newTaskInput, taskInput);
+    newTaskInput.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            addTask();
+        }
+    });
+    
+    // Update references to the new cloned elements
+    // taskInput and addTaskButton are effectively replaced by newTaskInput and newAddTaskButton for event listening.
+    // The original taskInput needs to be used for .value access in addTask.
+    // This is a bit tricky. Let's adjust: keep original references for value, use new ones for listeners.
+    // Simpler: just ensure this initTodoApp is called ONLY once per view load. Router already does this.
+    // So, direct attachment without cloning should be fine if initTodoApp is idempotent or called once.
+
+    if (addTaskButton) { // Re-reference in case it was replaced by newAddTaskButton in a more complex scenario
+        const currentAddTaskButton = document.getElementById('addTaskButton');
+         if (currentAddTaskButton && !currentAddTaskButton.dataset.todoListenerAttached) {
+            currentAddTaskButton.addEventListener('click', addTask);
+            currentAddTaskButton.dataset.todoListenerAttached = 'true';
+        }
     }
     
-    // Allow adding task with Enter key
     if (taskInput) {
-        taskInput.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                addTask();
-            }
-        });
+        const currentTaskInput = document.getElementById('taskInput');
+        if (currentTaskInput && !currentTaskInput.dataset.todoListenerAttached) {
+            currentTaskInput.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    addTask();
+                }
+            });
+            currentTaskInput.dataset.todoListenerAttached = 'true';
+        }
     }
 
-    // Event delegation for task actions (toggle complete, delete)
-    if (taskList) {
+    if (taskList && !taskList.dataset.todoListenerAttached) {
         taskList.addEventListener('click', function(event) {
             const target = event.target;
             if (target.classList.contains('task-checkbox')) {
@@ -125,14 +158,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 deleteTask(target.dataset.id);
             }
         });
+        taskList.dataset.todoListenerAttached = 'true';
     }
 
-    // Initial load
-    loadTasks();
-});
+    loadTasks(); // Initial load of tasks
+}
 
 // Basic CSS for completed tasks (can be moved to a CSS file)
-const style = document.createElement('style');
+// This part should ideally be in a CSS file, but for the exercise, we'll keep it.
+// Ensure it's only added once.
+if (!document.getElementById('todo-styles')) {
+    const style = document.createElement('style');
+    style.id = 'todo-styles';
 style.textContent = `
     .completed-task {
         text-decoration: line-through;
