@@ -236,43 +236,48 @@ function displayUpcomingEvents() {
     overviewContainer.innerHTML = contentHtml;
 
     // Attach Event Listener for clickable event items
-    const eventListUl = overviewContainer.querySelector('.list-group');
+    const eventListUl = overviewContainer.querySelector('ul.list-group'); 
     if (eventListUl) {
-        // Remove previous listener if any to prevent multiple attachments
-        // This is a simple way; for more complex scenarios, consider AbortController or storing the handler.
-        const newEventListUl = eventListUl.cloneNode(true);
-        eventListUl.parentNode.replaceChild(newEventListUl, eventListUl);
-
-        newEventListUl.addEventListener('click', function(e) {
+        eventListUl.addEventListener('click', function(e) {
+            console.log('Clicked on .upcoming-event-item. Event target:', e.target); // Added log
             const listItem = e.target.closest('.upcoming-event-item');
+            console.log('Found listItem:', listItem); // Added log
             if (listItem) {
                 const eventId = listItem.dataset.eventId;
+                console.log('Retrieved eventId from listItem.dataset:', eventId); // Added log
                 if (eventId) {
-                    console.log('Clicked event item with ID:', eventId); // Log click
                     showEventDetails(eventId); 
+                } else {
+                    console.error('Event ID not found on clicked list item.'); // Added log
                 }
+            } else {
+                console.error('Could not find parent .upcoming-event-item from click target.'); // Added log
             }
         });
+    } else if (sortedEvents.length > 0) { // Only log error if events were expected
+        console.error('Could not find ul.list-group to attach click listener after rendering upcoming events.');
     }
 }
 
 // Function to show event details in the #viewEventModal
 function showEventDetails(eventId) {
+    console.log('showEventDetails function CALLED with eventId:', eventId); // Added log
     if (!window.eventService || typeof window.eventService.getEvents !== 'function') {
         console.error('eventService not available for showEventDetails.');
         return;
     }
     const allEvents = window.eventService.getEvents();
-    const eventIdNum = parseInt(eventId, 10); // Ensure eventId is a number for comparison
+    const eventIdNum = parseInt(eventId, 10); 
     
-    console.log('showEventDetails - Searching for event ID:', eventIdNum, '(original string:', eventId, ')'); // Log search
+    console.log('showEventDetails - Searching for event ID:', eventIdNum, '(original string:', eventId, ')'); 
 
     const event = allEvents.find(e => e.id === eventIdNum);
 
     if (event) {
-        console.log('showEventDetails - Event found:', JSON.stringify(event, null, 2)); // Log found event
+        console.log('showEventDetails - Event found:', JSON.stringify(event, null, 2)); 
 
         // Populate the modal elements
+        console.log('Event found, attempting to show #viewEventModal with title:', event.title); // Added log
         $('#viewEventTitle').text(event.title || 'Sem título');
         $('#viewEventDate').text(moment(event.date, 'YYYY-MM-DD').format('DD/MM/YYYY'));
         $('#viewEventTime').text(event.startTime ? `${event.startTime}${event.endTime ? ` - ${event.endTime}` : ''}` : 'Dia todo');
@@ -314,8 +319,9 @@ function showEventDetails(eventId) {
         }
 
     } else {
-        console.error('showEventDetails - Event with ID ' + eventIdNum + ' not found.');
+        console.error('Event object not found in showEventDetails for eventId:', eventIdNum); // Updated log
     }
+    console.log('showEventDetails function ENDED for eventId:', eventId); // Added log
 }
 
 
