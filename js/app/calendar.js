@@ -520,4 +520,11 @@ document.addEventListener('DOMContentLoaded', function() {
             updateReminderValueOptions();
         });
     }
+
+    // Initial call to setup the calendar and upcoming events on page load
+    if (typeof initCalendar === 'function') {
+        initCalendar();
+    } else {
+        console.error('initCalendar function not found on DOMContentLoaded.');
+    }
 });
