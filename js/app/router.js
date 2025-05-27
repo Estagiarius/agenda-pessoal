@@ -141,4 +141,27 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     loadView(window.location.hash); 
+
+    // Auto-collapse navbar on link click (for mobile view)
+    const navLinks = document.querySelectorAll('#navbarCollapse .nav a');
+    const navbarCollapseDiv = document.getElementById('navbarCollapse');
+    const navbarToggleButton = document.querySelector('.navbar-toggle[data-target="#navbarCollapse"]');
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            // Check if the navbar is actually open/expanded (Bootstrap 3 uses 'in' class)
+            const isNavbarCollapsedAndOpen = navbarCollapseDiv && navbarCollapseDiv.classList.contains('in');
+            
+            if (isNavbarCollapsedAndOpen) {
+                // Prefer jQuery's collapse('hide') if available, as it's Bootstrap's native way
+                if (typeof $ !== 'undefined' && typeof $.fn.collapse !== 'undefined') {
+                    $('#navbarCollapse').collapse('hide');
+                } else if (navbarToggleButton) {
+                    // Fallback: programmatically click the toggle button
+                    // This is generally more robust than directly manipulating classes if Bootstrap's JS is active
+                    navbarToggleButton.click(); 
+                }
+            }
+        });
+    });
 });

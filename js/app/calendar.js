@@ -160,16 +160,24 @@ function displayUpcomingEvents() {
     }
 
     const allEvents = window.eventService.getEvents();
-    if (!allEvents) { // Should not happen if eventService.getEvents() returns []
+    console.log('Resumo de Hoje - All Events:', JSON.stringify(allEvents, null, 2)); // Added log
+
+    if (!allEvents) { 
         overviewContainer.innerHTML = '<h2>Resumo de Hoje</h2><p>Não foi possível carregar eventos.</p>';
         return;
     }
     
     const today = moment().startOf('day');
-    const todaysEvents = allEvents.filter(event => {
-        const eventDate = moment(event.date, 'YYYY-MM-DD'); // Ensure event.date is in this format
+    console.log('Resumo de Hoje - Today (moment object):', today.format('YYYY-MM-DD')); // Added log
+
+    const todaysEvents = allEvents.filter((event, index) => { // Added index for limited logging
+        const eventDate = moment(event.date, 'YYYY-MM-DD'); 
+        // Log for the first 5 events or a specific test event
+        if (index < 5) { // Limit logging to avoid flooding the console
+            console.log(`Resumo de Hoje - Checking Event: Date='${event.date}', Parsed='${eventDate.format('YYYY-MM-DD')}', IsToday=${eventDate.isSame(today, 'day')}, Title='${event.title}'`);
+        }
         return eventDate.isSame(today, 'day');
-    }).sort((a, b) => { // Sort by start time
+    }).sort((a, b) => { 
         if (a.startTime && b.startTime) {
             return a.startTime.localeCompare(b.startTime);
         } else if (a.startTime) {
@@ -180,13 +188,15 @@ function displayUpcomingEvents() {
         return 0; 
     });
 
+    
+    console.log('Resumo de Hoje - Filtered Todays Events:', JSON.stringify(todaysEvents, null, 2)); // Added log
+
     let contentHtml = '<h2>Resumo de Hoje</h2>';
     if (todaysEvents.length === 0) {
         contentHtml += '<p>Nenhum evento para hoje.</p>';
     } else {
         contentHtml += '<ul class="list-group">';
         todaysEvents.forEach(event => {
-            // Escape HTML to prevent XSS - simple example, consider a library for robustness
             const escapeHTML = str => str ? str.replace(/[&<>"']/g, match => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[match]) : '';
 
             const title = escapeHTML(event.title);
@@ -206,6 +216,8 @@ function displayUpcomingEvents() {
         });
         contentHtml += '</ul>';
     }
+    
+    console.log('Resumo de Hoje - Generated HTML:', contentHtml); // Added log
     overviewContainer.innerHTML = contentHtml;
 }
 
