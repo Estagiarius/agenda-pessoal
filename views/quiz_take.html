@@ -1,3 +1,17 @@
-<div id="quiz-taking-view" class="container">
-    <h2>Fazendo Quiz</h2>
+<div class="container mt-4" id="quiz-taking-actual-content">
+    <h2 id="quiz-progress-indicator">Questão X de Y</h2>
+    <div id="quiz-question-card" class="card mt-3">
+        <div class="card-body">
+            <p id="quiz-question-text" class="card-text lead">Texto da pergunta aqui...</p>
+            <div id="quiz-options-container" class="mt-3">
+                <!-- Options will be rendered here by ui.js -->
+            </div>
+        </div>
+    </div>
+    <div id="quiz-taking-feedback" class="mt-3"></div>
+    <div class="mt-3">
+        <button id="quiz-prev-btn" class="btn btn-secondary mr-2" style="display: none;">Anterior</button>
+        <button id="quiz-next-btn" class="btn btn-info mr-2" style="display: none;">Próxima</button>
+        <button id="quiz-submit-btn" class="btn btn-success" style="display: none;">Finalizar Quiz</button>
+    </div>
 </div>

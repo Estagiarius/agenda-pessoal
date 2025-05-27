@@ -141,7 +141,74 @@ function initCalendar() {
     // Add Event Listener for the "Save Event" button - moved to DOMContentLoaded
     // Store the instance if we needed to call methods on it later, e.g., a hypothetical destroy.
     // window.currentCalendarInstance = calendar; 
+
+    displayUpcomingEvents(); // Call to display today's events in the overview
 }
+
+// Function to display upcoming events for today in the "Resumo de Hoje" section
+function displayUpcomingEvents() {
+    const overviewContainer = document.getElementById('todays-overview');
+    if (!overviewContainer) {
+        console.error('Error: Todays overview container not found.');
+        return;
+    }
+
+    if (!window.eventService || typeof window.eventService.getEvents !== 'function') {
+        overviewContainer.innerHTML = '<h2>Resumo de Hoje</h2><p>Serviço de eventos não disponível.</p>';
+        console.error('eventService not available for displaying upcoming events.');
+        return;
+    }
+
+    const allEvents = window.eventService.getEvents();
+    if (!allEvents) { // Should not happen if eventService.getEvents() returns []
+        overviewContainer.innerHTML = '<h2>Resumo de Hoje</h2><p>Não foi possível carregar eventos.</p>';
+        return;
+    }
+    
+    const today = moment().startOf('day');
+    const todaysEvents = allEvents.filter(event => {
+        const eventDate = moment(event.date, 'YYYY-MM-DD'); // Ensure event.date is in this format
+        return eventDate.isSame(today, 'day');
+    }).sort((a, b) => { // Sort by start time
+        if (a.startTime && b.startTime) {
+            return a.startTime.localeCompare(b.startTime);
+        } else if (a.startTime) {
+            return -1; // Events with start time come before those without
+        } else if (b.startTime) {
+            return 1;  // Events without start time come after those with
+        }
+        return 0; 
+    });
+
+    let contentHtml = '<h2>Resumo de Hoje</h2>';
+    if (todaysEvents.length === 0) {
+        contentHtml += '<p>Nenhum evento para hoje.</p>';
+    } else {
+        contentHtml += '<ul class="list-group">';
+        todaysEvents.forEach(event => {
+            // Escape HTML to prevent XSS - simple example, consider a library for robustness
+            const escapeHTML = str => str ? str.replace(/[&<>"']/g, match => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[match]) : '';
+
+            const title = escapeHTML(event.title);
+            const startTime = escapeHTML(event.startTime);
+            const endTime = escapeHTML(event.endTime);
+            const description = escapeHTML(event.description);
+
+            contentHtml += `
+                <li class="list-group-item">
+                    <h5 class="list-group-item-heading">${title}</h5>
+                    <p class="list-group-item-text mb-0">
+                        ${startTime ? `Horário: ${startTime}` : 'Dia todo'}
+                        ${endTime ? ` - ${endTime}` : ''}
+                    </p>
+                    ${description ? `<p class="list-group-item-text text-muted" style="font-size: 0.9em; margin-top: 5px;">${description}</p>` : ''}
+                </li>`;
+        });
+        contentHtml += '</ul>';
+    }
+    overviewContainer.innerHTML = contentHtml;
+}
+
 
 // Function to render configured reminders in the modal
 function renderConfiguredReminders() {

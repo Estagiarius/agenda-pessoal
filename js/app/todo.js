@@ -108,45 +108,19 @@ function initTodoApp() {
     }
 
     // Event Listeners
-    // Remove previous listeners if any, to prevent multiple attachments if initTodoApp is called multiple times.
-    // A more robust way would be to use AbortController if listeners were more complex.
-    const newAddTaskButton = addTaskButton.cloneNode(true);
-    addTaskButton.parentNode.replaceChild(newAddTaskButton, addTaskButton);
-    newAddTaskButton.addEventListener('click', addTask);
-
-    const newTaskInput = taskInput.cloneNode(true);
-    taskInput.parentNode.replaceChild(newTaskInput, taskInput);
-    newTaskInput.addEventListener('keypress', function(event) {
-        if (event.key === 'Enter') {
-            addTask();
-        }
-    });
-    
-    // Update references to the new cloned elements
-    // taskInput and addTaskButton are effectively replaced by newTaskInput and newAddTaskButton for event listening.
-    // The original taskInput needs to be used for .value access in addTask.
-    // This is a bit tricky. Let's adjust: keep original references for value, use new ones for listeners.
-    // Simpler: just ensure this initTodoApp is called ONLY once per view load. Router already does this.
-    // So, direct attachment without cloning should be fine if initTodoApp is idempotent or called once.
-
-    if (addTaskButton) { // Re-reference in case it was replaced by newAddTaskButton in a more complex scenario
-        const currentAddTaskButton = document.getElementById('addTaskButton');
-         if (currentAddTaskButton && !currentAddTaskButton.dataset.todoListenerAttached) {
-            currentAddTaskButton.addEventListener('click', addTask);
-            currentAddTaskButton.dataset.todoListenerAttached = 'true';
-        }
+    // Ensure listeners are attached only once using flags
+    if (addTaskButton && !addTaskButton.dataset.todoListenerAttached) {
+        addTaskButton.addEventListener('click', addTask);
+        addTaskButton.dataset.todoListenerAttached = 'true';
     }
     
-    if (taskInput) {
-        const currentTaskInput = document.getElementById('taskInput');
-        if (currentTaskInput && !currentTaskInput.dataset.todoListenerAttached) {
-            currentTaskInput.addEventListener('keypress', function(event) {
-                if (event.key === 'Enter') {
-                    addTask();
-                }
-            });
-            currentTaskInput.dataset.todoListenerAttached = 'true';
-        }
+    if (taskInput && !taskInput.dataset.todoListenerAttached) {
+        taskInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                addTask();
+            }
+        });
+        taskInput.dataset.todoListenerAttached = 'true';
     }
 
     if (taskList && !taskList.dataset.todoListenerAttached) {
