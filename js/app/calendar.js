@@ -232,47 +232,61 @@ function displayUpcomingEvents() {
     }
     
     const today = moment().startOf('day');
-    console.log('Resumo de Hoje - Today (moment object):', today.format('YYYY-MM-DD')); // Added log
+    const sevenDaysFromNow = moment().add(7, 'days').endOf('day'); // End of the 7th day from today
+    console.log('Resumo de Hoje - Start Date:', today.format('YYYY-MM-DD')); 
+    console.log('Resumo de Hoje - End Date:', sevenDaysFromNow.format('YYYY-MM-DD'));
 
-    const todaysEvents = allEvents.filter((event, index) => { // Added index for limited logging
-        const eventDate = moment(event.date, 'YYYY-MM-DD'); 
-        // Log for the first 5 events or a specific test event
-        if (index < 5) { // Limit logging to avoid flooding the console
-            console.log(`Resumo de Hoje - Checking Event: Date='${event.date}', Parsed='${eventDate.format('YYYY-MM-DD')}', IsToday=${eventDate.isSame(today, 'day')}, Title='${event.title}'`);
+    const upcomingEvents = allEvents.filter((event, index) => {
+        const eventDate = moment(event.date, 'YYYY-MM-DD');
+        // Log for the first few events or specific test events
+        if (index < 5) { // Limit logging
+            console.log(`Resumo de Hoje - Checking Event: Date='${event.date}', Parsed='${eventDate.format('YYYY-MM-DD')}', IsBetween=${eventDate.isBetween(today, sevenDaysFromNow, null, '[]')}, Title='${event.title}'`);
         }
-        return eventDate.isSame(today, 'day');
-    }).sort((a, b) => { 
+        return eventDate.isBetween(today, sevenDaysFromNow, null, '[]'); // '[]' includes start and end dates
+    }).sort((a, b) => {
+        // First, sort by date
+        const dateA = moment(a.date, 'YYYY-MM-DD');
+        const dateB = moment(b.date, 'YYYY-MM-DD');
+        if (dateA.isBefore(dateB)) return -1;
+        if (dateA.isAfter(dateB)) return 1;
+
+        // If dates are the same, then sort by startTime
         if (a.startTime && b.startTime) {
             return a.startTime.localeCompare(b.startTime);
-        } else if (a.startTime) {
-            return -1; // Events with start time come before those without
-        } else if (b.startTime) {
-            return 1;  // Events without start time come after those with
+        } else if (a.startTime) { // a has time, b doesn't
+            return -1; 
+        } else if (b.startTime) { // b has time, a doesn't
+            return 1;  
         }
-        return 0; 
+        return 0; // Both are all-day events on the same date
     });
 
     
-    console.log('Resumo de Hoje - Filtered Todays Events:', JSON.stringify(todaysEvents, null, 2)); // Added log
+    console.log('Resumo de Hoje - Filtered Upcoming Events:', JSON.stringify(upcomingEvents, null, 2));
 
     let contentHtml = '<h2>Resumo de Hoje</h2>';
-    if (todaysEvents.length === 0) {
-        contentHtml += '<p>Nenhum evento para hoje.</p>';
+    if (upcomingEvents.length === 0) {
+        contentHtml += '<p>Nenhum evento programado para os próximos 7 dias.</p>';
     } else {
         contentHtml += '<ul class="list-group">';
-        todaysEvents.forEach(event => {
+        upcomingEvents.forEach(event => {
             const escapeHTML = str => str ? str.replace(/[&<>"']/g, match => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[match]) : '';
 
+            // Format date for display within the list item
+            const eventDateFormatted = moment(event.date, 'YYYY-MM-DD').format('DD/MM');
             const title = escapeHTML(event.title);
             const startTime = escapeHTML(event.startTime);
             const endTime = escapeHTML(event.endTime);
             const description = escapeHTML(event.description);
             // Assuming event.id exists and is unique for each event
-            const eventId = event.id || `event-${Date.now()}-${Math.random()}`; // Fallback ID if event.id is missing
+            const eventId = event.id || `event-${Date.now()}-${Math.random()}`; 
 
             contentHtml += `
                 <li class="list-group-item" data-event-id="${escapeHTML(String(eventId))}">
-                    <h5 class="list-group-item-heading">${title}</h5>
+                    <h5 class="list-group-item-heading">
+                        <span class="badge pull-right" style="background-color: #05676E; margin-left: 8px;">${eventDateFormatted}</span>
+                        ${title}
+                    </h5>
                     <p class="list-group-item-text mb-0">
                         ${startTime ? `Horário: ${startTime}` : 'Dia todo'}
                         ${endTime ? ` - ${endTime}` : ''}
