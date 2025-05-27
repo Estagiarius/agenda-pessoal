@@ -86,6 +86,22 @@
         return events.filter(event => event.date === dateString);
     }
 
+    function getEventById(eventId) {
+        console.log(`eventService: Attempting to find event with ID: ${eventId}`);
+        if (typeof eventId === 'undefined' || eventId === null) {
+            console.warn('eventService: getEventById called with undefined or null eventId.');
+            return undefined;
+        }
+        const event = events.find(e => String(e.id) === String(eventId));
+        if (event) {
+            console.log('eventService: Event found:', event);
+            return event; // Return a copy to prevent direct modification of the stored event
+        } else {
+            console.log(`eventService: Event not found with ID: ${eventId}`);
+            return undefined;
+        }
+    }
+
     // Function to update an existing event
     function updateEvent(updatedEventObject) {
         if (!updatedEventObject || typeof updatedEventObject.id === 'undefined') {
@@ -110,7 +126,8 @@
         addEvent: addEvent,
         getEvents: getEvents,
         getEventsForDate: getEventsForDate,
-        updateEvent: updateEvent // Expose the new function
+        getEventById: getEventById, // Expose the new function
+        updateEvent: updateEvent 
     };
 
 })(window);

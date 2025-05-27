@@ -145,6 +145,70 @@ function initCalendar() {
     displayUpcomingEvents(); // Call to display today's events in the overview
 }
 
+function showEventDetails(eventId) {
+    console.log(`Attempting to show details for event ID: ${eventId}`);
+
+    if (!window.eventService || typeof window.eventService.getEventById !== 'function') {
+        console.error('eventService is not available or getEventById is not a function.');
+        return;
+    }
+
+    const event = window.eventService.getEventById(eventId);
+
+    if (!event) {
+        console.error(`Event with ID ${eventId} not found.`);
+        return;
+    }
+
+    console.log('Event retrieved:', event);
+
+    // Populate modal elements - using placeholder IDs for now
+    // These IDs would need to exist in your #viewEventModal HTML structure
+    const modalTitle = document.getElementById('viewEventModalTitle');
+    const modalDescription = document.getElementById('viewEventModalDescription');
+    const modalDate = document.getElementById('viewEventModalDate');
+    const modalTime = document.getElementById('viewEventModalTime');
+    const modalCategory = document.getElementById('viewEventModalCategory');
+
+    if (modalTitle) modalTitle.textContent = event.title || 'N/A';
+    if (modalDescription) modalDescription.textContent = event.description || 'N/A';
+    
+    let formattedDate = 'N/A';
+    if (event.date) {
+        if (typeof moment === 'function') {
+            formattedDate = moment(event.date, 'YYYY-MM-DD').format('DD/MM/YYYY');
+        } else {
+            // Basic formatting if moment is not available
+            const parts = event.date.split('-');
+            if (parts.length === 3) {
+                formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+            } else {
+                formattedDate = event.date; // Fallback to original if format is unexpected
+            }
+        }
+    }
+    if (modalDate) modalDate.textContent = `Date: ${formattedDate}`;
+
+    let timeInfo = 'All day';
+    if (event.startTime) {
+        timeInfo = `Time: ${event.startTime}`;
+        if (event.endTime) {
+            timeInfo += ` - ${event.endTime}`;
+        }
+    }
+    if (modalTime) modalTime.textContent = timeInfo;
+
+    if (modalCategory) modalCategory.textContent = `Category: ${event.category || 'General'}`;
+
+    // Show the modal using jQuery
+    if (typeof $ === 'function' && $('#viewEventModal').modal) {
+        $('#viewEventModal').modal('show');
+        console.log(`Attempted to show #viewEventModal for event ID: ${eventId}`);
+    } else {
+        console.error('jQuery or Bootstrap modal function not available to show #viewEventModal.');
+    }
+}
+
 // Function to display upcoming events for today in the "Resumo de Hoje" section
 function displayUpcomingEvents() {
     const overviewContainer = document.getElementById('todays-overview');
@@ -212,6 +276,13 @@ function displayUpcomingEvents() {
             const startTime = escapeHTML(event.startTime);
             const endTime = escapeHTML(event.endTime);
             const description = escapeHTML(event.description);
+
+            // Assuming event.id exists and is unique for each event
+            const eventId = event.id || `event-${Date.now()}-${Math.random()}`; // Fallback ID if event.id is missing
+
+            contentHtml += `
+                <li class="list-group-item" data-event-id="${escapeHTML(String(eventId))}">
+                    <h5 class="list-group-item-heading">${title}</h5>
             
             const eventMomentDate = moment(event.date, 'YYYY-MM-DD'); // For date display
             let displayDateInfo = '';
@@ -222,6 +293,7 @@ function displayUpcomingEvents() {
             contentHtml += `
                 <li class="list-group-item">
                     <h5 class="list-group-item-heading">${displayDateInfo}${title}</h5>
+
                     <p class="list-group-item-text mb-0">
                         ${startTime ? `Horário: ${startTime}` : 'Dia todo'}
                         ${endTime ? ` - ${endTime}` : ''}
@@ -235,6 +307,24 @@ function displayUpcomingEvents() {
     console.log('Próximos Eventos - Generated HTML:', contentHtml); // Log title updated
     overviewContainer.innerHTML = contentHtml;
 
+
+    // Add event listener to the list of upcoming events for showing details
+    const upcomingEventsList = overviewContainer.querySelector('ul.list-group');
+    if (upcomingEventsList) {
+        upcomingEventsList.addEventListener('click', function(e) {
+            const listItem = e.target.closest('li.list-group-item[data-event-id]');
+            if (listItem) {
+                const eventId = listItem.dataset.eventId;
+                console.log('Clicked upcoming event item:', listItem);
+                console.log('Retrieved eventId for details:', eventId);
+                if (eventId) {
+                    showEventDetails(eventId);
+                } else {
+                    console.warn('Event ID not found on clicked item.');
+                }
+            }
+        });
+    }
     // Attach Event Listener for clickable event items
     const eventListUl = overviewContainer.querySelector('ul.list-group'); 
     if (eventListUl) {
@@ -322,6 +412,7 @@ function showEventDetails(eventId) {
         console.error('Event object not found in showEventDetails for eventId:', eventIdNum); // Updated log
     }
     console.log('showEventDetails function ENDED for eventId:', eventId); // Added log
+
 }
 
 
