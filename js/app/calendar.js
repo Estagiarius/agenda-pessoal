@@ -197,24 +197,23 @@ function updateReminderValueOptions() {
 // Setup event listeners once DOM is fully loaded
 document.addEventListener('DOMContentLoaded', function() {
     const categoryFilterDropdown = document.getElementById('categoryFilterDropdown');
-    const calendarDiv = document.querySelector('#calendar'); // For re-initialization
-    
+    // const calendarDiv = document.querySelector('#calendar'); // Removed from here, initCalendar will find it
+
     const saveEventButton = document.getElementById('saveEventButton');
     const addReminderButton = document.getElementById('addReminderButton');
     const reminderUnitInput = document.getElementById('reminderUnitInput');
     const configuredRemindersList = document.getElementById('configuredRemindersList'); // For event delegation
 
-    if (categoryFilterDropdown && calendarDiv) {
+    if (categoryFilterDropdown) { // Check only for the dropdown existing in index.html
         categoryFilterDropdown.addEventListener('change', function() {
             currentFilterCategory = this.value;
-            if (calendarDiv.classList.contains('datepickk-initialized')) {
-                calendarDiv.classList.remove('datepickk-initialized');
-            }
-            initCalendar();
+            // initCalendar is responsible for finding the #calendar div
+            // and handling its 'datepickk-initialized' state.
+            initCalendar(); 
         });
     } else {
-        if (!categoryFilterDropdown) console.error('#categoryFilterDropdown not found.');
-        if (!calendarDiv) console.error('#calendar div not found for filter listener setup.');
+        console.error('#categoryFilterDropdown not found.');
+        // The error about #calendar div is removed as it's not needed at this stage of listener setup.
     }
 
     // Listener for Save Event Button
@@ -241,9 +240,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (window.eventService && typeof window.eventService.addEvent === 'function') {
                 console.log('Salvando evento com lembretes:', JSON.stringify(eventObject.reminders));
                 window.eventService.addEvent(eventObject);
-                if (calendarDiv && calendarDiv.classList.contains('datepickk-initialized')) {
-                    calendarDiv.classList.remove('datepickk-initialized');
-                }
+                // initCalendar will handle finding #calendar and its initialized state.
+                // No need to manipulate calendarDiv's classes here directly.
                 initCalendar(); 
             } else {
                 console.error('eventService não disponível ou addEvent não é uma função.');
