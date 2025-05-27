@@ -186,23 +186,26 @@ body {
 }
 */
 
-/* Navbar Mobile Dropdown Legibility Fix */
+/* Navbar Mobile Dropdown Legibility Fix - Enhanced Specificity */
 @media (max-width: 767px) {
-    .navbar-default .navbar-nav .open .dropdown-menu > li > a {
-        color: #495057; /* Mid-gray, same as desktop nav links from main-theme */
+    /* Default text color for items in open mobile dropdown */
+    .navbar-default .navbar-collapse.in .navbar-nav > .open > .dropdown-menu > li > a {
+        color: #495057 !important; /* Mid-gray, ensuring override */
+        background-color: #ffffff !important; /* Explicitly white background for the link area if needed */
     }
 
-    .navbar-default .navbar-nav .open .dropdown-menu > li > a:hover,
-    .navbar-default .navbar-nav .open .dropdown-menu > li > a:focus {
-        color: #007bff; /* Light blue, same as desktop hover from main-theme */
-        /* Bootstrap's default mobile dropdown hover background is transparent or very light,
-           so a colored text works well. If background changes, this might need adjustment. */
+    /* Hover/focus text color for items in open mobile dropdown */
+    .navbar-default .navbar-collapse.in .navbar-nav > .open > .dropdown-menu > li > a:hover,
+    .navbar-default .navbar-collapse.in .navbar-nav > .open > .dropdown-menu > li > a:focus {
+        color: #007bff !important; /* Light blue, ensuring override */
+        background-color: #f0f0f0 !important; /* Slightly off-white hover for links, or keep transparent if parent is styled */
     }
 
-    .navbar-default .navbar-nav .open .dropdown-menu > .active > a,
-    .navbar-default .navbar-nav .open .dropdown-menu > .active > a:hover,
-    .navbar-default .navbar-nav .open .dropdown-menu > .active > a:focus {
-        color: #007bff; /* Light blue for active link text */
-        background-color: #e9ecef; /* Light gray background for active link, consistent with desktop */
+    /* Active state for items in open mobile dropdown */
+    .navbar-default .navbar-collapse.in .navbar-nav > .open > .dropdown-menu > .active > a,
+    .navbar-default .navbar-collapse.in .navbar-nav > .open > .dropdown-menu > .active > a:hover,
+    .navbar-default .navbar-collapse.in .navbar-nav > .open > .dropdown-menu > .active > a:focus {
+        color: #007bff !important; 
+        background-color: #e9ecef !important;
     }
 }
