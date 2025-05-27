@@ -310,17 +310,15 @@ const ui = (() => {
     }
 
     function showQuestionBank() {
-        const questionBankView = document.getElementById('question-bank-view');
-        if (questionBankView) {
-            questionBankView.style.display = 'block';
-            renderQuestions(questionService.getQuestions());
-            populateSubjectFilter();
-            initQuestionBankEventListeners(); 
-        }
-        const homeView = document.getElementById('home-view'); 
-        if (homeView) {
-            homeView.style.display = 'none';
-        }
+        // Container visibility is now handled by the router loading the partial.
+        // This function focuses on initializing the content of the question bank view.
+        renderQuestions(questionService.getQuestions());
+        populateSubjectFilter();
+        initQuestionBankEventListeners(); 
+        // const homeView = document.getElementById('home-view'); 
+        // if (homeView) {
+        //     homeView.style.display = 'none'; // Router should handle visibility of other general areas
+        // }
     }
 
     function hideQuestionBank() {
@@ -378,15 +376,8 @@ const ui = (() => {
     }
 
     function showQuizConfigView() {
-        const quizConfigView = document.getElementById('quiz-config-view');
-        if (quizConfigView) quizConfigView.style.display = 'block';
-        
-        const viewsToHide = ['question-bank-view', 'quiz-taking-view', 'quiz-results-view', 'home-view'];
-        viewsToHide.forEach(viewId => {
-            const viewToHide = document.getElementById(viewId);
-            if(viewToHide) viewToHide.style.display = 'none';
-        });
-
+        // Container visibility is now handled by the router.
+        // This function focuses on initializing the content of the quiz config view.
         populateQuizSubjectFilter();
         initQuizConfigEventListeners();
     }
@@ -431,7 +422,7 @@ const ui = (() => {
                     optionsContainerEl.appendChild(div);
                 });
             } else {
-                optionsContainerEl.innerHTML = '<p>Esta pergunta pode exigir um formato de resposta diferente (não de múltipla escolha).</p>';
+                optionsContainerEl.innerHTML = '<p>Esta pergunta pode exigir um formato de resposta diferente (não é de múltipla escolha).</p>';
             }
             
             const userAnswers = quizService.getUserAnswers();
@@ -491,19 +482,12 @@ const ui = (() => {
 
         if (!questions || questions.length === 0) {
             displayFeedback("Nenhum quiz carregado. Por favor, configure um quiz primeiro.", "warning", "quiz-config-feedback");
-            window.location.hash = '#/quiz-config';
+            window.location.hash = '#/quiz-config'; // Redirect if no questions
             return; 
         }
         
-        const quizTakingView = document.getElementById('quiz-taking-view');
-        if (quizTakingView) quizTakingView.style.display = 'block';
-        
-        const viewsToHide = ['quiz-config-view', 'question-bank-view', 'quiz-results-view', 'home-view'];
-        viewsToHide.forEach(viewId => {
-            const viewToHide = document.getElementById(viewId);
-            if(viewToHide) viewToHide.style.display = 'none';
-        });
-
+        // Container visibility is now handled by the router.
+        // This function focuses on initializing the content of the quiz taking view.
         renderCurrentQuizQuestion();
         initQuizTakingEventListeners(); 
     }
@@ -605,21 +589,8 @@ const ui = (() => {
             return;
         }
         
-        const resultsView = document.getElementById('quiz-results-view');
-        if (resultsView) resultsView.style.display = 'block';
-        
-        const viewsToHide = ['quiz-config-view', 'quiz-taking-view', 'question-bank-view', 'home-view']; 
-         viewsToHide.forEach(viewId => {
-            const viewToHide = document.getElementById(viewId); 
-            if(viewToHide) viewToHide.style.display = 'none';
-         });
-        
-        const mainContentArea = document.getElementById('main-content-area');
-        if (mainContentArea && mainContentArea.contains(document.getElementById('quiz-results-view'))) {
-            // This logic isn't strictly necessary with current router setup
-        }
-
-
+        // Container visibility is now handled by the router.
+        // This function focuses on initializing the content of the quiz results view.
         renderQuizResults(resultsData);
         initQuizResultsEventListeners();
     }

@@ -15,6 +15,7 @@
 	<link rel="stylesheet" type="text/css" href="css/datepickk.css"/>
 	<link rel="stylesheet" type="text/css" href="css/flat-timetable.css"/ >
 	<link rel="stylesheet" type="text/css" href="css/modified-bootstrap.css"/>
+	<link rel="stylesheet" type="text/css" href="css/main-theme.css"/>
 
 	<!-- JS -->
 	<script src="js/jquery-3.2.1.min.js"></script>
@@ -39,6 +40,7 @@
 		<div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="nav navbar-nav"> <!-- Added Home link to the left -->
                 <li><a href="#/home">Início</a></li>
+                <li><a href="#/tasks">Tarefas</a></li>
                 <li><a href="#/questions">Banco de Perguntas</a></li>
                 <li><a href="#/quiz-config">Fazer um Quiz</a></li>
             </ul>
@@ -47,19 +49,19 @@
 enhancement/adhd-productivity-tools
 				<li>
                     <select id="categoryFilterDropdown" class="form-control" style="margin-top: 8px; margin-right: 5px; width: auto; display: inline-block;">
-                        <option value="all" selected>All Categories</option>
-                        <option value="Chemistry">Chemistry</option>
-                        <option value="Physics">Physics</option>
-                        <option value="Mathematics">Mathematics</option>
-                        <option value="Biology">Biology</option>
-                        <option value="Natural Sciences">Natural Sciences</option>
-                        <option value="Robotics">Robotics</option>
-                        <option value="Programming">Programming</option>
-                        <option value="Other">Other</option>
+                        <option value="all" selected>Todas as Categorias</option>
+                        <option value="Chemistry">Química</option>
+                        <option value="Physics">Física</option>
+                        <option value="Mathematics">Matemática</option>
+                        <option value="Biology">Biologia</option>
+                        <option value="Natural Sciences">Ciências Naturais</option>
+                        <option value="Robotics">Robótica</option>
+                        <option value="Programming">Programação</option>
+                        <option value="Other">Outro</option>
                     </select>
                 </li>
-				<li><a href="#/settings">Settings</a></li> 
-				<li><a href="#" target="_blank">Jon Doe <img class="img-circle" src="http://sozialreferat.com/wp-content/uploads/2016/09/Profile-Picture-43-150x150.jpg" alt="Profile Photo" style="width=: 20px; height: 20px"></a></li>               
+				<li><a href="#/settings">Configurações</a></li> 
+				<li><a href="#/home">Usuário <img class="img-circle" src="http://sozialreferat.com/wp-content/uploads/2016/09/Profile-Picture-43-150x150.jpg" alt="Profile Photo" style="width=: 20px; height: 20px"></a></li>               
 
 			</ul>
 		</div>
@@ -68,20 +70,6 @@ enhancement/adhd-productivity-tools
 
 <div id="main-content-area">
   <!-- Content for different views will be loaded here by the router -->
-
-  <div class="container" id="todo-list-container" style="margin-top: 20px;">
-    <h2>My Tasks</h2>
-    <div class="input-group" style="margin-bottom: 10px;">
-      <input type="text" id="taskInput" class="form-control" placeholder="Add a new task">
-      <span class="input-group-btn">
-        <button id="addTaskButton" class="btn btn-primary">Add Task</button>
-      </span>
-    </div>
-    <ul id="taskList" class="list-group">
-      <!-- Tasks will be rendered here by todo.js -->
-    </ul>
-
-  </div>
 </div>
 
 <!-- The static <section> has been removed. Its content is now in router.js -->
@@ -135,7 +123,7 @@ enhancement/adhd-productivity-tools
                 <textarea class="form-control" id="eventDescriptionInput" rows="3" placeholder="Descrição do Evento"></textarea>
               </div>
               <div class="form-group">
-                <label for="eventCategoryInput">Category</label>
+                <label for="eventCategoryInput">Categoria</label>
                 <select class="form-control" id="eventCategoryInput">
                   <option selected>Chemistry</option>
                   <option>Physics</option>
@@ -149,7 +137,7 @@ enhancement/adhd-productivity-tools
               </div>
               <!-- Reminders Section -->
               <div class="form-group">
-                <h5 style="margin-top: 15px; margin-bottom: 5px;">Reminders</h5>
+                <h5 style="margin-top: 15px; margin-bottom: 5px;">Lembretes</h5>
                 <div id="configuredRemindersList" class="list-group mb-2" style="margin-bottom: 10px;">
                   <!-- Configured reminders will be displayed here by calendar.js -->
                 </div>
@@ -166,13 +154,13 @@ enhancement/adhd-productivity-tools
                   <div class="col-xs-5">
                     <label for="reminderUnitInput" class="sr-only">Reminder Unit</label>
                     <select id="reminderUnitInput" class="form-control">
-                      <option value="minutes" selected>Minutes Before</option>
-                      <option value="hours">Hours Before</option>
+                      <option value="minutes" selected>Minutos Antes</option>
+                      <option value="hours">Horas Antes</option>
                     </select>
                   </div>
                   <div class="col-xs-2">
                     <button type="button" id="addReminderButton" class="btn btn-info btn-sm" title="Add Reminder" style="padding: 7px 10px;">
-                        <span class="glyphicon glyphicon-plus"></span> Add
+                        <span class="glyphicon glyphicon-plus"></span> Adicionar
                     </button>
                   </div>
                 </div>
