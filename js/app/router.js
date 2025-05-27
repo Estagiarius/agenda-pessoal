@@ -143,7 +143,10 @@ document.addEventListener('DOMContentLoaded', function() {
     loadView(window.location.hash); 
 
     // Auto-collapse navbar on link click (for mobile view)
-    const navLinks = document.querySelectorAll('#navbarCollapse .nav a');
+    // Selects direct nav links and links within dropdown menus, but not dropdown toggles themselves.
+    const navLinks = document.querySelectorAll(
+        '#navbarCollapse .nav > li:not(.dropdown) > a, #navbarCollapse .dropdown-menu a'
+    );
     const navbarCollapseDiv = document.getElementById('navbarCollapse');
     const navbarToggleButton = document.querySelector('.navbar-toggle[data-target="#navbarCollapse"]');
 

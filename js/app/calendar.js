@@ -149,76 +149,179 @@ function initCalendar() {
 function displayUpcomingEvents() {
     const overviewContainer = document.getElementById('todays-overview');
     if (!overviewContainer) {
-        console.error('Error: Todays overview container not found.');
+        console.error('Error: Todays overview container (#todays-overview) not found.'); // Updated error message
         return;
     }
 
     if (!window.eventService || typeof window.eventService.getEvents !== 'function') {
-        overviewContainer.innerHTML = '<h2>Resumo de Hoje</h2><p>Serviço de eventos não disponível.</p>';
+        overviewContainer.innerHTML = '<h2>Próximos Eventos</h2><p>Serviço de eventos não disponível.</p>'; // Title updated
         console.error('eventService not available for displaying upcoming events.');
         return;
     }
 
     const allEvents = window.eventService.getEvents();
-    console.log('Resumo de Hoje - All Events:', JSON.stringify(allEvents, null, 2)); // Added log
+    console.log('Próximos Eventos - All Events:', JSON.stringify(allEvents, null, 2)); // Log title updated
 
     if (!allEvents) { 
-        overviewContainer.innerHTML = '<h2>Resumo de Hoje</h2><p>Não foi possível carregar eventos.</p>';
+        overviewContainer.innerHTML = '<h2>Próximos Eventos</h2><p>Não foi possível carregar eventos.</p>'; // Title updated
         return;
     }
     
-    const today = moment().startOf('day');
-    console.log('Resumo de Hoje - Today (moment object):', today.format('YYYY-MM-DD')); // Added log
+    const startDate = moment().startOf('day');
+    const endDate = moment().add(7, 'days').endOf('day'); // Includes today + 7 full days after
+    
+    console.log('Próximos Eventos - Start Date:', startDate.format('YYYY-MM-DD HH:mm')); // New log
+    console.log('Próximos Eventos - End Date:', endDate.format('YYYY-MM-DD HH:mm'));   // New log
 
-    const todaysEvents = allEvents.filter((event, index) => { // Added index for limited logging
+    const upcomingEvents = allEvents.filter((event, index) => {
         const eventDate = moment(event.date, 'YYYY-MM-DD'); 
         // Log for the first 5 events or a specific test event
         if (index < 5) { // Limit logging to avoid flooding the console
-            console.log(`Resumo de Hoje - Checking Event: Date='${event.date}', Parsed='${eventDate.format('YYYY-MM-DD')}', IsToday=${eventDate.isSame(today, 'day')}, Title='${event.title}'`);
+            console.log(`Próximos Eventos - Checking Event: Date='${event.date}', Parsed='${eventDate.format('YYYY-MM-DD')}', IsInPeriod=${eventDate.isBetween(startDate, endDate, null, '[]')}, Title='${event.title}'`); // Log title and logic updated
         }
-        return eventDate.isSame(today, 'day');
-    }).sort((a, b) => { 
+        return eventDate.isBetween(startDate, endDate, null, '[]'); // '[]' includes start and end dates
+    });
+
+    const sortedEvents = upcomingEvents.sort((a, b) => { // New sorting logic
+        const dateA = moment(a.date, 'YYYY-MM-DD');
+        const dateB = moment(b.date, 'YYYY-MM-DD');
+        if (dateA.isBefore(dateB)) return -1;
+        if (dateA.isAfter(dateB)) return 1;
+        // Dates are same, sort by time
         if (a.startTime && b.startTime) {
             return a.startTime.localeCompare(b.startTime);
         } else if (a.startTime) {
-            return -1; // Events with start time come before those without
+            return -1; 
         } else if (b.startTime) {
-            return 1;  // Events without start time come after those with
+            return 1;  
         }
-        return 0; 
+        return 0;
     });
-
     
-    console.log('Resumo de Hoje - Filtered Todays Events:', JSON.stringify(todaysEvents, null, 2)); // Added log
+    console.log('Próximos Eventos - Filtered Upcoming Events:', JSON.stringify(sortedEvents, null, 2)); // Log title and variable updated
 
-    let contentHtml = '<h2>Resumo de Hoje</h2>';
-    if (todaysEvents.length === 0) {
-        contentHtml += '<p>Nenhum evento para hoje.</p>';
+    let contentHtml = '<h2>Próximos Eventos</h2>'; // Title updated
+    if (sortedEvents.length === 0) {
+        contentHtml += '<p>Nenhum evento programado para hoje ou para os próximos 7 dias.</p>'; // Message updated
     } else {
         contentHtml += '<ul class="list-group">';
-        todaysEvents.forEach(event => {
+        sortedEvents.forEach(event => { // Variable updated
             const escapeHTML = str => str ? str.replace(/[&<>"']/g, match => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[match]) : '';
 
             const title = escapeHTML(event.title);
             const startTime = escapeHTML(event.startTime);
             const endTime = escapeHTML(event.endTime);
             const description = escapeHTML(event.description);
+            
+            const eventMomentDate = moment(event.date, 'YYYY-MM-DD'); // For date display
+            let displayDateInfo = '';
+            if (!eventMomentDate.isSame(moment().startOf('day'), 'day')) { // If not today
+                displayDateInfo = `(${eventMomentDate.format('ddd, DD/MM')}) `; // e.g., (Sex, 23/07)
+            }
 
             contentHtml += `
                 <li class="list-group-item">
-                    <h5 class="list-group-item-heading">${title}</h5>
+                    <h5 class="list-group-item-heading">${displayDateInfo}${title}</h5>
                     <p class="list-group-item-text mb-0">
                         ${startTime ? `Horário: ${startTime}` : 'Dia todo'}
                         ${endTime ? ` - ${endTime}` : ''}
                     </p>
-                    ${description ? `<p class="list-group-item-text text-muted" style="font-size: 0.9em; margin-top: 5px;">${description}</p>` : ''}
-                </li>`;
+                    ${description ? `<p class="list-group-item-text text-muted" style="font-size: 0.9em; margin-top: 5px;"><small>${description}</small></p>` : ''} 
+                </li>`; // Applied small tag to description as per original snippet's implied style
         });
         contentHtml += '</ul>';
     }
     
-    console.log('Resumo de Hoje - Generated HTML:', contentHtml); // Added log
+    console.log('Próximos Eventos - Generated HTML:', contentHtml); // Log title updated
     overviewContainer.innerHTML = contentHtml;
+
+    // Attach Event Listener for clickable event items
+    const eventListUl = overviewContainer.querySelector('ul.list-group'); 
+    if (eventListUl) {
+        eventListUl.addEventListener('click', function(e) {
+            console.log('Clicked on .upcoming-event-item. Event target:', e.target); // Added log
+            const listItem = e.target.closest('.upcoming-event-item');
+            console.log('Found listItem:', listItem); // Added log
+            if (listItem) {
+                const eventId = listItem.dataset.eventId;
+                console.log('Retrieved eventId from listItem.dataset:', eventId); // Added log
+                if (eventId) {
+                    showEventDetails(eventId); 
+                } else {
+                    console.error('Event ID not found on clicked list item.'); // Added log
+                }
+            } else {
+                console.error('Could not find parent .upcoming-event-item from click target.'); // Added log
+            }
+        });
+    } else if (sortedEvents.length > 0) { // Only log error if events were expected
+        console.error('Could not find ul.list-group to attach click listener after rendering upcoming events.');
+    }
+}
+
+// Function to show event details in the #viewEventModal
+function showEventDetails(eventId) {
+    console.log('showEventDetails function CALLED with eventId:', eventId); // Added log
+    if (!window.eventService || typeof window.eventService.getEvents !== 'function') {
+        console.error('eventService not available for showEventDetails.');
+        return;
+    }
+    const allEvents = window.eventService.getEvents();
+    const eventIdNum = parseInt(eventId, 10); 
+    
+    console.log('showEventDetails - Searching for event ID:', eventIdNum, '(original string:', eventId, ')'); 
+
+    const event = allEvents.find(e => e.id === eventIdNum);
+
+    if (event) {
+        console.log('showEventDetails - Event found:', JSON.stringify(event, null, 2)); 
+
+        // Populate the modal elements
+        console.log('Event found, attempting to show #viewEventModal with title:', event.title); // Added log
+        $('#viewEventTitle').text(event.title || 'Sem título');
+        $('#viewEventDate').text(moment(event.date, 'YYYY-MM-DD').format('DD/MM/YYYY'));
+        $('#viewEventTime').text(event.startTime ? `${event.startTime}${event.endTime ? ` - ${event.endTime}` : ''}` : 'Dia todo');
+        
+        const descriptionContainer = document.getElementById('viewEventDescriptionContainer');
+        const descriptionEl = document.getElementById('viewEventDescription');
+        if (event.description) {
+            descriptionEl.textContent = event.description;
+            descriptionContainer.style.display = 'block';
+        } else {
+            descriptionEl.textContent = ''; // Clear it
+            descriptionContainer.style.display = 'none'; // Hide if no description
+        }
+        
+        $('#viewEventCategory').text(event.category || 'Não especificada');
+
+        const remindersListEl = document.getElementById('viewEventRemindersList');
+        const remindersContainer = document.getElementById('viewEventRemindersContainer');
+        if (remindersListEl && remindersContainer) {
+            remindersListEl.innerHTML = ''; // Clear previous reminders
+            if (event.reminders && event.reminders.length > 0) {
+                event.reminders.forEach(reminder => {
+                    const li = document.createElement('li');
+                    li.textContent = `${reminder.value} ${reminder.unit === 'minutes' ? 'Minutos Antes' : 'Horas Antes'}`;
+                    remindersListEl.appendChild(li);
+                });
+                remindersContainer.style.display = 'block';
+            } else {
+                remindersListEl.innerHTML = '<li>Nenhum lembrete configurado.</li>'; // Display if no reminders
+                // Or hide the section: remindersContainer.style.display = 'none';
+            }
+        }
+        
+        // Show the modal using jQuery
+        if (typeof $ === 'function' && $('#viewEventModal').modal) {
+            $('#viewEventModal').modal('show');
+        } else {
+            console.error('jQuery or Bootstrap modal function not available to show #viewEventModal.');
+        }
+
+    } else {
+        console.error('Event object not found in showEventDetails for eventId:', eventIdNum); // Updated log
+    }
+    console.log('showEventDetails function ENDED for eventId:', eventId); // Added log
 }
 
 
