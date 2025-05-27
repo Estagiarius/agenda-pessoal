@@ -171,11 +171,11 @@ body {
 
 /* Custom spacing for Today's Overview event items */
 #todays-overview .list-group-item h5.list-group-item-heading {
-    margin-bottom: 5px; /* Default is often 10px or 0.5rem, reduce this */
+    margin-bottom: 12px; /* Increase space below the title heading */
 }
 
 #todays-overview .list-group-item p.list-group-item-text:last-child {
-    margin-bottom: 0; /* Remove bottom margin from the last paragraph */
+    margin-bottom: 0; /* Keep no margin at the very end of the item */
 }
 
 /* Optional: If overall padding of items needs adjustment, uncomment and modify as needed.
@@ -185,3 +185,24 @@ body {
     padding-bottom: 8px;
 }
 */
+
+/* Navbar Mobile Dropdown Legibility Fix */
+@media (max-width: 767px) {
+    .navbar-default .navbar-nav .open .dropdown-menu > li > a {
+        color: #495057; /* Mid-gray, same as desktop nav links from main-theme */
+    }
+
+    .navbar-default .navbar-nav .open .dropdown-menu > li > a:hover,
+    .navbar-default .navbar-nav .open .dropdown-menu > li > a:focus {
+        color: #007bff; /* Light blue, same as desktop hover from main-theme */
+        /* Bootstrap's default mobile dropdown hover background is transparent or very light,
+           so a colored text works well. If background changes, this might need adjustment. */
+    }
+
+    .navbar-default .navbar-nav .open .dropdown-menu > .active > a,
+    .navbar-default .navbar-nav .open .dropdown-menu > .active > a:hover,
+    .navbar-default .navbar-nav .open .dropdown-menu > .active > a:focus {
+        color: #007bff; /* Light blue for active link text */
+        background-color: #e9ecef; /* Light gray background for active link, consistent with desktop */
+    }
+}

@@ -53,18 +53,21 @@
             </ul>
 			<ul class="nav navbar-nav navbar-right">
 				<li class="navbar-text" id="current-date-display"></li>
-				<li>
-                    <select id="categoryFilterDropdown" class="form-control" style="margin-top: 8px; margin-right: 5px; width: auto; display: inline-block;">
-                        <option value="all" selected>Todas as Categorias</option>
-                        <option value="Chemistry">Química</option>
-                        <option value="Physics">Física</option>
-                        <option value="Mathematics">Matemática</option>
-                        <option value="Biology">Biologia</option>
-                        <option value="Natural Sciences">Ciências Naturais</option>
-                        <option value="Robotics">Robótica</option>
-                        <option value="Programming">Programação</option>
-                        <option value="Other">Outro</option>
-                    </select>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                        <span id="selectedCategoryLabel">Todas as Categorias</span> <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu" id="categoryFilterDropdownMenu">
+                        <li><a href="#" data-value="all">Todas as Categorias</a></li>
+                        <li><a href="#" data-value="Chemistry">Química</a></li>
+                        <li><a href="#" data-value="Physics">Física</a></li>
+                        <li><a href="#" data-value="Mathematics">Matemática</a></li>
+                        <li><a href="#" data-value="Biology">Biologia</a></li>
+                        <li><a href="#" data-value="Natural Sciences">Ciências Naturais</a></li>
+                        <li><a href="#" data-value="Robotics">Robótica</a></li>
+                        <li><a href="#" data-value="Programming">Programação</a></li>
+                        <li><a href="#" data-value="Other">Outro</a></li>
+                    </ul>
                 </li>
 				<li><a href="#/settings">Configurações</a></li> 
 				<li><a href="#/home">Usuário <img class="img-circle" src="https://sozialreferat.com/wp-content/uploads/2016/09/Profile-Picture-43-150x150.jpg" alt="Profile Photo" style="width=: 20px; height: 20px"></a></li>               

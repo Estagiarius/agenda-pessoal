@@ -359,7 +359,6 @@ function updateReminderValueOptions() {
 
 // Setup event listeners once DOM is fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-    const categoryFilterDropdown = document.getElementById('categoryFilterDropdown');
     // const calendarDiv = document.querySelector('#calendar'); // Removed from here, initCalendar will find it
 
     const saveEventButton = document.getElementById('saveEventButton');
@@ -367,16 +366,39 @@ document.addEventListener('DOMContentLoaded', function() {
     const reminderUnitInput = document.getElementById('reminderUnitInput');
     const configuredRemindersList = document.getElementById('configuredRemindersList'); // For event delegation
 
-    if (categoryFilterDropdown) { // Check only for the dropdown existing in index.html
-        categoryFilterDropdown.addEventListener('change', function() {
-            currentFilterCategory = this.value;
-            // initCalendar is responsible for finding the #calendar div
-            // and handling its 'datepickk-initialized' state.
-            initCalendar(); 
+    // New Category Filter Dropdown Logic
+    const categoryFilterDropdownMenu = document.getElementById('categoryFilterDropdownMenu');
+    const selectedCategoryLabel = document.getElementById('selectedCategoryLabel');
+
+    if (categoryFilterDropdownMenu && selectedCategoryLabel) {
+        // Set initial label based on currentFilterCategory
+        const initialCategoryLink = Array.from(categoryFilterDropdownMenu.querySelectorAll('a')).find(a => a.dataset.value === currentFilterCategory);
+        if (initialCategoryLink) {
+          selectedCategoryLabel.textContent = initialCategoryLink.textContent;
+        }
+
+        categoryFilterDropdownMenu.addEventListener('click', function(event) {
+            if (event.target.tagName === 'A' && event.target.dataset.value) {
+                event.preventDefault();
+                const selectedValue = event.target.dataset.value;
+                const selectedText = event.target.textContent;
+
+                console.log('Category filter selected: ' + selectedText + ' (value: ' + selectedValue + ')');
+
+                currentFilterCategory = selectedValue;
+                selectedCategoryLabel.textContent = selectedText;
+                
+                // Ensure initCalendar is called to refresh content
+                if (typeof initCalendar === 'function') {
+                    initCalendar();
+                } else {
+                    console.error('initCalendar function not found after category selection.');
+                }
+            }
         });
     } else {
-        console.error('#categoryFilterDropdown not found.');
-        // The error about #calendar div is removed as it's not needed at this stage of listener setup.
+        if (!categoryFilterDropdownMenu) console.error('#categoryFilterDropdownMenu not found for new category filter.');
+        if (!selectedCategoryLabel) console.error('#selectedCategoryLabel not found for new category filter.');
     }
 
     // Listener for Save Event Button
