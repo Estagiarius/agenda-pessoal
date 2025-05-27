@@ -209,3 +209,20 @@ body {
         background-color: #e9ecef !important;
     }
 }
+
+/* Styling for 'Agenda Completa' page */
+.event-list-container .event-item {
+    margin-bottom: 15px; /* Add some space between event panels */
+}
+
+.event-list-container .event-item .panel-heading .panel-title {
+    font-size: 1.25em; /* Slightly larger title for event items */
+}
+
+.event-list-container .event-item .panel-body p {
+    margin-bottom: 8px; /* Adjust spacing between paragraphs within event body */
+}
+
+.event-list-container .event-item .panel-body p strong {
+    color: #333; /* Ensure strong tags are sufficiently dark */
+}

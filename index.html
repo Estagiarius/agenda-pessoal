@@ -41,6 +41,7 @@
             <ul class="nav navbar-nav"> <!-- Added Home link to the left -->
                 <li><a href="#/home">Início</a></li>
                 <li><a href="#/tasks">Tarefas</a></li>
+                <li><a href="#/all-events">Agenda Completa</a></li> <!-- New Link -->
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
                         Recursos Didáticos <span class="caret"></span>
@@ -179,6 +180,33 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
             <button type="button" class="btn btn-primary" id="saveEventButton">Salvar Evento</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Event Details Modal -->
+    <div class="modal fade" id="viewEventModal" tabindex="-1" role="dialog" aria-labelledby="viewEventModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="viewEventModalTitle">Detalhes do Evento</h4>
+          </div>
+          <div class="modal-body" id="viewEventModalBody">
+            <p><strong>Data:</strong> <span id="viewEventModalDate">N/A</span></p>
+            <p><strong>Horário:</strong> <span id="viewEventModalTime">N/A</span></p>
+            <p><strong>Categoria:</strong> <span id="viewEventModalCategory">N/A</span></p>
+            <p><strong>Descrição:</strong></p>
+            <p id="viewEventModalDescription" style="white-space: pre-wrap; word-wrap: break-word;">N/A</p>
+            
+            <div class="event-modal-reminders-section" style="margin-top: 15px;">
+                <strong>Lembretes:</strong>
+                <p id="viewEventModalReminders" style="white-space: pre-wrap; word-wrap: break-word;">Nenhum lembrete configurado.</p>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
           </div>
         </div>
       </div>

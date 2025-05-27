@@ -200,6 +200,21 @@ function showEventDetails(eventId) {
 
     if (modalCategory) modalCategory.textContent = `Category: ${event.category || 'General'}`;
 
+    // Populate reminders
+    const modalReminders = document.getElementById('viewEventModalReminders');
+    if (modalReminders) {
+        if (event.reminders && event.reminders.length > 0) {
+            const reminderTexts = event.reminders.map(reminder => {
+                return `${reminder.value} ${reminder.unit === 'minutes' ? 'Minutos Antes' : 'Horas Antes'}`;
+            });
+            modalReminders.textContent = reminderTexts.join(', ');
+        } else {
+            modalReminders.textContent = 'Nenhum lembrete configurado.';
+        }
+    } else {
+        console.warn('#viewEventModalReminders element not found in the modal.');
+    }
+
     // Show the modal using jQuery
     if (typeof $ === 'function' && $('#viewEventModal').modal) {
         $('#viewEventModal').modal('show');
@@ -540,3 +555,107 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('initCalendar function not found on DOMContentLoaded.');
     }
 });
+
+// Helper function to escape HTML content
+function escapeHTML(str) {
+    if (typeof str !== 'string') {
+        if (str === null || typeof str === 'undefined') {
+            return '';
+        }
+        str = String(str); // Convert to string if possible (e.g. numbers)
+    }
+    return str.replace(/[&<>"']/g, match => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[match]);
+}
+
+// Function to render all events on the "Agenda Completa" page
+function renderAllEventsPage() {
+    const container = document.getElementById('all-events-container');
+    if (!container) {
+        console.error('Error: Container #all-events-container not found for Agenda Completa.');
+        return;
+    }
+
+    if (!window.eventService || typeof window.eventService.getEvents !== 'function') {
+        container.innerHTML = '<p>Serviço de eventos não disponível.</p>';
+        console.error('eventService not available for rendering all events.');
+        return;
+    }
+
+    const allEvents = window.eventService.getEvents();
+
+    if (!allEvents || allEvents.length === 0) {
+        container.innerHTML = '<p>Nenhum evento cadastrado no sistema.</p>';
+        return;
+    }
+
+    // Sort events: primarily by date (ascending), secondarily by start time (ascending)
+    allEvents.sort((a, b) => {
+        const dateA = moment(a.date, 'YYYY-MM-DD');
+        const dateB = moment(b.date, 'YYYY-MM-DD');
+        if (dateA.isBefore(dateB)) return -1;
+        if (dateA.isAfter(dateB)) return 1;
+        
+        // Dates are same, sort by time (earliest first)
+        if (a.startTime && b.startTime) {
+            return a.startTime.localeCompare(b.startTime);
+        } else if (a.startTime) { // a has time, b doesn't (all day)
+            return -1;
+        } else if (b.startTime) { // b has time, a doesn't (all day)
+            return 1;
+        }
+        return 0; // Both all day or no times
+    });
+
+    let contentHtml = '';
+    allEvents.forEach(event => {
+        const displayDate = moment(event.date, 'YYYY-MM-DD').format('DD/MM/YYYY');
+        let timeInfo = event.startTime ? `${escapeHTML(event.startTime)} - ${escapeHTML(event.endTime || 'sem hora de término')}` : 'Dia todo';
+        
+        // Ensure event.id is a string for the data-event-id attribute
+        const eventId = escapeHTML(String(event.id || `event-${Date.now()}-${Math.random()}`));
+
+
+        contentHtml += `
+            <div class="panel panel-default event-item" style="margin-bottom: 15px;">
+                <div class="panel-heading">
+                    <h3 class="panel-title">${escapeHTML(event.title)} - ${escapeHTML(displayDate)}</h3>
+                </div>
+                <div class="panel-body">
+                    <p><strong>Horário:</strong> ${timeInfo}</p> 
+                    <p><strong>Categoria:</strong> ${escapeHTML(event.category || 'Geral')}</p>
+                    <p><strong>Descrição:</strong> ${escapeHTML(event.description || 'Nenhuma descrição.')}</p>
+                </div>
+                <div class="panel-footer">
+                    <button class="btn btn-info btn-sm view-event-details-btn" data-event-id="${eventId}">Ver Detalhes Completos</button>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = contentHtml;
+
+    // Attach event listener to the container for handling clicks on "Ver Detalhes Completos" buttons
+    container.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('view-event-details-btn')) {
+            const eventId = e.target.dataset.eventId;
+            if (eventId && typeof showEventDetails === 'function') {
+                console.log(`All Events Page: Clicked 'Ver Detalhes Completos' for event ID: ${eventId}`);
+                showEventDetails(eventId);
+            } else {
+                console.error('Could not show event details. Event ID or showEventDetails function missing.', { eventId: eventId, hasShowEventDetails: typeof showEventDetails === 'function' });
+            }
+        }
+    });
+}
+
+// Initialization function for the "Agenda Completa" view, called by the router
+function initAllEventsView() {
+    console.log('Initializing All Events View...');
+    renderAllEventsPage();
+}

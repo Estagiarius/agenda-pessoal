@@ -130,6 +130,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error('ui.showQuizResultsView() não está disponível.');
                 }
             });
+        } else if (viewKey === '#/all-events') {
+            fetchView('views/all_events.html', () => {
+                if (typeof initAllEventsView === 'function') {
+                    initAllEventsView();
+                } else {
+                    console.error('initAllEventsView function not defined. Page may not load correctly.');
+                    // Optionally, display a message in all-events-container if function is missing
+                    const container = document.getElementById('all-events-container');
+                    if (container) {
+                        container.innerHTML = '<p>Erro ao inicializar a visualização da agenda completa.</p>';
+                    }
+                }
+            });
         } else {
             mainContentArea.innerHTML = '<h2>404 - Página Não Encontrada</h2><p>A página que você solicitou não pôde ser encontrada.</p>';
             mainContentArea.style.display = 'block';
