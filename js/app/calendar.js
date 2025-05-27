@@ -238,10 +238,8 @@ function displayUpcomingEvents() {
 
     const upcomingEvents = allEvents.filter((event, index) => {
         const eventDate = moment(event.date, 'YYYY-MM-DD');
-        // Log for the first few events or specific test events
-        if (index < 5) { // Limit logging
-            console.log(`Resumo de Hoje - Checking Event: Date='${event.date}', Parsed='${eventDate.format('YYYY-MM-DD')}', IsBetween=${eventDate.isBetween(today, sevenDaysFromNow, null, '[]')}, Title='${event.title}'`);
-        }
+        // Log for each event being checked against the date range
+        console.log(`Resumo de Hoje - Checking Event: Date='${event.date}', Parsed='${eventDate.format('YYYY-MM-DD')}', IsInDateRange=${eventDate.isBetween(today, sevenDaysFromNow, null, '[]')}, Title='${event.title}'`);
         return eventDate.isBetween(today, sevenDaysFromNow, null, '[]'); // '[]' includes start and end dates
     }).sort((a, b) => {
         // First, sort by date
@@ -266,7 +264,7 @@ function displayUpcomingEvents() {
 
     let contentHtml = '<h2>Resumo de Hoje</h2>';
     if (upcomingEvents.length === 0) {
-        contentHtml += '<p>Nenhum evento programado para os próximos 7 dias.</p>';
+        contentHtml += '<p>Nenhum evento programado para os próximos 7 dias.</p>'; // This line was already correct from the previous step.
     } else {
         contentHtml += '<ul class="list-group">';
         upcomingEvents.forEach(event => {
