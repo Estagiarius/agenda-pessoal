@@ -234,6 +234,88 @@ function displayUpcomingEvents() {
     
     console.log('Próximos Eventos - Generated HTML:', contentHtml); // Log title updated
     overviewContainer.innerHTML = contentHtml;
+
+    // Attach Event Listener for clickable event items
+    const eventListUl = overviewContainer.querySelector('.list-group');
+    if (eventListUl) {
+        // Remove previous listener if any to prevent multiple attachments
+        // This is a simple way; for more complex scenarios, consider AbortController or storing the handler.
+        const newEventListUl = eventListUl.cloneNode(true);
+        eventListUl.parentNode.replaceChild(newEventListUl, eventListUl);
+
+        newEventListUl.addEventListener('click', function(e) {
+            const listItem = e.target.closest('.upcoming-event-item');
+            if (listItem) {
+                const eventId = listItem.dataset.eventId;
+                if (eventId) {
+                    console.log('Clicked event item with ID:', eventId); // Log click
+                    showEventDetails(eventId); 
+                }
+            }
+        });
+    }
+}
+
+// Function to show event details in the #viewEventModal
+function showEventDetails(eventId) {
+    if (!window.eventService || typeof window.eventService.getEvents !== 'function') {
+        console.error('eventService not available for showEventDetails.');
+        return;
+    }
+    const allEvents = window.eventService.getEvents();
+    const eventIdNum = parseInt(eventId, 10); // Ensure eventId is a number for comparison
+    
+    console.log('showEventDetails - Searching for event ID:', eventIdNum, '(original string:', eventId, ')'); // Log search
+
+    const event = allEvents.find(e => e.id === eventIdNum);
+
+    if (event) {
+        console.log('showEventDetails - Event found:', JSON.stringify(event, null, 2)); // Log found event
+
+        // Populate the modal elements
+        $('#viewEventTitle').text(event.title || 'Sem título');
+        $('#viewEventDate').text(moment(event.date, 'YYYY-MM-DD').format('DD/MM/YYYY'));
+        $('#viewEventTime').text(event.startTime ? `${event.startTime}${event.endTime ? ` - ${event.endTime}` : ''}` : 'Dia todo');
+        
+        const descriptionContainer = document.getElementById('viewEventDescriptionContainer');
+        const descriptionEl = document.getElementById('viewEventDescription');
+        if (event.description) {
+            descriptionEl.textContent = event.description;
+            descriptionContainer.style.display = 'block';
+        } else {
+            descriptionEl.textContent = ''; // Clear it
+            descriptionContainer.style.display = 'none'; // Hide if no description
+        }
+        
+        $('#viewEventCategory').text(event.category || 'Não especificada');
+
+        const remindersListEl = document.getElementById('viewEventRemindersList');
+        const remindersContainer = document.getElementById('viewEventRemindersContainer');
+        if (remindersListEl && remindersContainer) {
+            remindersListEl.innerHTML = ''; // Clear previous reminders
+            if (event.reminders && event.reminders.length > 0) {
+                event.reminders.forEach(reminder => {
+                    const li = document.createElement('li');
+                    li.textContent = `${reminder.value} ${reminder.unit === 'minutes' ? 'Minutos Antes' : 'Horas Antes'}`;
+                    remindersListEl.appendChild(li);
+                });
+                remindersContainer.style.display = 'block';
+            } else {
+                remindersListEl.innerHTML = '<li>Nenhum lembrete configurado.</li>'; // Display if no reminders
+                // Or hide the section: remindersContainer.style.display = 'none';
+            }
+        }
+        
+        // Show the modal using jQuery
+        if (typeof $ === 'function' && $('#viewEventModal').modal) {
+            $('#viewEventModal').modal('show');
+        } else {
+            console.error('jQuery or Bootstrap modal function not available to show #viewEventModal.');
+        }
+
+    } else {
+        console.error('showEventDetails - Event with ID ' + eventIdNum + ' not found.');
+    }
 }
 
 
