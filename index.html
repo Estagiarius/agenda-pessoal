@@ -53,7 +53,6 @@
             </ul>
 			<ul class="nav navbar-nav navbar-right">
 				<li class="navbar-text" id="current-date-display"></li>
-enhancement/adhd-productivity-tools
 				<li>
                     <select id="categoryFilterDropdown" class="form-control" style="margin-top: 8px; margin-right: 5px; width: auto; display: inline-block;">
                         <option value="all" selected>Todas as Categorias</option>
@@ -180,36 +179,6 @@ enhancement/adhd-productivity-tools
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- View Event Detail Modal -->
-    <div class="modal fade" id="viewEventModal" tabindex="-1" role="dialog" aria-labelledby="viewEventModalLabel">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="viewEventModalLabel">Detalhes do Evento</h4>
-                </div>
-                <div class="modal-body">
-                    <h5 id="viewEventTitle" style="font-weight: bold; font-size: 1.5em;"></h5>
-                    <p><strong>Data:</strong> <span id="viewEventDate"></span></p>
-                    <p><strong>Horário:</strong> <span id="viewEventTime"></span></p>
-                    <p><strong>Categoria:</strong> <span id="viewEventCategory"></span></p>
-                    <div id="viewEventDescriptionContainer">
-                        <p><strong>Descrição:</strong></p>
-                        <p id="viewEventDescription" style="white-space: pre-wrap; background-color: #f9f9f9; border: 1px solid #eee; padding: 10px; border-radius: 4px;"></p>
-                    </div>
-                    <div id="viewEventRemindersContainer" class="mt-3">
-                        <p><strong>Lembretes:</strong></p>
-                        <ul id="viewEventRemindersList" class="list-unstyled" style="padding-left: 0;"></ul>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
-                    <!-- Optional: <button type="button" class="btn btn-primary" id="editEventFromViewBtn">Editar</button> -->
-                </div>
-            </div>
-        </div>
     </div>
     </body>
     </html>
