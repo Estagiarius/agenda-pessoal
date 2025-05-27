@@ -130,8 +130,8 @@
     function checkReminders() {
         console.log('notificationService: Executando checkReminders...', new Date().toLocaleTimeString());
         if (!window.eventService || typeof window.eventService.getEvents !== 'function') {
-            console.error('eventService not available for checking reminders.');
-            return;
+            console.warn('eventService not available or not fully initialized for checking reminders.'); // Changed to warn and updated message
+            return; // Wait for next interval
         }
         if (!window.moment) {
             console.error('moment.js is not available for date calculations.');

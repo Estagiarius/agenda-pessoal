@@ -1,3 +1,27 @@
-<div id="quiz-config-view" class="container">
+<div class="container mt-4" id="quiz-config-actual-content">
     <h2>Configurar Quiz</h2>
+    <form id="quiz-config-form">
+        <div class="form-group">
+            <label for="quiz-num-questions">Número de Perguntas:</label>
+            <input type="number" id="quiz-num-questions" class="form-control" value="5" min="1" required>
+        </div>
+        <div class="form-group">
+            <label for="quiz-subject">Assunto (opcional):</label>
+            <select id="quiz-subject" class="form-control">
+                <option value="">Todos os Assuntos</option>
+                <!-- Subjects will be populated by ui.js -->
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="quiz-difficulty">Dificuldade (opcional):</label>
+            <select id="quiz-difficulty" class="form-control">
+                <option value="">Todas as Dificuldades</option>
+                <option value="Fácil">Fácil</option>
+                <option value="Médio">Médio</option>
+                <option value="Difícil">Difícil</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Iniciar Quiz</button>
+    </form>
+    <div id="quiz-config-feedback" class="mt-3"></div>
 </div>

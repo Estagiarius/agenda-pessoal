@@ -141,7 +141,86 @@ function initCalendar() {
     // Add Event Listener for the "Save Event" button - moved to DOMContentLoaded
     // Store the instance if we needed to call methods on it later, e.g., a hypothetical destroy.
     // window.currentCalendarInstance = calendar; 
+
+    displayUpcomingEvents(); // Call to display today's events in the overview
 }
+
+// Function to display upcoming events for today in the "Resumo de Hoje" section
+function displayUpcomingEvents() {
+    const overviewContainer = document.getElementById('todays-overview');
+    if (!overviewContainer) {
+        console.error('Error: Todays overview container not found.');
+        return;
+    }
+
+    if (!window.eventService || typeof window.eventService.getEvents !== 'function') {
+        overviewContainer.innerHTML = '<h2>Resumo de Hoje</h2><p>Serviço de eventos não disponível.</p>';
+        console.error('eventService not available for displaying upcoming events.');
+        return;
+    }
+
+    const allEvents = window.eventService.getEvents();
+    console.log('Resumo de Hoje - All Events:', JSON.stringify(allEvents, null, 2)); // Added log
+
+    if (!allEvents) { 
+        overviewContainer.innerHTML = '<h2>Resumo de Hoje</h2><p>Não foi possível carregar eventos.</p>';
+        return;
+    }
+    
+    const today = moment().startOf('day');
+    console.log('Resumo de Hoje - Today (moment object):', today.format('YYYY-MM-DD')); // Added log
+
+    const todaysEvents = allEvents.filter((event, index) => { // Added index for limited logging
+        const eventDate = moment(event.date, 'YYYY-MM-DD'); 
+        // Log for the first 5 events or a specific test event
+        if (index < 5) { // Limit logging to avoid flooding the console
+            console.log(`Resumo de Hoje - Checking Event: Date='${event.date}', Parsed='${eventDate.format('YYYY-MM-DD')}', IsToday=${eventDate.isSame(today, 'day')}, Title='${event.title}'`);
+        }
+        return eventDate.isSame(today, 'day');
+    }).sort((a, b) => { 
+        if (a.startTime && b.startTime) {
+            return a.startTime.localeCompare(b.startTime);
+        } else if (a.startTime) {
+            return -1; // Events with start time come before those without
+        } else if (b.startTime) {
+            return 1;  // Events without start time come after those with
+        }
+        return 0; 
+    });
+
+    
+    console.log('Resumo de Hoje - Filtered Todays Events:', JSON.stringify(todaysEvents, null, 2)); // Added log
+
+    let contentHtml = '<h2>Resumo de Hoje</h2>';
+    if (todaysEvents.length === 0) {
+        contentHtml += '<p>Nenhum evento para hoje.</p>';
+    } else {
+        contentHtml += '<ul class="list-group">';
+        todaysEvents.forEach(event => {
+            const escapeHTML = str => str ? str.replace(/[&<>"']/g, match => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[match]) : '';
+
+            const title = escapeHTML(event.title);
+            const startTime = escapeHTML(event.startTime);
+            const endTime = escapeHTML(event.endTime);
+            const description = escapeHTML(event.description);
+
+            contentHtml += `
+                <li class="list-group-item">
+                    <h5 class="list-group-item-heading">${title}</h5>
+                    <p class="list-group-item-text mb-0">
+                        ${startTime ? `Horário: ${startTime}` : 'Dia todo'}
+                        ${endTime ? ` - ${endTime}` : ''}
+                    </p>
+                    ${description ? `<p class="list-group-item-text text-muted" style="font-size: 0.9em; margin-top: 5px;">${description}</p>` : ''}
+                </li>`;
+        });
+        contentHtml += '</ul>';
+    }
+    
+    console.log('Resumo de Hoje - Generated HTML:', contentHtml); // Added log
+    overviewContainer.innerHTML = contentHtml;
+}
+
 
 // Function to render configured reminders in the modal
 function renderConfiguredReminders() {
@@ -197,24 +276,23 @@ function updateReminderValueOptions() {
 // Setup event listeners once DOM is fully loaded
 document.addEventListener('DOMContentLoaded', function() {
     const categoryFilterDropdown = document.getElementById('categoryFilterDropdown');
-    const calendarDiv = document.querySelector('#calendar'); // For re-initialization
-    
+    // const calendarDiv = document.querySelector('#calendar'); // Removed from here, initCalendar will find it
+
     const saveEventButton = document.getElementById('saveEventButton');
     const addReminderButton = document.getElementById('addReminderButton');
     const reminderUnitInput = document.getElementById('reminderUnitInput');
     const configuredRemindersList = document.getElementById('configuredRemindersList'); // For event delegation
 
-    if (categoryFilterDropdown && calendarDiv) {
+    if (categoryFilterDropdown) { // Check only for the dropdown existing in index.html
         categoryFilterDropdown.addEventListener('change', function() {
             currentFilterCategory = this.value;
-            if (calendarDiv.classList.contains('datepickk-initialized')) {
-                calendarDiv.classList.remove('datepickk-initialized');
-            }
-            initCalendar();
+            // initCalendar is responsible for finding the #calendar div
+            // and handling its 'datepickk-initialized' state.
+            initCalendar(); 
         });
     } else {
-        if (!categoryFilterDropdown) console.error('#categoryFilterDropdown not found.');
-        if (!calendarDiv) console.error('#calendar div not found for filter listener setup.');
+        console.error('#categoryFilterDropdown not found.');
+        // The error about #calendar div is removed as it's not needed at this stage of listener setup.
     }
 
     // Listener for Save Event Button
@@ -241,9 +319,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (window.eventService && typeof window.eventService.addEvent === 'function') {
                 console.log('Salvando evento com lembretes:', JSON.stringify(eventObject.reminders));
                 window.eventService.addEvent(eventObject);
-                if (calendarDiv && calendarDiv.classList.contains('datepickk-initialized')) {
-                    calendarDiv.classList.remove('datepickk-initialized');
-                }
+                // initCalendar will handle finding #calendar and its initialized state.
+                // No need to manipulate calendarDiv's classes here directly.
                 initCalendar(); 
             } else {
                 console.error('eventService não disponível ou addEvent não é uma função.');

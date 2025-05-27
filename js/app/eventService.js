@@ -1,64 +1,12 @@
 (function(window) {
     'use strict';
 
-
-    // Load events and nextEventId from localStorage on initialization
-    let events = [];
-    let nextEventId = 1;
-
-    try {
-        const storedEvents = localStorage.getItem('calendarEvents');
-        if (storedEvents) {
-            events = JSON.parse(storedEvents);
-            if (!Array.isArray(events)) { // Basic validation
-                console.error('Invalid events data found in localStorage, defaulting to empty array.');
-                events = [];
-            } else {
-                // Ensure all loaded events have a category and reminders array, default if missing
-                events = events.map(event => ({
-                    ...event,
-                    category: event.category || 'General',
-                    reminders: Array.isArray(event.reminders) ? event.reminders : []
-                }));
-            }
-        }
-    } catch (error) {
-        console.error('Error parsing events from localStorage:', error);
-        events = []; // Default to empty array on error
-    }
-
-    try {
-        const storedNextEventId = localStorage.getItem('calendarNextEventId');
-        if (storedNextEventId) {
-            const parsedId = parseInt(storedNextEventId, 10);
-            if (!isNaN(parsedId) && parsedId > 0) {
-                nextEventId = parsedId;
-            } else {
-                console.error('Invalid nextEventId found in localStorage, defaulting to 1.');
-                nextEventId = 1;
-            }
-        }
-    } catch (error) {
-        console.error('Error parsing nextEventId from localStorage:', error);
-        nextEventId = 1; // Default to 1 on error
-    }
-
-    // Function to save events and nextEventId to localStorage
-    function saveToLocalStorage() {
-        try {
-            localStorage.setItem('calendarEvents', JSON.stringify(events));
-            localStorage.setItem('calendarNextEventId', nextEventId.toString());
-        } catch (error) {
-            console.error('Error saving to localStorage:', error);
-        }
-    }
-
     // Function to add a new event
     // eventObject is expected to have: title, date, startTime, endTime, description
 
     const EVENTS_STORAGE_KEY = 'teacherAgendaEvents';
-    let events = [];
-    let nextEventId = 1;
+    let events = []; // Single declaration of events
+    let nextEventId = 1; // Single declaration of nextEventId
 
     function loadEvents() {
         const storedEvents = localStorage.getItem(EVENTS_STORAGE_KEY);
@@ -122,10 +70,9 @@
         events.push(newEvent);
 
         console.log('eventService: Evento adicionado/atualizado:', JSON.stringify(newEvent));
-        saveToLocalStorage(); // Save after adding an event
         // console.log('Event added:', newEvent); // Original log, can be kept or removed
         // console.log('All events:', events); // Original log, can be kept or removed
-        saveEvents();
+        saveEvents(); // Only call saveEvents
         // console.log('Event added:', newEvent); // You can uncomment these for debugging
         // console.log('All events:', events);
         return newEvent;
@@ -154,7 +101,7 @@
 
         events[eventIndex] = updatedEventObject;
         console.log('eventService: Evento atualizado (para lembrete mostrado):', JSON.stringify(updatedEventObject));
-        saveToLocalStorage();
+        saveEvents(); // Use saveEvents here
         return true;
     }
     
