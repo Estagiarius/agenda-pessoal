@@ -1,18 +1,20 @@
 /* css/dark-theme.css */
 
-/* Full-screen dark background for html and body */
+/* Ensure full viewport dark background */
 .dark-theme html {
-    height: 100%; /* Ensure html element takes full height */
+    height: 100%; /* Prerequisite for body height: 100% if that route is taken */
     background-color: #121212; /* Dark theme base background */
+    /* Adding display: flex; flex-direction: column; can help if body needs to expand to fill it */
 }
 
 .dark-theme body {
-    min-height: 100%; /* Ensure body takes at least full viewport height */
+    min-height: 100vh; /* Force body to be at least as tall as the viewport */
+    /* Or use height: 100%; if html height:100% is reliably set and preferred */
     background-color: #121212; /* Dark theme base background */
     color: #e0e0e0; /* Default light text color */
     margin: 0; /* Remove default browser margin */
     padding: 0; /* Remove default browser padding */
-    /* font-family should be inherited or set in main-theme.css */
+    /* display: flex; flex-direction: column; flex-grow: 1; can be useful if html is flex container */
 }
 
 /* Navbar */
