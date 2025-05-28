@@ -1,10 +1,18 @@
 /* css/dark-theme.css */
 
-/* General body and text styles for dark theme */
-.dark-theme body,
-.dark-theme { /* Apply to body or a wrapper if body class is hard to set initially */
-    background-color: #121212; /* Very dark gray, almost black */
-    color: #e0e0e0; /* Light gray for text */
+/* Full-screen dark background for html and body */
+.dark-theme html {
+    height: 100%; /* Ensure html element takes full height */
+    background-color: #121212; /* Dark theme base background */
+}
+
+.dark-theme body {
+    min-height: 100%; /* Ensure body takes at least full viewport height */
+    background-color: #121212; /* Dark theme base background */
+    color: #e0e0e0; /* Default light text color */
+    margin: 0; /* Remove default browser margin */
+    padding: 0; /* Remove default browser padding */
+    /* font-family should be inherited or set in main-theme.css */
 }
 
 /* Navbar */
