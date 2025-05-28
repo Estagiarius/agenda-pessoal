@@ -4,16 +4,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function initSettingsViewLogic() {
         const enableSoundCheckbox = document.getElementById('enableSoundNotification');
-        
-        if (enableSoundCheckbox && window.settingsService) {
-            const currentSettings = window.settingsService.getNotificationSettings();
-            enableSoundCheckbox.checked = currentSettings.enableSound;
-            enableSoundCheckbox.addEventListener('change', function() {
-                window.settingsService.saveNotificationSettings({ enableSound: this.checked });
-            });
+        const enableDarkThemeCheckbox = document.getElementById('enableDarkThemeCheckbox'); // Get the new checkbox
+
+        if (window.settingsService) {
+            const currentSettings = window.settingsService.getSettings(); // Use getSettings()
+
+            // Sound notification logic
+            if (enableSoundCheckbox) {
+                enableSoundCheckbox.checked = currentSettings.enableSound;
+                enableSoundCheckbox.addEventListener('change', function() {
+                    window.settingsService.saveSettings({ enableSound: this.checked }); // Use saveSettings()
+                });
+            } else {
+                console.error('#enableSoundNotification checkbox not found.');
+            }
+
+            // Dark theme logic
+            if (enableDarkThemeCheckbox) {
+                enableDarkThemeCheckbox.checked = currentSettings.theme === 'dark';
+                enableDarkThemeCheckbox.addEventListener('change', function() {
+                    const newTheme = this.checked ? 'dark' : 'light';
+                    window.settingsService.saveSettings({ theme: newTheme }); // Use saveSettings()
+                    // Updated call to applyThemePreference
+                    if (window.settingsService && typeof window.settingsService.applyThemePreference === 'function') {
+                        window.settingsService.applyThemePreference();
+                    } else {
+                        console.warn('settingsService.applyThemePreference function not defined. Theme may not apply immediately.');
+                    }
+                });
+            } else {
+                console.error('#enableDarkThemeCheckbox checkbox not found.');
+            }
+
         } else {
-            if (!enableSoundCheckbox) console.error('#enableSoundNotification checkbox not found.');
-            if (!window.settingsService) console.error('settingsService not available.');
+            console.error('settingsService not available.');
+            // Disable checkboxes if service is not available, as their state cannot be determined or saved
+            if (enableSoundCheckbox) enableSoundCheckbox.disabled = true;
+            if (enableDarkThemeCheckbox) enableDarkThemeCheckbox.disabled = true;
         }
     }
 
@@ -177,4 +204,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Initial Theme Application on page load
+    if (window.settingsService && typeof window.settingsService.applyThemePreference === 'function') {
+        window.settingsService.applyThemePreference();
+    } else {
+        console.warn('settingsService.applyThemePreference function not available on initial load.');
+    }
 });

@@ -2,16 +2,17 @@
 (function(window) {
     'use strict';
 
-    const SETTINGS_KEY = 'notificationSettings';
+    const SETTINGS_KEY = 'appSettings'; // Renamed
     const DEFAULT_SETTINGS = {
-        enableSound: false // Default sound to disabled
+        enableSound: false, // Default sound to disabled
+        theme: 'light'      // Default theme
     };
 
     /**
-     * Loads notification settings from localStorage.
-     * @returns {object} The notification settings.
+     * Loads app settings from localStorage.
+     * @returns {object} The app settings.
      */
-    function loadNotificationSettings() {
+    function loadSettings() { // Renamed and modified
         let loadedSettings;
         try {
             const storedSettings = localStorage.getItem(SETTINGS_KEY);
@@ -23,44 +24,61 @@
                 loadedSettings = { ...DEFAULT_SETTINGS };
             }
         } catch (error) {
-            console.error('Error loading notification settings from localStorage:', error);
+            console.error('Error loading app settings from localStorage:', error); // Log updated
             // Fallback to default settings in case of error
             loadedSettings = { ...DEFAULT_SETTINGS };
         }
-        console.log('settingsService: Carregando configurações de notificação. Encontrado:', JSON.stringify(loadedSettings));
+        console.log('settingsService: Carregando configurações do aplicativo. Encontrado:', JSON.stringify(loadedSettings)); // Log updated
         return loadedSettings;
     }
 
     /**
-     * Saves notification settings to localStorage.
-     * @param {object} settings - The settings object to save.
+     * Saves app settings to localStorage.
+     * @param {object} newSettings - The partial or complete settings object to save.
      */
-    function saveNotificationSettings(settings) {
-        if (typeof settings !== 'object' || settings === null) {
-            console.error('Invalid settings object provided to saveNotificationSettings.');
+    function saveSettings(newSettings) { // Renamed and modified
+        if (typeof newSettings !== 'object' || newSettings === null) {
+            console.error('Invalid settings object provided to saveSettings.');
             return;
         }
         try {
-            localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-            console.log('settingsService: Salvando configurações de notificação:', JSON.stringify(settings));
+            const currentSettings = loadSettings(); // Load current settings
+            const updatedSettings = { ...currentSettings, ...newSettings }; // Merge
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(updatedSettings));
+            console.log('settingsService: Salvando configurações do aplicativo:', JSON.stringify(updatedSettings)); // Log updated
         } catch (error) {
-            console.error('Error saving notification settings to localStorage:', error);
+            console.error('Error saving app settings to localStorage:', error); // Log updated
         }
     }
 
     /**
-     * A getter function for notification settings.
-     * @returns {object} The current notification settings.
+     * A getter function for app settings.
+     * @returns {object} The current app settings.
      */
-    function getNotificationSettings() {
-        return loadNotificationSettings();
+    function getSettings() { // Renamed
+        return loadSettings();
+    }
+
+    /**
+     * Applies the current theme preference (light/dark) to the document body.
+     */
+    function applyThemePreference() {
+        const currentSettings = loadSettings(); // Use the internal loadSettings
+        if (currentSettings.theme === 'dark') {
+            document.body.classList.add('dark-theme');
+            console.log('Dark theme applied.');
+        } else {
+            document.body.classList.remove('dark-theme');
+            console.log('Light theme applied.');
+        }
     }
 
     // Expose public functions
-    window.settingsService = {
-        loadNotificationSettings: loadNotificationSettings,
-        saveNotificationSettings: saveNotificationSettings,
-        getNotificationSettings: getNotificationSettings
+    window.settingsService = { // Updated
+        loadSettings: loadSettings,
+        saveSettings: saveSettings,
+        getSettings: getSettings,
+        applyThemePreference: applyThemePreference // New function
     };
 
 })(window);

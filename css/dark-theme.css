@@ -1,0 +1,206 @@
+/* css/dark-theme.css */
+
+/* General body and text styles for dark theme */
+.dark-theme body,
+.dark-theme { /* Apply to body or a wrapper if body class is hard to set initially */
+    background-color: #121212; /* Very dark gray, almost black */
+    color: #e0e0e0; /* Light gray for text */
+}
+
+/* Navbar */
+.dark-theme .navbar-default {
+    background-color: #1f1f1f; /* Slightly lighter dark gray for navbar */
+    border-color: #333333;
+}
+.dark-theme .navbar-default .navbar-brand {
+    color: #d0d0d0;
+}
+.dark-theme .navbar-default .navbar-brand:hover,
+.dark-theme .navbar-default .navbar-brand:focus {
+    color: #ffffff;
+}
+.dark-theme .navbar-default .navbar-nav > li > a {
+    color: #d0d0d0;
+}
+.dark-theme .navbar-default .navbar-nav > li > a:hover,
+.dark-theme .navbar-default .navbar-nav > li > a:focus {
+    color: #ffffff;
+    background-color: #2a2a2a; /* Subtle hover background */
+}
+.dark-theme .navbar-default .navbar-nav > .active > a,
+.dark-theme .navbar-default .navbar-nav > .active > a:hover,
+.dark-theme .navbar-default .navbar-nav > .active > a:focus {
+    color: #ffffff;
+    background-color: #007bff; /* Keep primary color for active indication, or choose a dark-theme friendly active color */
+}
+.dark-theme .navbar-default .navbar-text {
+  color: #d0d0d0;
+}
+.dark-theme .navbar-default .navbar-toggle .icon-bar {
+    background-color: #d0d0d0; /* Make hamburger icon bars visible */
+}
+/* Mobile dropdown menu items */
+.dark-theme .navbar-default .navbar-collapse.in .navbar-nav > .open > .dropdown-menu > li > a,
+.dark-theme .navbar-default .navbar-nav > .open > .dropdown-menu > li > a { /* For desktop too */
+    color: #d0d0d0;
+    background-color: #1f1f1f; /* Match navbar background */
+}
+.dark-theme .navbar-default .navbar-collapse.in .navbar-nav > .open > .dropdown-menu > li > a:hover,
+.dark-theme .navbar-default .navbar-collapse.in .navbar-nav > .open > .dropdown-menu > li > a:focus,
+.dark-theme .navbar-default .navbar-nav > .open > .dropdown-menu > li > a:hover,
+.dark-theme .navbar-default .navbar-nav > .open > .dropdown-menu > li > a:focus {
+    color: #ffffff;
+    background-color: #2a2a2a;
+}
+.dark-theme .navbar-default .navbar-collapse.in .navbar-nav > .open > .dropdown-menu > .active > a,
+.dark-theme .navbar-default .navbar-collapse.in .navbar-nav > .open > .dropdown-menu > .active > a:hover,
+.dark-theme .navbar-default .navbar-collapse.in .navbar-nav > .open > .dropdown-menu > .active > a:focus,
+.dark-theme .navbar-default .navbar-nav > .open > .dropdown-menu > .active > a,
+.dark-theme .navbar-default .navbar-nav > .open > .dropdown-menu > .active > a:hover,
+.dark-theme .navbar-default .navbar-nav > .open > .dropdown-menu > .active > a:focus {
+    color: #ffffff;
+    background-color: #007bff;
+}
+
+
+/* Panels (used for event items in Agenda Completa) */
+.dark-theme .panel-default {
+    background-color: #1e1e1e;
+    border-color: #333333;
+    color: #e0e0e0; /* Default text color within panel */
+}
+.dark-theme .panel-default > .panel-heading {
+    background-color: #282828;
+    color: #e0e0e0;
+    border-bottom-color: #333333;
+}
+.dark-theme .panel-default > .panel-body {
+    background-color: #1e1e1e; /* Ensure panel body matches panel background */
+    color: #e0e0e0;
+}
+.dark-theme .panel-default > .panel-footer {
+    background-color: #282828;
+    border-top-color: #333333;
+}
+
+/* List Groups (used in Resumo de Hoje and modals) */
+.dark-theme .list-group-item {
+    background-color: #1e1e1e;
+    border-color: #333333;
+    color: #e0e0e0;
+}
+.dark-theme a.list-group-item:hover, 
+.dark-theme button.list-group-item:hover {
+    background-color: #2a2a2a;
+}
+.dark-theme .list-group-item-heading {
+    color: #e0e0e0; /* Ensure headings in list items are light */
+}
+.dark-theme .list-group-item .text-muted {
+    color: #a0a0a0 !important; /* Make muted text lighter in dark theme */
+}
+
+
+/* Modals */
+.dark-theme .modal-content {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    border: 1px solid #333333;
+}
+.dark-theme .modal-header {
+    border-bottom-color: #333333;
+}
+.dark-theme .modal-footer {
+    border-top-color: #333333;
+}
+.dark-theme .modal-header .close {
+    color: #e0e0e0;
+    text-shadow: 0 1px 0 #000;
+}
+
+/* Form Controls */
+.dark-theme .form-control {
+    background-color: #282828;
+    color: #e0e0e0;
+    border-color: #444444;
+}
+.dark-theme .form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25); /* Standard focus shadow, might need adjustment */
+}
+.dark-theme .form-control-static {
+    color: #e0e0e0;
+}
+.dark-theme label {
+    color: #d0d0d0; /* Slightly lighter labels */
+}
+
+/* Buttons */
+.dark-theme .btn-default {
+    background-color: #333333;
+    color: #e0e0e0;
+    border-color: #555555;
+}
+.dark-theme .btn-default:hover,
+.dark-theme .btn-default:focus {
+    background-color: #444444;
+    border-color: #666666;
+    color: #ffffff;
+}
+/* Primary buttons might need adjustment if default blue doesn't fit well */
+.dark-theme .btn-primary {
+    background-color: #0069d9; /* A common darker shade of blue for dark themes */
+    border-color: #0062cc;
+}
+.dark-theme .btn-primary:hover,
+.dark-theme .btn-primary:focus {
+    background-color: #005cbf;
+    border-color: #0056b3;
+}
+.dark-theme .btn-info {
+    /* Adjust if needed, standard info might be okay or too bright */
+}
+.dark-theme .btn-danger {
+    /* Adjust if needed */
+}
+
+/* Calendar (Datepickk) - Basic Inversion. Might need more specific selectors from datepickk.css */
+.dark-theme #calendar {
+    background-color: #1e1e1e; /* Dark background for calendar container */
+    color: #e0e0e0; /* Light text for dates */
+}
+.dark-theme .datepickk-chrome { /* Main calendar body */
+    background: #1e1e1e;
+    border-color: #333;
+}
+.dark-theme .datepickk-month table th, /* Month headers */
+.dark-theme .datepickk-month table td button { /* Day buttons */
+    color: #e0e0e0;
+}
+.dark-theme .datepickk-month table td button:hover {
+    background: #2a2a2a;
+}
+.dark-theme .datepickk-month table td.datepickk-selected button,
+.dark-theme .datepickk-month table td.datepickk-highlight button { /* Selected/highlighted dates */
+    background-color: #007bff;
+    color: #ffffff;
+}
+.dark-theme .datepickk-tooltip {
+    background-color: #333333;
+    color: #e0e0e0;
+    border-color: #444444;
+}
+.dark-theme .datepickk-tooltip .datepickk-tooltip-arrow:before {
+    border-top-color: #333333; /* Assuming tooltip is above */
+}
+
+/* Specific to 'Resumo de Hoje' & 'Agenda Completa' if needed beyond panel/list-group */
+.dark-theme #todays-overview h2,
+.dark-theme #all-events-container h1 {
+    color: #e0e0e0;
+}
+
+/* Ensure main content area also gets dark background if not body */
+.dark-theme #main-content-area {
+    background-color: #121212; /* Match body background */
+}
