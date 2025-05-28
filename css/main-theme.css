@@ -226,3 +226,10 @@ body {
 .event-list-container .event-item .panel-body p strong {
     color: #333; /* Ensure strong tags are sufficiently dark */
 }
+
+/* Quiz Configuration Form Layout (RNF003.1) */
+#quiz-config-actual-content {
+    max-width: 650px;
+    margin-left: auto;
+    margin-right: auto;
+}

@@ -1,0 +1,351 @@
+/* css/dark-theme.css */
+
+/* RNF001.1: Full Height Background */
+html.dark-theme-active {
+    min-height: 100vh;
+    background-color: #121212; /* Ensure html also has bg color */
+    display: flex;
+    flex-direction: column;
+}
+
+body.dark-theme {
+    background-color: #121212;
+    color: #e0e0e0; /* Slightly off-white for general text for better legibility */
+    flex-grow: 1; /* Allow body to grow if html is flex container */
+    display: flex;
+    flex-direction: column;
+}
+
+.dark-theme #main-content-area {
+    flex-grow: 1; /* Ensure main content area can grow to push footer down if applicable */
+    padding-bottom: 20px; /* Add some padding at the bottom */
+}
+
+/* RNF001.2: Text Legibility Improvements */
+.dark-theme h1, .dark-theme h2, .dark-theme h3, .dark-theme h4, .dark-theme h5, .dark-theme h6 {
+    color: #ffffff; /* Pure white for headings for emphasis */
+}
+
+.dark-theme p {
+    color: #e0e0e0; /* Consistent paragraph text color */
+}
+
+.dark-theme a {
+    color: #6cb2eb; /* Lighter blue for links */
+}
+
+.dark-theme a:hover {
+    color: #8ec9f2; /* Even lighter blue for hover */
+}
+
+.dark-theme .text-muted {
+    color: #adb5bd !important; /* Light grayish color, important to override bootstrap */
+}
+
+.dark-theme .navbar-default {
+    background-color: #1f1f1f;
+    border-color: #333333;
+}
+
+.dark-theme .navbar-default .navbar-brand,
+.dark-theme .navbar-default .navbar-nav > li > a {
+    color: #f5f5f5; /* Slightly off-white for navbar text */
+}
+
+.dark-theme .navbar-default .navbar-brand:hover,
+.dark-theme .navbar-default .navbar-nav > li > a:hover {
+    color: #ffffff; /* Pure white on hover for navbar links */
+}
+
+.dark-theme .navbar-text {
+    color: #adb5bd; /* For elements like current-date-display */
+}
+
+.dark-theme .list-group-item {
+    background-color: #1f1f1f;
+    border-color: #333333;
+    color: #e0e0e0; /* Main text color for list items */
+}
+
+.dark-theme .list-group-item:hover {
+    background-color: #2a2a2a; /* Darken slightly on hover */
+}
+
+.dark-theme .btn-primary {
+    background-color: #0d6efd; /* Bootstrap 5 blue, ensure good contrast */
+    border-color: #0d6efd;
+    color: #ffffff;
+}
+
+.dark-theme .btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+.dark-theme .btn-default, .dark-theme .btn-secondary { /* Cover .btn-secondary as well if used */
+    background-color: #4f4f4f; /* Darker gray for default/secondary buttons */
+    border-color: #5a5a5a;
+    color: #ffffff;
+}
+
+.dark-theme .btn-default:hover, .dark-theme .btn-secondary:hover {
+    background-color: #5a5a5a;
+    border-color: #666666;
+}
+
+.dark-theme .form-control {
+    background-color: #2c2c2c; /* Slightly lighter than body for form fields */
+    border-color: #444444;
+    color: #e0e0e0;
+}
+
+.dark-theme .form-control::placeholder {
+    color: #888888; /* Darker placeholder text for contrast */
+}
+
+.dark-theme .form-control:focus {
+    background-color: #333333;
+    border-color: #0d6efd; /* Highlight with accent color */
+    color: #ffffff;
+}
+
+
+.dark-theme .panel-default > .panel-heading {
+    background-color: #2a2a2a; /* Darker heading for panels */
+    border-color: #333333;
+    color: #f5f5f5;
+}
+
+.dark-theme .panel-default {
+    border-color: #333333;
+    background-color: #1f1f1f; /* Ensure panel body has background */
+}
+
+.dark-theme .panel-body {
+    color: #e0e0e0;
+}
+
+.dark-theme .modal-content {
+    background-color: #232323; /* Slightly different shade for modals */
+    color: #e0e0e0;
+}
+
+.dark-theme .modal-header {
+    border-bottom-color: #333333;
+}
+
+.dark-theme .modal-footer {
+    border-top-color: #333333;
+}
+
+.dark-theme .close {
+    color: #f5f5f5; /* Ensure close button is visible */
+    opacity: 0.8;
+    text-shadow: none; /* Remove default text shadow if any */
+}
+
+.dark-theme .close:hover {
+    opacity: 1;
+    color: #ffffff;
+}
+
+.dark-theme .alert-info {
+    background-color: #132c3f; /* Darker blue for info alerts */
+    border-color: #1e425e;
+    color: #bee5eb; /* Light blue text for info alerts */
+}
+
+.dark-theme .table > thead > tr > th,
+.dark-theme .table > tbody > tr > th,
+.dark-theme .table > tfoot > tr > th,
+.dark-theme .table > thead > tr > td,
+.dark-theme .table > tbody > tr > td,
+.dark-theme .table > tfoot > tr > td {
+    border-top-color: #333333;
+}
+
+.dark-theme .table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: #2a2a2a;
+}
+
+.dark-theme hr {
+    border-top-color: #333333;
+}
+
+/* Calendar specific dark theme styles */
+.dark-theme .fc-unthemed td.fc-today {
+    background: #2a2a2a; /* Darker shade for 'today' */
+}
+
+.dark-theme .fc-event {
+    background-color: #0d6efd; /* Bootstrap 5 blue */
+    border-color: #0d6efd;
+    color: #ffffff;
+}
+
+.dark-theme .fc-event .fc-title {
+    color: #ffffff; /* Ensure event title is white */
+}
+
+.dark-theme .fc-day-header, /* Day headers (Mon, Tue, etc.) */
+.dark-theme .fc-widget-header /* For table headers in agenda view */ {
+    background-color: #2a2a2a;
+    color: #f5f5f5;
+    border-color: #333333;
+}
+
+.dark-theme .fc-widget-content { /* Calendar cells, agenda slots */
+    border-color: #333333;
+    background-color: #1c1c1c; /* Slightly different from main background */
+}
+
+.dark-theme .fc-axis { /* Time labels in agenda views (e.g., 12am, 1am) */
+    color: #adb5bd;
+}
+
+/* Checkbox and radio button theming */
+.dark-theme input[type="checkbox"],
+.dark-theme input[type="radio"] {
+    /* Consider using a custom checkbox/radio or library for better styling control */
+    /* Basic inversion, might not be perfect. Consider custom styling if this is not adequate. */
+    /* For better control, you might need to style the actual checkbox elements or use a library. */
+    filter: invert(1) hue-rotate(180deg) contrast(80%); 
+}
+
+.dark-theme input[type="checkbox"]:checked,
+.dark-theme input[type="radio"]:checked {
+    filter: invert(1) hue-rotate(180deg) contrast(100%) brightness(1.2); /* Make checked ones brighter */
+}
+
+
+.dark-theme label {
+    color: #e0e0e0; /* General label color */
+}
+
+/* Specifically for settings page toggles if needed */
+.dark-theme #enableSoundNotification + label, /* This targets the label *after* the checkbox */
+.dark-theme #themeToggle + label {
+    color: #e0e0e0; /* Ensure these specific labels are also themed */
+}
+/* If the label wraps the input, target the label directly */
+.dark-theme .checkbox label,
+.dark-theme .radio label {
+    color: #e0e0e0;
+}
+
+
+/* Ensure main content area text is readable - these are more general now */
+.dark-theme #main-content-area div,
+.dark-theme #main-content-area span,
+.dark-theme #main-content-area li {
+    color: #e0e0e0; /* General catch-all for text within main content */
+}
+/* Headings and paragraphs are covered by earlier specific rules (h1-h6, p) */
+
+
+/* Question bank, quiz config, quiz taking, quiz results specific adjustments */
+.dark-theme #question-bank-view .list-group-item,
+.dark-theme #quiz-config-view .list-group-item,
+.dark-theme #quiz-taking-view .list-group-item,
+.dark-theme #quiz-results-view .list-group-item,
+.dark-theme .all-events-list .list-group-item /* For #all-events view */ {
+    background-color: #252525; /* Slightly different background for list items in these specific views */
+    border-color: #383838;
+    color: #e0e0e0;
+}
+
+.dark-theme #question-bank-view .list-group-item:hover,
+.dark-theme #quiz-config-view .list-group-item:hover,
+.dark-theme #quiz-taking-view .list-group-item:hover,
+.dark-theme #quiz-results-view .list-group-item:hover,
+.dark-theme .all-events-list .list-group-item:hover {
+    background-color: #303030;
+}
+
+/* Ensure .container and its typical children have legible text */
+.dark-theme .container {
+    color: #e0e0e0;
+}
+
+.dark-theme .container h1,
+.dark-theme .container h2,
+.dark-theme .container h3,
+.dark-theme .container p,
+.dark-theme .container label,
+.dark-theme .container .form-text /* for Bootstrap form text helpers */ {
+    color: #e0e0e0; /* Ensure headings, paragraphs, and labels inherit or are set */
+}
+.dark-theme .container h1, .dark-theme .container h2, .dark-theme .container h3 {
+    color: #ffffff; /* Headings inside containers should be pure white */
+}
+
+
+/* Specific overrides for Bootstrap components if needed */
+.dark-theme .dropdown-menu {
+    background-color: #2c2c2c;
+    border-color: #383838;
+}
+.dark-theme .dropdown-menu > li > a {
+    color: #e0e0e0;
+}
+.dark-theme .dropdown-menu > li > a:hover,
+.dark-theme .dropdown-menu > li > a:focus {
+    color: #ffffff;
+    background-color: #383838;
+}
+.dark-theme .dropdown-divider {
+    border-top-color: #383838;
+}
+
+/* Ensure text in modals' specific areas is legible */
+.dark-theme .modal-header .modal-title {
+    color: #f5f5f5;
+}
+.dark-theme .modal-body {
+    color: #e0e0e0;
+}
+.dark-theme .modal-body p, 
+.dark-theme .modal-body label,
+.dark-theme .modal-body .form-group { /* ensure text elements within modal body are legible */
+    color: #e0e0e0;
+}
+.dark-theme .modal-body strong {
+    color: #f5f5f5; /* Make bolded text slightly brighter */
+}
+
+/* Ensure form static text is also themed */
+.dark-theme .form-control-static {
+    color: #e0e0e0;
+}
+
+/* Breadcrumbs if used */
+.dark-theme .breadcrumb {
+    background-color: #2a2a2a;
+    color: #adb5bd;
+}
+.dark-theme .breadcrumb a {
+    color: #8ec9f2;
+}
+.dark-theme .breadcrumb > .active {
+    color: #e0e0e0;
+}
+
+/* Fix for text color on date display in navbar */
+.dark-theme #current-date-display.navbar-text {
+    color: #adb5bd !important; 
+}
+
+/* Ensure selected category label in navbar is also themed */
+.dark-theme #selectedCategoryLabel {
+     color: #e0e0e0 !important; /* Important may be needed due to inline styles or specificity */
+}
+.dark-theme .navbar-default .navbar-nav > .dropdown > a .caret {
+    border-top-color: #e0e0e0;
+    border-bottom-color: #e0e0e0;
+}
+.dark-theme .navbar-default .navbar-nav > .open > a .caret,
+.dark-theme .navbar-default .navbar-nav > .open > a:hover .caret,
+.dark-theme .navbar-default .navbar-nav > .open > a:focus .caret {
+    border-top-color: #ffffff;
+    border-bottom-color: #ffffff;
+}

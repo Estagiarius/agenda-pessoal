@@ -12,8 +12,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.settingsService.saveNotificationSettings({ enableSound: this.checked });
             });
         } else {
-            if (!enableSoundCheckbox) console.error('#enableSoundNotification checkbox not found.');
-            if (!window.settingsService) console.error('settingsService not available.');
+            // console.error('#enableSoundNotification checkbox not found or settingsService not available.');
+        }
+
+        // Theme toggle logic
+        const themeToggleCheckbox = document.getElementById('themeToggle');
+        if (themeToggleCheckbox && window.settingsService) {
+            const currentTheme = window.settingsService.getThemeSettings();
+            themeToggleCheckbox.checked = (currentTheme === 'dark');
+            themeToggleCheckbox.addEventListener('change', function() {
+                const newTheme = this.checked ? 'dark' : 'light';
+                window.settingsService.saveThemeSettings(newTheme);
+                window.settingsService.applyTheme(newTheme);
+            });
+        } else {
+            // console.error('#themeToggle checkbox not found or settingsService not available.');
         }
     }
 
@@ -152,6 +165,14 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('hashchange', function() {
         loadView(window.location.hash);
     });
+
+    // Initial theme application on load
+    if (window.settingsService) {
+        const initialTheme = window.settingsService.getThemeSettings();
+        window.settingsService.applyTheme(initialTheme);
+    } else {
+        console.error('settingsService not available for initial theme application.');
+    }
 
     loadView(window.location.hash); 
 
