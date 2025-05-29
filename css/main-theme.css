@@ -167,6 +167,7 @@ h2 {
 /* For example, to ensure body background is not #e74c3c */
 body {
     background-color: #f8f9fa !important; /* Use !important if strictly necessary to override, but prefer specificity */
+    padding-top: 50px; /* RNF002: Prevent content from being hidden by fixed navbar */
 }
 
 /* Custom spacing for Today's Overview event items */
