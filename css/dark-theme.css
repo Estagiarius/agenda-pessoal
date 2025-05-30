@@ -3,22 +3,26 @@
 /* RNF001.1: Full Height Background */
 html.dark-theme-active {
     min-height: 100vh;
-    background-color: #121212; /* Ensure html also has bg color */
-    display: flex;
+    background-color: #121212 !important; /* Aggressive override for testing */
+    margin: 0; /* Ensure no default margins */
+    padding: 0; /* Ensure no default padding */
+    display: flex; 
     flex-direction: column;
 }
 
 body.dark-theme {
-    min-height: 100vh; /* Ensure body also tries to be full height */
-    background-color: #121212;
-    color: #e0e0e0; /* Slightly off-white for general text for better legibility */
-    display: flex; /* Make body a flex container */
-    flex-direction: column; /* Stack its children (like #main-content-area) vertically */
-    /* flex-grow: 1; is not strictly needed if html is display:flex and body is a direct child, but min-height is more direct */
+    flex-grow: 1; /* Allow body to grow within html flex container */
+    background-color: #121212 !important; /* Aggressive override for testing */
+    color: #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    margin: 0; /* Ensure no default margins */
+    /* padding-top for navbar is handled in main-theme.css */
+    /* min-height: 100vh; is implicitly handled by flex-grow and html's min-height */
 }
 
 .dark-theme #main-content-area {
-    flex-grow: 1; /* This makes #main-content-area take available space within the body */
+    flex-grow: 1; /* Ensures this area pushes other content down or fills space */
     padding-bottom: 20px; /* Add some padding at the bottom */
 }
 
@@ -496,3 +500,12 @@ body.dark-theme {
     border-bottom-color: #333333;
 }
 /* Add more .datepickk specific rules if other text elements are found */
+
+/* Fix for RNF001.2: Agenda Completa event details legibility */
+.dark-theme .event-list-container .event-item .panel-body p {
+    color: #e0e0e0; /* Ensure paragraph text is light */
+}
+
+.dark-theme .event-list-container .event-item .panel-body p strong {
+    color: #f0f0f0 !important; /* Make strong text even lighter, and use !important to ensure override */
+}
