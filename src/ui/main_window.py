@@ -11,25 +11,18 @@ from src.ui.tasks_view import TasksView
 from src.ui.questions_view import QuestionsView
 from src.ui.quiz_section_widget import QuizSectionWidget
 from src.ui.entities_view import EntitiesView
-from src.ui.settings_view import SettingsView # Adicionado SettingsView
+from src.ui.settings_view import SettingsView
 from src.core.database_manager import DatabaseManager
 
 class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, db_manager: DatabaseManager, parent=None): # db_manager como parâmetro
+        super().__init__(parent) # Chamada única ao super
 
-        # Inicializar o DatabaseManager uma vez e passar para as views que precisam dele
-        # Isso evita múltiplas conexões ou a necessidade de passar o caminho do DB repetidamente
-        self.db_manager = DatabaseManager(db_path='data/agenda.db')
-        # É importante garantir que a conexão seja fechada quando a aplicação sair.
-        # QApplication.instance().aboutToQuit.connect(self.cleanup_db_connection)
+        self.db_manager = db_manager # Usar o db_manager passado
+        # QApplication.instance().aboutToQuit.connect(self.cleanup_db_connection) # Pode ser mantido
 
-
-        self.setWindowTitle("Agenda Pessoal")
-        super().__init__()
-
-        self.setWindowTitle("Agenda Pessoal")
-        self.setGeometry(100, 100, 1024, 768) # x, y, width, height
+        self.setWindowTitle("Agenda Pessoal") # Chamada única
+        self.setGeometry(100, 100, 1024, 768)
 
         # Widget central e layout principal
         central_widget = QWidget()
@@ -120,22 +113,25 @@ class MainWindow(QMainWindow):
 
 if __name__ == '__main__':
     # Este bloco é para testar a MainWindow diretamente.
-    # O ponto de entrada principal da aplicação será src/main.py
-    app = QApplication(sys.argv)
+    # O ponto de entrada principal da aplicação é src/main.py
+    # Este bloco é para teste direto, mas agora MainWindow requer um db_manager.
+    print("Para testar MainWindow diretamente, execute src/main.py.")
+    print("Este if __name__ == '__main__' em main_window.py não iniciará a UI completa.")
 
-    # Para o teste direto, precisamos garantir que o DBManager seja instanciado.
-    # Em uma execução normal via src/main.py, isso já acontece no __init__ da MainWindow.
-    # db_manager_instance = DatabaseManager(db_path='data/agenda.db')
-    # if db_manager_instance.conn:
-    #     # Adicionar dados de exemplo se o DB foi recém-criado
-    #     db_manager_instance.add_sample_event()
-    #     db_manager_instance.close() # Fecha a conexão, MainWindow abrirá a sua própria
-    # else:
-    #     print("Falha ao inicializar DB para teste da MainWindow.")
-
-    main_window = MainWindow() # MainWindow agora cria sua própria instância de db_manager
-    main_window.show()
-
-    exit_code = app.exec()
-    # A conexão do db_manager da MainWindow será fechada pelo closeEvent ou aboutToQuit
-    sys.exit(exit_code)
+    # Se ainda quiser testar isoladamente (exigirá um db_manager mock ou real):
+    # app = QApplication(sys.argv)
+    # # Criar um db_manager real para teste (cuidado com o caminho do DB)
+    # test_db_path = os.path.join(os.path.dirname(__file__), "..", "data", "agenda_test_main_window.db")
+    # os.makedirs(os.path.join(os.path.dirname(__file__), "..", "data"), exist_ok=True)
+    # print(f"Usando DB de teste para MainWindow: {test_db_path}")
+    # db_manager_instance = DatabaseManager(database_path=test_db_path)
+    # if not db_manager_instance.conn:
+    #     print(f"Falha ao conectar ao DB de teste {test_db_path}. Saindo.")
+    #     sys.exit(1)
+    #
+    # main_window = MainWindow(db_manager=db_manager_instance)
+    # main_window.show()
+    # exit_code = app.exec()
+    # db_manager_instance.close() # Fechar conexão do DB de teste
+    # sys.exit(exit_code)
+    pass # Evita iniciar a UI incompleta por padrão.
