@@ -26,8 +26,8 @@ a = Analysis(
         'PyQt6.QtGui',
         'PyQt6.QtCore',
         'PyQt6.QtWidgets',
-        'PyQt6.QtSvg',
-        'PyQt6.QtXml',
+        'PyQt6.QtSvg', 
+        'PyQt6.QtXml', 
         # Adicionar outros módulos que podem ser importados dinamicamente se necessário
         # 'pkg_resources.py2_warn', # Exemplo de hidden import comum
     ],

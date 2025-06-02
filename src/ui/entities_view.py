@@ -1,7 +1,7 @@
 import sys
 import json
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
+    QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem, 
     QPushButton, QComboBox, QLabel, QMessageBox, QHeaderView
 )
 from PyQt6.QtCore import Qt
@@ -30,7 +30,7 @@ class EntitiesView(QWidget):
         filter_layout = QHBoxLayout()
         filter_layout.addWidget(QLabel("Filtrar por tipo:"))
         self.type_filter_combo = QComboBox()
-        self.type_filter_combo.addItem("Todos")
+        self.type_filter_combo.addItem("Todos") 
         # Popular com tipos existentes no DB? Poderia ser feito, mas para simplificar:
         self.type_filter_combo.addItems(["Professor", "Aluno", "Contato", "Outro"]) # Tipos comuns
         self.type_filter_combo.setEditable(True) # Permitir digitar outros tipos
@@ -50,7 +50,7 @@ class EntitiesView(QWidget):
         self.entities_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         self.entities_table.verticalHeader().setVisible(False)
         self.entities_table.itemSelectionChanged.connect(self._on_entity_selected)
-
+        
         header = self.entities_table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch) # Nome
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents) # Tipo
@@ -72,7 +72,7 @@ class EntitiesView(QWidget):
         self.delete_button.clicked.connect(self._delete_entity_dialog)
         self.delete_button.setEnabled(False)
         action_buttons_layout.addWidget(self.delete_button)
-
+        
         main_layout.addLayout(action_buttons_layout)
         self._load_entities()
 
@@ -83,8 +83,8 @@ class EntitiesView(QWidget):
 
         entity_type_filter = self.type_filter_combo.currentText()
         if entity_type_filter == "Todos" or not entity_type_filter.strip():
-            entity_type_filter = None
-
+            entity_type_filter = None 
+        
         entities = self.db_manager.get_all_entities(entity_type=entity_type_filter)
 
         for entity in entities:
@@ -96,7 +96,7 @@ class EntitiesView(QWidget):
                  name_item.setData(Qt.ItemDataRole.UserRole, entity.id)
 
             type_item = QTableWidgetItem(entity.type)
-
+            
             details_str = ""
             if entity.details_json:
                 try:
@@ -109,7 +109,7 @@ class EntitiesView(QWidget):
             self.entities_table.setItem(row_position, 0, name_item)
             self.entities_table.setItem(row_position, 1, type_item)
             self.entities_table.setItem(row_position, 2, details_item)
-
+        
         if self.entities_table.rowCount() > 0:
             self.entities_table.selectRow(0)
 
@@ -202,15 +202,15 @@ if __name__ == '__main__':
     if not db_manager_instance.conn:
         QMessageBox.critical(None, "DB Error", "Não foi possível conectar ao banco de dados.")
         sys.exit(1)
-
+    
     # Adicionar entidades de exemplo se não existirem (o add_sample_data já faz isso)
-    # db_manager_instance.add_sample_data()
+    # db_manager_instance.add_sample_data() 
 
     entities_widget = EntitiesView(db_manager_instance)
     entities_widget.setWindowTitle("Teste da EntitiesView")
     entities_widget.setGeometry(100, 100, 800, 600)
     entities_widget.show()
-
+    
     exit_code = app.exec()
     if db_manager_instance.conn:
         db_manager_instance.close()

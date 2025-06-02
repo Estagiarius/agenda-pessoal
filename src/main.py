@@ -1,8 +1,9 @@
 import sys
-import os # Adicionado os
-from PyQt6.QtWidgets import QApplication, QMessageBox # Adicionado QMessageBox
+import os 
+from PyQt6.QtWidgets import QApplication, QMessageBox
 from src.ui.main_window import MainWindow
-from src.core.database_manager import DatabaseManager # Agora importamos e usamos
+from src.core.database_manager import DatabaseManager
+from src.ui.theme_manager import ThemeManager # Adicionado ThemeManager
 
 def get_application_base_path():
     """Retorna o caminho base para dados, considerando se está empacotado ou em dev."""
@@ -16,7 +17,7 @@ def get_application_base_path():
         return os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 def main():
-    app = QApplication(sys.argv)
+    app = QApplication(sys.argv) # app deve ser instanciado antes de qualquer lógica de UI ou DB
 
     application_path = get_application_base_path()
     data_dir = os.path.join(application_path, "data")
@@ -33,26 +34,31 @@ def main():
             os.makedirs(data_dir)
             print(f"INFO: Diretório de dados criado em: {data_dir}")
         except OSError as e:
-            QMessageBox.critical(None, "Erro Crítico",
+            QMessageBox.critical(None, "Erro Crítico", 
                                  f"Erro ao criar diretório de dados {data_dir}: {e}\n"
                                  "A aplicação pode não funcionar corretamente.")
             # A aplicação provavelmente falhará se não puder criar/acessar o DB.
-            # Considerar sair aqui sys.exit(1) se o DB for essencial para iniciar.
-
+    
     # Inicializar o DatabaseManager com o caminho dinâmico
-    # A MainWindow agora espera um db_manager em seu construtor.
-    # A lógica de instanciar o db_manager foi movida de MainWindow para cá.
     db_manager = DatabaseManager(database_path=db_path)
-
+    
     if not db_manager.conn:
-        QMessageBox.critical(None, "Erro de Banco de Dados",
-                             f"Não foi possível conectar ao banco de dados em:\n{db_path}\n"
-                             "Verifique as permissões ou se o caminho é válido.\n"
-                             "A aplicação será encerrada.")
+        # Não podemos usar QMessageBox aqui antes de QApplication ser totalmente configurado com um tema,
+        # ou pode ter aparência inconsistente ou falhar em alguns ambientes headless.
+        # Imprimir no console é mais seguro para erros muito iniciais.
+        print(f"ERRO CRÍTICO: Não foi possível conectar ao banco de dados em: {db_path}")
+        # QMessageBox.critical(None, "Erro de Banco de Dados", ... ) # Movido para depois da app.exec se necessário
         sys.exit(1)
 
+    # Carregar e aplicar o tema ANTES de criar a MainWindow
+    saved_theme_name = db_manager.get_setting('theme_preference', 'system') # 'system' como padrão
+    if saved_theme_name: # Garante que não é None
+        ThemeManager.apply_theme(app, saved_theme_name)
+    else: # Fallback caso get_setting retorne None inesperadamente
+        ThemeManager.apply_theme(app, 'system')
 
-    main_window = MainWindow(db_manager=db_manager) # Passar o db_manager para MainWindow
+
+    main_window = MainWindow(db_manager=db_manager) 
     main_window.show()
 
     sys.exit(app.exec())

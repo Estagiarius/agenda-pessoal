@@ -128,7 +128,7 @@ class QuizAttempt:
 
 if __name__ == '__main__':
     # Exemplos de uso (apenas para teste rápido e demonstração)
-
+    
     # Criando uma Entidade
     entity1 = Entity(name="Prof. Silva", type="professor", details_json={"department": "Computer Science", "office": "Room 101"})
     print(entity1)
@@ -166,13 +166,13 @@ if __name__ == '__main__':
     simple_event_start = datetime.now()
     simple_event = Event(title="Reunião Rápida", start_time=simple_event_start, event_type="reuniao")
     print(simple_event)
-
+    
     # Criando uma Pergunta
     question1_options = ["Paris", "Londres", "Berlim", "Madri"]
-    question1 = Question(text="Qual é a capital da França?",
-                         subject="Geografia",
-                         difficulty="Fácil",
-                         options=question1_options,
+    question1 = Question(text="Qual é a capital da França?", 
+                         subject="Geografia", 
+                         difficulty="Fácil", 
+                         options=question1_options, 
                          answer="Paris")
     print(question1)
     print(f"  Opções: {question1.options}")

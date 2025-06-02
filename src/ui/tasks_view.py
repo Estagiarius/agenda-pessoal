@@ -1,6 +1,6 @@
 import sys
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
+    QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem, 
     QPushButton, QComboBox, QLabel, QMessageBox, QHeaderView
 )
 from PyQt6.QtCore import Qt
@@ -33,7 +33,7 @@ class TasksView(QWidget):
         self.status_filter_combo.addItems(["Todas", "Open", "In Progress", "Completed"])
         self.status_filter_combo.currentIndexChanged.connect(self._load_tasks)
         filter_layout.addWidget(self.status_filter_combo)
-
+        
         # Adicionar mais filtros (ex: Prioridade) aqui no futuro, se necessário
         filter_layout.addStretch() # Empurra os filtros para a esquerda
         main_layout.addLayout(filter_layout)
@@ -47,7 +47,7 @@ class TasksView(QWidget):
         self.tasks_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection) # Apenas uma linha por vez
         self.tasks_table.verticalHeader().setVisible(False) # Esconder cabeçalho vertical (números das linhas)
         self.tasks_table.itemSelectionChanged.connect(self._on_task_selected)
-
+        
         # Ajustar largura das colunas
         header = self.tasks_table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch) # Título
@@ -71,7 +71,7 @@ class TasksView(QWidget):
         self.delete_task_button.clicked.connect(self._delete_task)
         self.delete_task_button.setEnabled(False)
         action_buttons_layout.addWidget(self.delete_task_button)
-
+        
         self.toggle_status_button = QPushButton("Marcar como...") # Texto será dinâmico
         self.toggle_status_button.clicked.connect(self._toggle_task_status)
         self.toggle_status_button.setEnabled(False)
@@ -90,9 +90,9 @@ class TasksView(QWidget):
         status_filter = self.status_filter_combo.currentText()
         if status_filter == "Todas":
             status_filter = None
-
+        
         # Adicionar filtro de prioridade aqui se implementado
-
+        
         tasks = self.db_manager.get_all_tasks(status=status_filter)
 
         for task in tasks:
@@ -118,7 +118,7 @@ class TasksView(QWidget):
             self.tasks_table.setItem(row_position, 1, priority_item)
             self.tasks_table.setItem(row_position, 2, due_date_item)
             self.tasks_table.setItem(row_position, 3, status_item)
-
+        
         if self.tasks_table.rowCount() > 0:
             self.tasks_table.selectRow(0) # Seleciona a primeira linha por padrão, se houver tarefas
 
@@ -134,7 +134,7 @@ class TasksView(QWidget):
                 self.current_selected_task_id = int(task_id_data)
             else:
                 self.current_selected_task_id = None # Caso não haja ID (não deve acontecer)
-
+        
         self._update_action_buttons_state()
 
     def _update_action_buttons_state(self):
@@ -223,12 +223,12 @@ class TasksView(QWidget):
                 self._load_tasks() # Recarrega a lista
             else:
                 QMessageBox.critical(self, "Erro", "Falha ao excluir a tarefa do banco de dados.")
-
+    
     def _toggle_task_status(self):
         if not self.current_selected_task_id:
             QMessageBox.warning(self, "Seleção Necessária", "Por favor, selecione uma tarefa.")
             return
-
+        
         task = self.db_manager.get_task_by_id(self.current_selected_task_id)
         if not task:
             QMessageBox.critical(self, "Erro", "Tarefa não encontrada.")
@@ -239,7 +239,7 @@ class TasksView(QWidget):
             task.status = "Open"
         else:
             task.status = "Completed"
-
+        
         if self.db_manager.update_task(task):
             QMessageBox.information(self, "Sucesso", f"Status da tarefa '{task.title}' atualizado para {task.status}.")
             self._load_tasks() # Recarrega para mostrar a mudança e atualizar o botão
@@ -258,7 +258,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     # É necessário um DatabaseManager funcional para este teste
     db_manager_instance = DatabaseManager(db_path='data/agenda.db')
-
+    
     # Certifique-se de que o DB e as tabelas existem, e talvez adicione dados de exemplo
     # O __main__ do database_manager.py já faz isso.
     # python -m src.core.database_manager # Execute isso antes se o DB não existir/estiver vazio
@@ -273,12 +273,12 @@ if __name__ == '__main__':
             db_manager_instance.add_task(Task(title="Revisar Documentação", priority="Medium", status="Open", due_date=datetime.now()))
             db_manager_instance.add_task(Task(title="Implementar Feature X", priority="High", status="In Progress"))
             db_manager_instance.add_task(Task(title="Teste Unitário Y", priority="High", status="Completed"))
-
+    
     tasks_widget = TasksView(db_manager_instance)
     tasks_widget.setWindowTitle("Teste da TasksView")
     tasks_widget.setGeometry(100, 100, 800, 600)
     tasks_widget.show()
-
+    
     exit_code = app.exec()
     if db_manager_instance.conn:
         db_manager_instance.close()

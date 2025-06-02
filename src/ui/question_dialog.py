@@ -1,6 +1,6 @@
 import sys
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QFormLayout, QLineEdit, QTextEdit,
+    QDialog, QVBoxLayout, QFormLayout, QLineEdit, QTextEdit, 
     QComboBox, QPushButton, QDialogButtonBox, QMessageBox, QHBoxLayout,
     QWidget, QLabel
 )
@@ -15,10 +15,10 @@ class OptionInputWidget(QWidget):
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-
+        
         self.option_edit = QLineEdit(text)
         layout.addWidget(self.option_edit)
-
+        
         self.remove_button = QPushButton("Remover")
         # O sinal clicked será conectado no QuestionDialog
         layout.addWidget(self.remove_button)
@@ -36,12 +36,12 @@ class QuestionDialog(QDialog):
             self.setWindowTitle("Editar Pergunta")
         else:
             self.setWindowTitle("Adicionar Nova Pergunta")
-
+        
         self.setMinimumWidth(500)
 
         # Layout Principal
         main_layout = QVBoxLayout(self)
-
+        
         # Formulário
         form_layout = QFormLayout()
         form_layout.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapAllRows)
@@ -57,13 +57,13 @@ class QuestionDialog(QDialog):
         self.difficulty_combo = QComboBox()
         self.difficulty_combo.addItems(["Fácil", "Médio", "Difícil"])
         form_layout.addRow("Dificuldade:", self.difficulty_combo)
-
+        
         main_layout.addLayout(form_layout)
 
         # Gerenciamento de Opções
         options_group_label = QLabel("Opções de Resposta:")
         main_layout.addWidget(options_group_label)
-
+        
         self.options_layout = QVBoxLayout() # Layout vertical para as opções
         main_layout.addLayout(self.options_layout)
 
@@ -89,13 +89,13 @@ class QuestionDialog(QDialog):
             self.text_edit.setPlainText(self.question.text)
             self.subject_edit.setText(self.question.subject or "")
             self.difficulty_combo.setCurrentText(self.question.difficulty or "Fácil")
-
+            
             if self.question.options:
                 for option_text in self.question.options:
                     self._add_option_input(option_text, is_initial_load=True)
             else: # Se não há opções, adiciona uma vazia
                 self._add_option_input(is_initial_load=True)
-
+            
             self._update_answer_combo_options() # Atualiza as opções do ComboBox de resposta
             if self.question.answer and self.question.answer in self.question.options:
                 self.answer_combo.setCurrentText(self.question.answer)
@@ -107,10 +107,10 @@ class QuestionDialog(QDialog):
         option_widget = OptionInputWidget(text)
         option_widget.remove_button.clicked.connect(lambda: self._remove_option_input(option_widget))
         option_widget.option_edit.textChanged.connect(self._update_answer_combo_options) # Atualiza ao digitar
-
+        
         self.options_layout.addWidget(option_widget)
         self.option_widgets.append(option_widget)
-
+        
         if not is_initial_load: # Só atualiza se não for carregamento inicial (para evitar chamadas múltiplas)
             self._update_answer_combo_options()
 
@@ -126,7 +126,7 @@ class QuestionDialog(QDialog):
     def _update_answer_combo_options(self):
         current_answer = self.answer_combo.currentText() # Salvar resposta atual, se houver
         self.answer_combo.clear()
-
+        
         valid_options = [opt_widget.get_text() for opt_widget in self.option_widgets if opt_widget.get_text()]
         if not valid_options:
             self.answer_combo.setPlaceholderText("Adicione opções válidas")
@@ -135,7 +135,7 @@ class QuestionDialog(QDialog):
 
         self.answer_combo.setEnabled(True)
         self.answer_combo.addItems(valid_options)
-
+        
         if current_answer in valid_options:
             self.answer_combo.setCurrentText(current_answer)
         elif valid_options: # Se a resposta anterior não é mais válida, seleciona a primeira
@@ -152,12 +152,12 @@ class QuestionDialog(QDialog):
 
         subject = self.subject_edit.text().strip()
         difficulty = self.difficulty_combo.currentText()
-
+        
         options = [opt_widget.get_text() for opt_widget in self.option_widgets if opt_widget.get_text()]
         if not options:
             QMessageBox.warning(self, "Opções Inválidas", "Deve haver pelo menos uma opção de resposta preenchida.")
             return None
-
+        
         answer = self.answer_combo.currentText()
         if not answer : # Se o ComboBox estiver vazio ou com placeholder
              QMessageBox.warning(self, "Resposta Inválida", "Por favor, selecione uma resposta correta entre as opções fornecidas.")
@@ -168,7 +168,7 @@ class QuestionDialog(QDialog):
 
         question_id = self.question.id if self.question else None
         created_at = self.question.created_at if self.question and self.question.created_at else None
-
+        
         return Question(
             id=question_id,
             text=text,
@@ -204,7 +204,7 @@ if __name__ == '__main__':
 
     print("\nTestando diálogo de Editar Pergunta:")
     existing_q = Question(
-        id=1,
+        id=1, 
         text="Qual o comando para listar arquivos em Linux?",
         subject="Sistemas Operacionais",
         difficulty="Fácil",
@@ -223,5 +223,5 @@ if __name__ == '__main__':
             print(f"    Resposta: {edited_q.answer}")
     else:
         print("  Edição de pergunta cancelada.")
-
+        
     sys.exit(0)

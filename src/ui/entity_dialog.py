@@ -1,7 +1,7 @@
 import sys
 import json
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QFormLayout, QLineEdit, QTextEdit,
+    QDialog, QVBoxLayout, QFormLayout, QLineEdit, QTextEdit, 
     QComboBox, QPushButton, QDialogButtonBox, QMessageBox
 )
 from PyQt6.QtCore import Qt
@@ -18,7 +18,7 @@ class EntityDialog(QDialog):
             self.setWindowTitle("Editar Entidade")
         else:
             self.setWindowTitle("Adicionar Nova Entidade")
-
+        
         self.setMinimumWidth(400)
 
         # Layouts
@@ -39,7 +39,7 @@ class EntityDialog(QDialog):
         form_layout.addRow("Nome:", self.name_edit)
         form_layout.addRow("Tipo:", self.type_combo)
         form_layout.addRow("Detalhes (JSON):", self.details_json_edit)
-
+        
         main_layout.addLayout(form_layout)
 
         # Botões
@@ -90,10 +90,10 @@ class EntityDialog(QDialog):
             except json.JSONDecodeError as e:
                 QMessageBox.warning(self, "JSON Inválido", f"Erro ao decodificar JSON no campo 'Detalhes':\n{e}")
                 return None
-
+        
         entity_id = self.entity.id if self.entity else None
         created_at = self.entity.created_at if self.entity and self.entity.created_at else None
-
+        
         return Entity(
             id=entity_id,
             name=name,
@@ -125,8 +125,8 @@ if __name__ == '__main__':
 
     print("\nTestando diálogo de Editar Entidade:")
     existing_entity = Entity(
-        id=1,
-        name="Prof. Exemplo",
+        id=1, 
+        name="Prof. Exemplo", 
         type="Professor",
         details_json={"email": "prof@example.com", "sala": "B102"},
         created_at=datetime.now()
@@ -141,5 +141,5 @@ if __name__ == '__main__':
             print(f"    Detalhes: {edited_entity.details_json}")
     else:
         print("  Edição de entidade cancelada.")
-
+        
     sys.exit(0)

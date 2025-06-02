@@ -25,11 +25,11 @@ cd "$(dirname "$0")" || exit
 # Nome da Aplicação (deve corresponder ao nome no arquivo .spec e usado em dist/)
 APP_NAME="TeacherAgenda"
 # Script Principal (usado para mensagens informativas, o .spec define o entrypoint)
-MAIN_SCRIPT_INFO="src/main.py"
+MAIN_SCRIPT_INFO="src/main.py" 
 
 # --- Configuração do Interpretador Python ---
 echo "--- Configurando Interpretador Python ---"
-PYTHON_INTERP_LIST=("python3.10" "python3")
+PYTHON_INTERP_LIST=("python3.10" "python3") 
 PYTHON_INTERP=""
 
 for interp in "${PYTHON_INTERP_LIST[@]}"; do
@@ -97,7 +97,7 @@ if [ $? -eq 0 ]; then
     # Esta seção foi removida porque o arquivo .spec agora lida com a inclusão da pasta 'data'.
     # O .spec com datas=[('data', 'data')] coloca a pasta 'data' DENTRO do diretório dist/$APP_NAME.
     # A lógica em main.py (os.path.dirname(sys.executable)) deve encontrar 'data/' corretamente.
-
+    
     echo ""
     echo "Para executar a aplicação, navegue até o diretório:"
     echo "  cd dist/$APP_NAME"

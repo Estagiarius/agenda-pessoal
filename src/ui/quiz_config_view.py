@@ -1,8 +1,8 @@
 import sys
 import json
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
-    QPushButton, QListWidget, QListWidgetItem, QLabel, QLineEdit,
+    QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem, 
+    QPushButton, QListWidget, QListWidgetItem, QLabel, QLineEdit, 
     QMessageBox, QHeaderView, QAbstractItemView, QSplitter
 )
 from PyQt6.QtCore import Qt, pyqtSignal # Adicionado pyqtSignal
@@ -21,24 +21,24 @@ class QuizConfigView(QWidget):
         self.selected_question_ids_for_quiz: Set[int] = set()
 
         main_layout = QVBoxLayout(self)
-
+        
         title_label = QLabel("Configurar Novo Quiz")
         title_label.setFont(QFont("Arial", 16, QFont.Weight.Bold))
         main_layout.addWidget(title_label, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # Layout do Splitter para dividir a seleção de perguntas e a configuração do quiz
         splitter = QSplitter(Qt.Orientation.Horizontal)
-
+        
         # --- Painel Esquerdo: Seleção de Perguntas ---
         left_panel = QWidget()
         left_layout = QVBoxLayout(left_panel)
-
+        
         available_questions_label = QLabel("Perguntas Disponíveis:")
         available_questions_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
         left_layout.addWidget(available_questions_label)
-
+        
         # (Filtros para perguntas disponíveis podem ser adicionados aqui no futuro)
-
+        
         self.available_questions_table = QTableWidget()
         self.available_questions_table.setColumnCount(3) # Texto, Assunto, Dificuldade
         self.available_questions_table.setHorizontalHeaderLabels(["Pergunta", "Assunto", "Dificuldade"])
@@ -51,17 +51,17 @@ class QuizConfigView(QWidget):
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         left_layout.addWidget(self.available_questions_table)
-
+        
         splitter.addWidget(left_panel)
 
         # --- Painel Direito: Perguntas Selecionadas e Configuração ---
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
-
+        
         selected_questions_label = QLabel("Perguntas Selecionadas para o Quiz:")
         selected_questions_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
         right_layout.addWidget(selected_questions_label)
-
+        
         self.selected_questions_list = QListWidget()
         right_layout.addWidget(self.selected_questions_list)
 
@@ -87,7 +87,7 @@ class QuizConfigView(QWidget):
         save_button.setFont(QFont("Arial", 12, QFont.Weight.Bold))
         save_button.clicked.connect(self._save_quiz_config)
         right_layout.addWidget(save_button, alignment=Qt.AlignmentFlag.AlignCenter)
-
+        
         splitter.addWidget(right_panel)
         splitter.setSizes([600, 400]) # Tamanhos iniciais
         main_layout.addWidget(splitter)
@@ -101,11 +101,11 @@ class QuizConfigView(QWidget):
         for q in questions:
             row_pos = self.available_questions_table.rowCount()
             self.available_questions_table.insertRow(row_pos)
-
+            
             text_item = QTableWidgetItem(q.text)
             if q.id is not None: # Armazena o ID
                 text_item.setData(Qt.ItemDataRole.UserRole, q.id)
-
+            
             self.available_questions_table.setItem(row_pos, 0, text_item)
             self.available_questions_table.setItem(row_pos, 1, QTableWidgetItem(q.subject or "N/A"))
             self.available_questions_table.setItem(row_pos, 2, QTableWidgetItem(q.difficulty or "N/A"))
@@ -126,7 +126,7 @@ class QuizConfigView(QWidget):
                 list_item = QListWidgetItem(f"ID: {question_id} - {question_text}")
                 list_item.setData(Qt.ItemDataRole.UserRole, question_id) # Armazena o ID no item
                 self.selected_questions_list.addItem(list_item)
-
+        
         # Limpar seleção da tabela para evitar re-adição acidental
         self.available_questions_table.clearSelection()
 
@@ -136,12 +136,12 @@ class QuizConfigView(QWidget):
         if not selected_list_items:
             QMessageBox.information(self, "Nenhuma Seleção", "Por favor, selecione perguntas da lista à direita para remover.")
             return
-
+        
         for item in selected_list_items:
             question_id = item.data(Qt.ItemDataRole.UserRole)
             if question_id is not None and question_id in self.selected_question_ids_for_quiz:
                 self.selected_question_ids_for_quiz.remove(question_id)
-
+            
             # Remover da QListWidget
             self.selected_questions_list.takeItem(self.selected_questions_list.row(item))
 
@@ -152,22 +152,22 @@ class QuizConfigView(QWidget):
             return
 
         quiz_name = self.quiz_name_edit.text().strip() or None # None se vazio
-
+        
         # Convertendo set para list para o modelo QuizConfig
         question_ids_list = list(self.selected_question_ids_for_quiz)
-
+        
         quiz_config = QuizConfig(name=quiz_name, question_ids=question_ids_list)
-
+        
         added_config = self.db_manager.add_quiz_config(quiz_config)
-
+        
         if added_config and added_config.id is not None:
-            QMessageBox.information(self, "Sucesso",
+            QMessageBox.information(self, "Sucesso", 
                                    f"Configuração de Quiz '{added_config.name or f'ID: {added_config.id}'}' salva com {len(added_config.question_ids)} perguntas.")
             # Limpar para próxima configuração
             self.quiz_name_edit.clear()
             self.selected_questions_list.clear()
             self.selected_question_ids_for_quiz.clear()
-
+            
             # Emitir o sinal para iniciar o quiz
             self.start_quiz_signal.emit(added_config)
         else:
@@ -178,9 +178,9 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     # É necessário um DatabaseManager funcional
     # Execute `python -m src.core.database_manager` antes para popular o DB
-    db_manager_instance = DatabaseManager(db_path='data/agenda.db')
+    db_manager_instance = DatabaseManager(db_path='data/agenda.db') 
     if not db_manager_instance.conn or not db_manager_instance.get_all_questions():
-        QMessageBox.critical(None, "Erro de Banco de Dados",
+        QMessageBox.critical(None, "Erro de Banco de Dados", 
                              "Banco de dados não encontrado ou sem perguntas. Execute 'python -m src.core.database_manager' primeiro.")
         sys.exit(1)
 
@@ -188,7 +188,7 @@ if __name__ == '__main__':
     quiz_config_widget.setWindowTitle("Teste da QuizConfigView")
     quiz_config_widget.setGeometry(50, 50, 1000, 700) # Aumentar tamanho para teste
     quiz_config_widget.show()
-
+    
     exit_code = app.exec()
     if db_manager_instance.conn:
         db_manager_instance.close()

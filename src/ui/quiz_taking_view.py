@@ -17,7 +17,7 @@ class QuizTakingView(QWidget):
         super().__init__(parent)
         self.db_manager = db_manager
         self.quiz_config = quiz_config
-
+        
         self.questions: List[Question] = []
         self.current_question_index: int = 0
         self.user_answers: Dict[int, str] = {} # question_id: answer_text
@@ -40,7 +40,7 @@ class QuizTakingView(QWidget):
             question = self.db_manager.get_question_by_id(q_id)
             if question:
                 self.questions.append(question)
-
+        
         if not self.questions:
             print(f"Aviso: Nenhum objeto Question carregado para QuizConfig ID {self.quiz_config.id} com question_ids {self.quiz_config.question_ids}")
 
@@ -70,7 +70,7 @@ class QuizTakingView(QWidget):
         question_layout = QVBoxLayout(scroll_widget)
         scroll_area.setWidget(scroll_widget)
         main_layout.addWidget(scroll_area)
-
+        
         self.question_text_label = QLabel("Texto da Pergunta Aqui...")
         self.question_text_label.setFont(QFont("Arial", 14))
         self.question_text_label.setWordWrap(True)
@@ -97,7 +97,7 @@ class QuizTakingView(QWidget):
             return
 
         question = self.questions[self.current_question_index]
-
+        
         self.progress_label.setText(f"Pergunta {self.current_question_index + 1} de {len(self.questions)}")
         self.question_text_label.setText(question.text)
 
@@ -106,7 +106,7 @@ class QuizTakingView(QWidget):
             child = self.options_layout.takeAt(0)
             if child.widget():
                 child.widget().deleteLater()
-
+        
         # Adicionar novas opções
         for option_text in question.options:
             radio_button = QRadioButton(option_text)
@@ -115,7 +115,7 @@ class QuizTakingView(QWidget):
             # Marcar se já respondido anteriormente nesta sessão
             if question.id in self.user_answers and self.user_answers[question.id] == option_text:
                 radio_button.setChecked(True)
-
+        
         if self.current_question_index == len(self.questions) - 1:
             self.next_button.setText("Finalizar Quiz")
         else:
@@ -141,7 +141,7 @@ class QuizTakingView(QWidget):
                 # ou forçar uma seleção. Por ora, não salvar se nada selecionado.
                 # Se for obrigatório responder:
                 # QMessageBox.warning(self, "Sem Resposta", "Por favor, selecione uma opção.")
-                # return
+                # return 
                 pass
 
 
@@ -159,20 +159,20 @@ class QuizTakingView(QWidget):
             question_obj = next((q for q in self.questions if q.id == q_id), None)
             if question_obj and question_obj.answer == user_answer:
                 score += 1
-
+        
         total_questions = len(self.questions)
-
+        
         attempt = QuizAttempt(
             quiz_config_id=self.quiz_config.id, # type: ignore # sabemos que quiz_config.id não é None aqui
             user_answers=self.user_answers,
             score=score,
             total_questions=total_questions
         )
-
+        
         added_attempt = self.db_manager.add_quiz_attempt(attempt)
-
+        
         if added_attempt and added_attempt.id is not None:
-            QMessageBox.information(self, "Quiz Finalizado",
+            QMessageBox.information(self, "Quiz Finalizado", 
                                    f"Sua pontuação: {score}/{total_questions}")
             self.quiz_finished_signal.emit(added_attempt.id)
         else:
@@ -191,7 +191,7 @@ if __name__ == '__main__':
     # Criar uma QuizConfig de exemplo para teste
     # Certifique-se que as perguntas com IDs 1, 2, 3 existem no DB
     # (Execute `python -m src.core.database_manager` para popular)
-
+    
     sample_questions_for_test = db_man.get_all_questions()
     if len(sample_questions_for_test) < 2:
         QMessageBox.critical(None, "Erro", "Pelo menos 2 perguntas são necessárias no DB para este teste.")
@@ -208,17 +208,17 @@ if __name__ == '__main__':
     # Para este teste, podemos simular um ID se não formos salvar a config aqui.
 
     quiz_view = QuizTakingView(db_man, test_quiz_config)
-
+    
     def show_results(attempt_id):
         print(f"Sinal quiz_finished_signal recebido! ID da Tentativa: {attempt_id}")
         # Aqui, você poderia abrir uma nova janela/view para mostrar os resultados detalhados.
         # Por agora, apenas fechamos a aplicação de teste.
         # app.quit() # Comentado para manter a janela aberta após o quiz para inspeção
-
+    
     quiz_view.quiz_finished_signal.connect(show_results)
-
+    
     quiz_view.setWindowTitle("Teste de Realização de Quiz")
     quiz_view.setGeometry(100, 100, 600, 400)
     quiz_view.show()
-
+    
     sys.exit(app.exec())

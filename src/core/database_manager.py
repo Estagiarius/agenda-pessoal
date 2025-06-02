@@ -160,7 +160,7 @@ class DatabaseManager:
                 name TEXT,
                 question_ids TEXT NOT NULL, -- JSON list de ints
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
             )
             """)
             # Trigger para QuizConfigs updated_at
@@ -229,7 +229,7 @@ class DatabaseManager:
         if not self.conn:
             print("Conexão com o banco de dados não estabelecida.")
             return events
-
+        
         try:
             cursor = self.conn.cursor()
             # Busca eventos onde a data de start_time corresponde à date_obj
@@ -241,7 +241,7 @@ class DatabaseManager:
             ORDER BY start_time
             """
             cursor.execute(query, (date_obj.isoformat(),))
-
+            
             for row in cursor.fetchall():
                 event = Event(
                     id=row['id'],
@@ -267,7 +267,7 @@ class DatabaseManager:
         if not self.conn:
             print("Conexão com o banco de dados não estabelecida.")
             return None
-
+            
         try:
             cursor = self.conn.cursor()
             query = """
@@ -277,7 +277,7 @@ class DatabaseManager:
             """
             cursor.execute(query, (event_id,))
             row = cursor.fetchone()
-
+            
             if row:
                 event = Event(
                     id=row['id'],
@@ -301,7 +301,7 @@ class DatabaseManager:
         if not self.conn:
             print("Conexão com o banco de dados não estabelecida.")
             return None
-
+        
         try:
             cursor = self.conn.cursor()
             query = """
@@ -319,14 +319,14 @@ class DatabaseManager:
             ))
             self.conn.commit()
             event.id = cursor.lastrowid
-
+            
             # Para obter created_at e updated_at, precisaríamos de uma nova query
             # ou confiar que o objeto Event já os tem (se aplicável) ou são None
             # Por simplicidade, vamos buscar o evento recém-criado para ter todos os campos.
             if event.id is not None:
                 return self.get_event_by_id(event.id)
             return None # Algo deu errado se não houver lastrowid
-
+            
         except sqlite3.Error as e:
             print(f"Erro ao adicionar evento: {e}")
             if self.conn:
@@ -338,12 +338,12 @@ class DatabaseManager:
         if not self.conn or event.id is None:
             print("Conexão não estabelecida ou ID do evento não fornecido para atualização.")
             return False
-
+        
         try:
             cursor = self.conn.cursor()
             query = """
             UPDATE Events
-            SET title = ?, description = ?, start_time = ?, end_time = ?,
+            SET title = ?, description = ?, start_time = ?, end_time = ?, 
                 event_type = ?, location = ?, recurrence_rule = ?
             WHERE id = ?
             """
@@ -371,7 +371,7 @@ class DatabaseManager:
         if not self.conn:
             print("Conexão com o banco de dados não estabelecida.")
             return False
-
+            
         try:
             cursor = self.conn.cursor()
             query = "DELETE FROM Events WHERE id = ?"
@@ -380,24 +380,20 @@ class DatabaseManager:
             return cursor.rowcount > 0 # Retorna True se alguma linha foi afetada
         except sqlite3.Error as e:
             print(f"Erro ao excluir evento: {e}")
-            if self.conn:
-                self.conn.rollback()
+            if self.conn: self.conn.rollback()
             return False
 
-    def add_sample_event(self):
-        """Adiciona um evento de exemplo para testes."""
+    def _add_sample_event_and_task(self):
+        """Adiciona um evento de exemplo e uma tarefa associada para testes."""
         if not self.conn:
-            print("Conexão não estabelecida.")
+            print("Conexão para _add_sample_event_and_task não estabelecida.")
             return
-
         try:
             cursor = self.conn.cursor()
-            # Verificar se já existe para não duplicar
-            # Usando uma data fixa para o evento de exemplo para consistência nos testes, se necessário
-            sample_event_date = date(2024, 1, 1) # Ou use date.today() se preferir dinâmico
-            cursor.execute("SELECT id FROM Events WHERE title = ? AND date(start_time) = ?",
+            sample_event_date = date(2024, 1, 1)
+            cursor.execute("SELECT id FROM Events WHERE title = ? AND date(start_time) = ?", 
                            ("Reunião de Planejamento", sample_event_date.isoformat()))
-
+            
             event_id_for_task = None
             existing_event = cursor.fetchone()
 
@@ -413,24 +409,18 @@ class DatabaseManager:
                     "event_type": "reuniao",
                     "location": "Sala de Conferências 1"
                 }
-
                 query_insert_event = """
                 INSERT INTO Events (title, description, start_time, end_time, event_type, location)
-                VALUES (?, ?, ?, ?, ?, ?)
-                """
+                VALUES (?, ?, ?, ?, ?, ?)"""
                 cursor.execute(query_insert_event, (
-                    event_data["title"],
-                    event_data["description"],
-                    self._datetime_to_str(event_data["start_time"]),
-                    self._datetime_to_str(event_data["end_time"]),
-                    event_data["event_type"],
-                    event_data["location"]
+                    event_data["title"], event_data["description"],
+                    self._datetime_to_str(event_data["start_time"]), self._datetime_to_str(event_data["end_time"]),
+                    event_data["event_type"], event_data["location"]
                 ))
                 self.conn.commit()
                 event_id_for_task = cursor.lastrowid
                 print(f"Evento de exemplo '{event_data['title']}' adicionado para {sample_event_date} com ID {event_id_for_task}.")
 
-            # Adicionar uma tarefa de exemplo vinculada a este evento
             if event_id_for_task:
                 cursor.execute("SELECT id FROM Tasks WHERE title = ? AND parent_event_id = ?",
                                ("Preparar apresentação para Reunião de Planejamento", event_id_for_task))
@@ -439,32 +429,23 @@ class DatabaseManager:
                 else:
                     task_data = {
                         "title": "Preparar apresentação para Reunião de Planejamento",
-                        "description": "Slides sobre o progresso do Q1.",
-                        "priority": "High",
+                        "description": "Slides sobre o progresso do Q1.", "priority": "High",
                         "due_date": datetime.combine(sample_event_date, datetime.min.time()).replace(hour=9),
-                        "status": "Open",
-                        "parent_event_id": event_id_for_task
+                        "status": "Open", "parent_event_id": event_id_for_task
                     }
                     query_insert_task = """
                     INSERT INTO Tasks (title, description, priority, due_date, status, parent_event_id)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                    """
+                    VALUES (?, ?, ?, ?, ?, ?)"""
                     cursor.execute(query_insert_task, (
-                        task_data["title"],
-                        task_data["description"],
-                        task_data["priority"],
-                        self._datetime_to_str(task_data["due_date"]),
-                        task_data["status"],
-                        task_data["parent_event_id"]
+                        task_data["title"], task_data["description"], task_data["priority"],
+                        self._datetime_to_str(task_data["due_date"]), task_data["status"], task_data["parent_event_id"]
                     ))
                     self.conn.commit()
                     print(f"Tarefa de exemplo '{task_data['title']}' adicionada.")
-
         except sqlite3.Error as e:
-            print(f"Erro ao adicionar evento/tarefa de exemplo: {e}")
-            if self.conn:
-                self.conn.rollback()
-
+            print(f"Erro ao adicionar evento/tarefa de exemplo em _add_sample_event_and_task: {e}")
+            if self.conn: self.conn.rollback()
+            
     # --- CRUD para Tasks ---
     def add_task(self, task: Task) -> Optional[Task]:
         """Adiciona uma nova tarefa ao banco de dados."""
@@ -537,12 +518,12 @@ class DatabaseManager:
             if priority:
                 conditions.append("priority = ?")
                 params.append(priority)
-
+            
             if conditions:
                 base_query += " WHERE " + " AND ".join(conditions)
-
+            
             base_query += " ORDER BY due_date DESC, created_at DESC" # Exemplo de ordenação
-
+            
             cursor.execute(base_query, params)
             for row in cursor.fetchall():
                 tasks.append(Task(
@@ -606,7 +587,7 @@ class DatabaseManager:
         """Cria um objeto Question a partir de uma linha do banco de dados."""
         if not row:
             return None
-
+        
         options_json = row['options']
         options_list: List[str] = []
         if options_json:
@@ -686,12 +667,12 @@ class DatabaseManager:
             if difficulty:
                 conditions.append("difficulty = ?")
                 params.append(difficulty)
-
+            
             if conditions:
                 base_query += " WHERE " + " AND ".join(conditions)
-
+            
             base_query += " ORDER BY subject, id"
-
+            
             cursor.execute(base_query, params)
             for row in cursor.fetchall():
                 question_obj = self._question_from_row(row)
@@ -755,7 +736,7 @@ class DatabaseManager:
         except json.JSONDecodeError:
             print(f"Aviso: Falha ao decodificar 'question_ids' JSON para QuizConfig ID {row['id']}.")
             question_ids_list = []
-
+        
         return QuizConfig(
             id=row['id'],
             name=row['name'],
@@ -791,7 +772,7 @@ class DatabaseManager:
                 details_dict = json.loads(row['details_json'])
             except json.JSONDecodeError:
                 print(f"Aviso: Falha ao decodificar 'details_json' para Entity ID {row['id']}.")
-
+        
         return Entity(
             id=row['id'],
             name=row['name'],
@@ -829,7 +810,7 @@ class DatabaseManager:
         except sqlite3.Error as e:
             print(f"Erro ao buscar QuizConfig por ID: {e}")
             return None
-
+            
     def get_all_quiz_configs(self) -> List[QuizConfig]:
         if not self.conn: return None # Correção: deveria ser None, não [] se a conexão falhar
         try:
@@ -840,7 +821,7 @@ class DatabaseManager:
                 query += " WHERE type = ?"
                 params.append(entity_type)
             query += " ORDER BY name"
-
+            
             cursor.execute(query, params)
             entities: List[Entity] = []
             for row in cursor.fetchall():
@@ -886,7 +867,7 @@ class DatabaseManager:
         if not self.conn: return False
         try:
             cursor = self.conn.cursor()
-            # Usar INSERT OR IGNORE para evitar erro se o link já existir,
+            # Usar INSERT OR IGNORE para evitar erro se o link já existir, 
             # ou INSERT OR REPLACE se quisermos atualizar o papel se o link existir.
             # Por simplicidade, INSERT OR IGNORE. Se precisar atualizar o papel, uma lógica de UPDATE seria melhor.
             query = "INSERT OR IGNORE INTO Event_Entities (event_id, entity_id, role) VALUES (?, ?, ?)"
@@ -947,7 +928,7 @@ class DatabaseManager:
         except json.JSONDecodeError:
             print(f"Aviso: Falha ao decodificar 'question_ids' JSON para QuizConfig ID {row['id']}.")
             question_ids_list = []
-
+        
         return QuizConfig(
             id=row['id'],
             name=row['name'],
@@ -986,7 +967,7 @@ class DatabaseManager:
         except sqlite3.Error as e:
             print(f"Erro ao buscar QuizConfig por ID: {e}")
             return None
-
+            
     def get_all_quiz_configs(self) -> List[QuizConfig]:
         if not self.conn: return []
         configs: List[QuizConfig] = []
@@ -1017,7 +998,7 @@ class DatabaseManager:
                 print(f"Aviso: 'user_answers' para QuizAttempt ID {row['id']} não é um dict JSON válido.")
         except json.JSONDecodeError:
             print(f"Aviso: Falha ao decodificar 'user_answers' JSON para QuizAttempt ID {row['id']}.")
-
+        
         return QuizAttempt(
             id=row['id'],
             quiz_config_id=row['quiz_config_id'],
@@ -1034,7 +1015,7 @@ class DatabaseManager:
             cursor = self.conn.cursor()
             # As chaves do dicionário (question_id) devem ser strings no JSON
             user_answers_json = json.dumps({str(k): v for k, v in attempt.user_answers.items()})
-
+            
             query = """
             INSERT INTO QuizAttempts (quiz_config_id, user_answers, score, total_questions, attempted_at)
             VALUES (?, ?, ?, ?, ?)
@@ -1088,7 +1069,7 @@ class DatabaseManager:
         except sqlite3.Error as e:
             print(f"Erro ao buscar tentativas para QuizConfig ID {quiz_config_id}: {e}")
         return attempts
-
+        
     def add_sample_data(self):
         """Adiciona um evento de exemplo, uma tarefa associada e perguntas de exemplo para testes."""
         if not self.conn:
@@ -1099,7 +1080,7 @@ class DatabaseManager:
                 "event_type": "reuniao",
                 "location": "Sala de Conferências 1"
             }
-
+            
             query = """
             INSERT INTO Events (title, description, start_time, end_time, event_type, location)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -1162,25 +1143,16 @@ if __name__ == '__main__':
     # Supondo que o método de adicionar dados de exemplo agora é add_sample_data
     # db_manager.add_sample_event() foi provavelmente renomeado para db_manager.add_sample_data()
     # Vou assumir que add_sample_data() é o método correto que também lida com Settings.
-
-    db_manager = DatabaseManager(db_path='data/agenda.db')
+    
+    db_manager = DatabaseManager(db_path='data/agenda.db') 
     if db_manager.conn:
         print(f"Banco de dados 'data/agenda.db' inicializado e tabelas criadas/verificadas.")
-
-        # Chamar o método que popula todos os dados de exemplo, incluindo settings se houver
-        # Se add_sample_data não existir, precisaremos chamá-lo individualmente ou criar um wrapper.
-        # Assumindo que add_sample_data() existe e é o método correto.
-        if hasattr(db_manager, 'add_sample_data'):
-            db_manager.add_sample_data()
-        elif hasattr(db_manager, 'add_sample_event'): # Fallback para nome antigo se existir
-             db_manager.add_sample_event()
-        else:
-            print("Método para popular dados de exemplo (add_sample_data ou add_sample_event) não encontrado.")
-
-
+        
+        db_manager.add_sample_data() # Chamada única para popular todos os dados de exemplo
+        
         # Testar CRUD de Eventos
         print("\n--- Testando CRUD de Eventos ---")
-
+        
         # 1. Adicionar Evento
         print("Testando add_event...")
         new_event_data = Event(
@@ -1207,7 +1179,7 @@ if __name__ == '__main__':
             retrieved_event.description = "Descrição atualizada."
             # Simular uma pequena mudança no tempo para testar a atualização do timestamp
             # Pode ser necessário um sleep pequeno se a resolução do CURRENT_TIMESTAMP for baixa
-            # import time; time.sleep(1)
+            # import time; time.sleep(1) 
             if db_manager.update_event(retrieved_event):
                 print(f"Evento ID={event_id_to_test} atualizado com sucesso.")
                 updated_event = db_manager.get_event_by_id(event_id_to_test)
@@ -1247,13 +1219,13 @@ if __name__ == '__main__':
 
         assert db_manager.get_setting("non_existent_key", "fallback") == "fallback"
         print("Setting inexistente 'non_existent_key' retornou valor fallback.")
-
+        
         assert db_manager.set_setting("test_user_name", "new_test_user") == True
         assert db_manager.get_setting("test_user_name") == "new_test_user"
         print("Setting 'test_user_name' atualizado e recuperado.")
 
         # ... (restantes dos testes de CRUD para Task, Question, QuizConfig, QuizAttempt, Entity, etc. podem seguir) ...
-
+            
         db_manager.close()
         print("\nConexão com o banco de dados fechada.")
     else:

@@ -1,6 +1,6 @@
 import sys
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QFormLayout, QLineEdit, QTextEdit,
+    QDialog, QVBoxLayout, QFormLayout, QLineEdit, QTextEdit, 
     QDateTimeEdit, QPushButton, QDialogButtonBox, QMessageBox,
     QListWidget, QListWidgetItem, QCheckBox, QLabel, QScrollArea, QWidget as QtWidget # Renomeado QWidget
 )
@@ -38,7 +38,7 @@ class EventDialog(QDialog):
         self.start_time_edit = QDateTimeEdit()
         self.start_time_edit.setCalendarPopup(True)
         self.start_time_edit.setDisplayFormat("dd/MM/yyyy HH:mm")
-
+        
         self.end_time_edit = QDateTimeEdit()
         self.end_time_edit.setCalendarPopup(True)
         self.end_time_edit.setDisplayFormat("dd/MM/yyyy HH:mm")
@@ -60,12 +60,12 @@ class EventDialog(QDialog):
         # --- Seção de Participantes/Entidades ---
         participants_label = QLabel("Participantes/Entidades Associadas:")
         main_layout.addWidget(participants_label)
-
+        
         # Usaremos um QScrollArea para o caso de muitas entidades
         scroll_area_participants = QScrollArea()
         scroll_area_participants.setWidgetResizable(True)
         scroll_area_participants.setFixedHeight(150) # Altura fixa para a área de scroll
-
+        
         self.participants_container = QtWidget() # Widget container para o layout das entidades
         self.participants_layout = QVBoxLayout(self.participants_container) # Layout para checkboxes de entidades
         scroll_area_participants.setWidget(self.participants_container)
@@ -88,7 +88,7 @@ class EventDialog(QDialog):
                 self.start_time_edit.setDateTime(self.event.start_time)
             else: # Caso de evento existente sem start_time (improvável com lógica atual)
                 self.start_time_edit.setDateTime(QDateTime.currentDateTime())
-
+            
             if self.event.end_time:
                 self.end_time_edit.setDateTime(self.event.end_time)
             else: # Se não houver end_time, pode-se deixar em branco ou usar start_time + 1h
@@ -106,19 +106,19 @@ class EventDialog(QDialog):
     def get_event_data(self) -> Optional[Event]:
         title = self.title_edit.text().strip()
         description = self.description_edit.toPlainText().strip()
-
+        
         # QDateTimeEdit retorna QDateTime, converter para datetime.datetime
         start_time_qdt = self.start_time_edit.dateTime()
         start_time = start_time_qdt.toPyDateTime()
 
         end_time_qdt = self.end_time_edit.dateTime()
         end_time = end_time_qdt.toPyDateTime()
-
+        
         # Validação
         if not title:
             QMessageBox.warning(self, "Campo Obrigatório", "O título do evento não pode estar vazio.")
             return None
-
+        
         if end_time < start_time:
             QMessageBox.warning(self, "Data Inválida", "A hora de término não pode ser anterior à hora de início.")
             return None
@@ -141,8 +141,8 @@ class EventDialog(QDialog):
             event_type=event_type,
             location=location,
             recurrence_rule=None, # recurrence_rule, # Adicionar quando o campo estiver ativo
-            created_at=created_at,
-            updated_at=updated_at
+            created_at=created_at, 
+            updated_at=updated_at 
         )
 
     def validate_and_accept(self):
@@ -178,8 +178,8 @@ if __name__ == '__main__':
     sample_start_time = datetime(2024, 8, 20, 10, 0, 0)
     sample_end_time = datetime(2024, 8, 20, 12, 0, 0)
     existing_event = Event(
-        id=1,
-        title="Evento Existente",
+        id=1, 
+        title="Evento Existente", 
         description="Esta é uma descrição.",
         start_time=sample_start_time,
         end_time=sample_end_time,
@@ -199,5 +199,5 @@ if __name__ == '__main__':
             # ... e outros campos conforme necessário
     else:
         print("\nEdição de evento cancelada.")
-
+        
     sys.exit(0) # Sair sem iniciar o loop de eventos principal para testes simples

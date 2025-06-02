@@ -1,6 +1,6 @@
 import sys
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QCalendarWidget, QListWidget,
+    QWidget, QVBoxLayout, QHBoxLayout, QCalendarWidget, QListWidget, 
     QListWidgetItem, QTextEdit, QLabel, QSplitter, QPushButton, QMessageBox,
     QSpacerItem, QSizePolicy, QScrollArea, QFormLayout # Adicionado QScrollArea, QFormLayout
 )
@@ -10,7 +10,7 @@ from datetime import date, datetime
 from typing import Optional, Dict # Adicionado Dict
 
 from src.core.database_manager import DatabaseManager
-from src.core.models import Event
+from src.core.models import Event 
 from src.ui.event_dialog import EventDialog
 
 class AgendaView(QWidget):
@@ -20,12 +20,12 @@ class AgendaView(QWidget):
         self.current_selected_event_id: Optional[int] = None
 
         main_layout = QHBoxLayout(self)
-        main_layout.setContentsMargins(10, 10, 10, 10)
-        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(10, 10, 10, 10) 
+        main_layout.setSpacing(10) 
 
         # --- Lado Esquerdo: Calendário e Lista de Eventos ---
         left_layout_widget = QWidget()
-        left_v_layout = QVBoxLayout(left_layout_widget)
+        left_v_layout = QVBoxLayout(left_layout_widget) 
         left_v_layout.setContentsMargins(0,0,0,0)
         left_v_layout.setSpacing(10)
 
@@ -41,21 +41,21 @@ class AgendaView(QWidget):
 
         self.edit_event_button = QPushButton("Editar Evento")
         self.edit_event_button.clicked.connect(self._edit_event_dialog)
-        self.edit_event_button.setEnabled(False)
+        self.edit_event_button.setEnabled(False) 
         action_buttons_layout.addWidget(self.edit_event_button)
 
         self.delete_event_button = QPushButton("Excluir Evento")
         self.delete_event_button.clicked.connect(self._delete_event)
-        self.delete_event_button.setEnabled(False)
+        self.delete_event_button.setEnabled(False) 
         action_buttons_layout.addWidget(self.delete_event_button)
-
+        
         left_v_layout.addLayout(action_buttons_layout)
 
         self.events_list = QListWidget()
         self.events_list.currentItemChanged.connect(self._on_event_selected)
         self.events_list.setStyleSheet("QListWidget::item { padding: 5px; }")
         left_v_layout.addWidget(self.events_list)
-
+        
         # --- Lado Direito: Detalhes do Evento com QLabels ---
         right_panel_widget = QWidget()
         right_panel_layout = QVBoxLayout(right_panel_widget)
@@ -69,7 +69,7 @@ class AgendaView(QWidget):
         details_scroll_area = QScrollArea()
         details_scroll_area.setWidgetResizable(True)
         details_scroll_area.setStyleSheet("QScrollArea { border: none; background-color: #f9f9f9; }") # Estilo similar ao QTextEdit anterior
-
+        
         self.event_details_widget = QWidget() # Widget que conterá o QFormLayout
         details_form_layout = QFormLayout(self.event_details_widget)
         details_form_layout.setContentsMargins(10, 10, 10, 10)
@@ -94,28 +94,28 @@ class AgendaView(QWidget):
         details_form_layout.addRow("<b>Início:</b>", self.detail_start_time_label)
         details_form_layout.addRow("<b>Fim:</b>", self.detail_end_time_label)
         details_form_layout.addRow("<b>Local:</b>", self.detail_location_label)
-
+        
         # Descrição e Participantes podem precisar de mais espaço ou formatação especial
         desc_title = QLabel("<b>Descrição:</b>")
         desc_title.setAlignment(Qt.AlignmentFlag.AlignTop) # Alinhar o rótulo "Descrição" ao topo
         details_form_layout.addRow(desc_title, self.detail_description_label)
-
+        
         part_title = QLabel("<b>Participantes:</b>")
         part_title.setAlignment(Qt.AlignmentFlag.AlignTop)
         details_form_layout.addRow(part_title, self.detail_participants_label)
 
         details_scroll_area.setWidget(self.event_details_widget)
         right_panel_layout.addWidget(details_scroll_area)
-
+        
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(left_layout_widget)
-        splitter.addWidget(right_panel_widget)
-        splitter.setSizes([350, 650])
+        splitter.addWidget(right_panel_widget) 
+        splitter.setSizes([350, 650]) 
 
         main_layout.addWidget(splitter)
 
         self._clear_details_labels() # Limpa os labels inicialmente
-        self._on_date_selected()
+        self._on_date_selected() 
 
     def _clear_details_labels(self):
         """Limpa o texto de todos os QLabels de detalhes."""
@@ -134,7 +134,7 @@ class AgendaView(QWidget):
         """Atualiza a lista de eventos para a data atualmente selecionada no calendário."""
         selected_qdate = self.calendar.selectedDate()
         selected_date = selected_qdate.toPyDate()
-
+        
         self.events_list.clear()
         # Não limpa os detalhes aqui, pois pode ser chamado após uma edição/deleção
         # e queremos manter o contexto ou limpá-lo seletivamente.
@@ -156,11 +156,11 @@ class AgendaView(QWidget):
                     display_text = f"{event_obj.start_time.strftime('%H:%M')} - {event_obj.title}"
                 else:
                     display_text = f"Horário Indef. - {event_obj.title}"
-
+                
                 item = QListWidgetItem(display_text)
                 item.setData(Qt.ItemDataRole.UserRole, event_obj.id)
                 self.events_list.addItem(item)
-
+            
             # Tentar manter o evento selecionado se ainda existir, ou selecionar o primeiro
             if self.current_selected_event_id:
                 items = self.events_list.findItems(str(self.current_selected_event_id), Qt.MatchFlag.MatchExactly) # Isso não vai funcionar, ID está em UserRole
@@ -198,7 +198,7 @@ class AgendaView(QWidget):
             return
 
         self.current_selected_event_id = current_item.data(Qt.ItemDataRole.UserRole)
-
+        
         if self.current_selected_event_id is None: # Checagem adicional
             self.edit_event_button.setEnabled(False)
             self.delete_event_button.setEnabled(False)
@@ -211,18 +211,18 @@ class AgendaView(QWidget):
         if event_obj:
             details_html = f"<h3>{event_obj.title}</h3>"
             details_html += f"<p><strong>Tipo:</strong> {event_obj.event_type}</p>" # Corrigido para event_obj
-
+            
             if event_obj.start_time: # Corrigido para event_obj
                 details_html += f"<p><strong>Início:</strong> {event_obj.start_time.strftime('%d/%m/%Y %H:%M')}</p>"
             if event_obj.end_time: # Corrigido para event_obj
                 details_html += f"<p><strong>Fim:</strong> {event_obj.end_time.strftime('%d/%m/%Y %H:%M')}</p>"
-
+            
             if event_obj.description: # Corrigido para event_obj
                 details_html += f"<p><strong>Descrição:</strong><br>{event_obj.description.replace(chr(10), '<br>')}</p>"
-
+            
             if event_obj.location: # Corrigido para event_obj
                 details_html += f"<p><strong>Local:</strong> {event_obj.location}</p>"
-
+            
             if event_obj.recurrence_rule: # Corrigido para event_obj (e notado que não está no dialog)
                 details_html += f"<p><strong>Recorrência:</strong> {event_obj.recurrence_rule}</p>"
 
@@ -233,7 +233,7 @@ class AgendaView(QWidget):
                 for entity, role in linked_entities:
                     details_html += f"<li>{entity.name} ({entity.type}) - <i>{role}</i></li>"
                 details_html += "</ul></p>"
-
+            
             self.event_details_area.setHtml(details_html)
         else:
             # self.event_details_area.setPlaceholderText(f"Detalhes do evento com ID {event_id} não encontrados.") # event_id não definido aqui
@@ -247,23 +247,23 @@ class AgendaView(QWidget):
         dialog = EventDialog(db_manager=self.db_manager, parent=self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             # Acessar os dados salvos no diálogo
-            event_data, selected_entities_map = dialog.event_data_to_save
-
+            event_data, selected_entities_map = dialog.event_data_to_save 
+            
             if event_data:
                 new_event = self.db_manager.add_event(event_data)
                 if new_event and new_event.id:
                     # Salvar associações
                     for entity_id, role in selected_entities_map.items():
                         self.db_manager.link_entity_to_event(new_event.id, entity_id, role)
-
+                    
                     QMessageBox.information(self, "Sucesso", f"Evento '{new_event.title}' adicionado com ID: {new_event.id}.")
                     if new_event.start_time:
                         self.calendar.setSelectedDate(QDate(new_event.start_time.year, new_event.start_time.month, new_event.start_time.day))
-                    self.current_selected_event_id = new_event.id
-                    self._refresh_event_list_for_selected_date()
+                    self.current_selected_event_id = new_event.id 
+                    self._refresh_event_list_for_selected_date() 
                 else:
                     QMessageBox.critical(self, "Erro", "Falha ao adicionar o evento no banco de dados.")
-
+    
     def _edit_event_dialog(self):
         if not self.current_selected_event_id:
             QMessageBox.warning(self, "Nenhum Evento Selecionado", "Por favor, selecione um evento para editar.")
@@ -279,22 +279,22 @@ class AgendaView(QWidget):
         dialog = EventDialog(db_manager=self.db_manager, event=event_to_edit, parent=self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             event_data, selected_entities_map = dialog.event_data_to_save
-
-            if event_data and event_data.id is not None:
+            
+            if event_data and event_data.id is not None: 
                 if self.db_manager.update_event(event_data):
                     # Atualizar associações:
                     existing_linked_entities = self.db_manager.get_entities_for_event(event_data.id)
                     for entity, _ in existing_linked_entities:
                         if entity.id is not None:
                              self.db_manager.unlink_entity_from_event(event_data.id, entity.id)
-
+                    
                     for entity_id, role in selected_entities_map.items():
                         self.db_manager.link_entity_to_event(event_data.id, entity_id, role)
 
                     QMessageBox.information(self, "Sucesso", f"Evento '{event_data.title}' atualizado.")
                     if event_data.start_time:
                          self.calendar.setSelectedDate(QDate(event_data.start_time.year, event_data.start_time.month, event_data.start_time.day))
-                    self.current_selected_event_id = event_data.id
+                    self.current_selected_event_id = event_data.id 
                     self._refresh_event_list_for_selected_date()
                 else:
                     QMessageBox.critical(self, "Erro", "Falha ao atualizar o evento no banco de dados.")
@@ -310,17 +310,17 @@ class AgendaView(QWidget):
             self._refresh_event_list_for_selected_date() # Atualiza a lista
             return
 
-        reply = QMessageBox.question(self, "Confirmar Exclusão",
+        reply = QMessageBox.question(self, "Confirmar Exclusão", 
                                      f"Tem certeza que deseja excluir o evento '{event_to_delete.title}'?",
-                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, 
                                      QMessageBox.StandardButton.No)
 
         if reply == QMessageBox.StandardButton.Yes:
             if self.db_manager.delete_event(self.current_selected_event_id):
                 QMessageBox.information(self, "Sucesso", f"Evento '{event_to_delete.title}' excluído.")
-                self.current_selected_event_id = None
-                self.event_details_area.clear()
-                self._refresh_event_list_for_selected_date()
+                self.current_selected_event_id = None 
+                self.event_details_area.clear() 
+                self._refresh_event_list_for_selected_date() 
             else:
                 QMessageBox.critical(self, "Erro", "Falha ao excluir o evento no banco de dados.")
 
@@ -333,14 +333,14 @@ if __name__ == '__main__':
     # e que há dados de exemplo.
     # O if __name__ == '__main__' em database_manager.py pode cuidar disso se executado.
     # python src/core/database_manager.py
-
+    
     app = QApplication(sys.argv)
-
+    
     # Crie uma instância do DatabaseManager
     # O DatabaseManager tentará criar o db e as tabelas se não existirem
     # e também adicionará um evento de exemplo para o dia atual.
     db_manager_instance = DatabaseManager(db_path='data/agenda.db')
-
+    
     if not db_manager_instance.conn:
         print("Falha ao conectar ao banco de dados. A AgendaView pode não funcionar corretamente.")
         # Você pode querer sair ou mostrar uma mensagem de erro aqui
@@ -353,7 +353,7 @@ if __name__ == '__main__':
 
 
     agenda_widget = AgendaView(db_manager_instance)
-
+    
     # Para testar, crie uma janela simples para hospedar a AgendaView
     test_window = QWidget()
     test_layout = QVBoxLayout(test_window)
@@ -361,12 +361,12 @@ if __name__ == '__main__':
     test_window.setWindowTitle("Teste da AgendaView")
     test_window.setGeometry(100, 100, 900, 700)
     test_window.show()
-
+    
     exit_code = app.exec()
-
+    
     # Fechar a conexão com o banco de dados ao sair
     if db_manager_instance.conn:
         db_manager_instance.close()
         print("Conexão com o DB fechada após o teste da AgendaView.")
-
+        
     sys.exit(exit_code)

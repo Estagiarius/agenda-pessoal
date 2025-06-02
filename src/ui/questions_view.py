@@ -1,7 +1,7 @@
 import sys
 import json
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
+    QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem, 
     QPushButton, QComboBox, QLabel, QMessageBox, QHeaderView, QLineEdit
 )
 from PyQt6.QtCore import Qt
@@ -39,7 +39,7 @@ class QuestionsView(QWidget):
         self.difficulty_filter_combo.addItems(["Todas", "Fácil", "Médio", "Difícil"])
         self.difficulty_filter_combo.currentIndexChanged.connect(self._load_questions)
         filter_layout.addWidget(self.difficulty_filter_combo)
-
+        
         main_layout.addLayout(filter_layout)
 
         # Tabela de Perguntas
@@ -51,7 +51,7 @@ class QuestionsView(QWidget):
         self.questions_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         self.questions_table.verticalHeader().setVisible(False)
         self.questions_table.itemSelectionChanged.connect(self._on_question_selected)
-
+        
         header = self.questions_table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch) # Texto
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents) # Assunto
@@ -75,7 +75,7 @@ class QuestionsView(QWidget):
         self.delete_question_button.clicked.connect(self._delete_question)
         self.delete_question_button.setEnabled(False)
         action_buttons_layout.addWidget(self.delete_question_button)
-
+        
         main_layout.addLayout(action_buttons_layout)
         self._load_questions()
 
@@ -87,11 +87,11 @@ class QuestionsView(QWidget):
         subject_filter = self.subject_filter_edit.text().strip()
         if not subject_filter: # Se vazio, não filtrar por assunto
             subject_filter = None
-
+            
         difficulty_filter = self.difficulty_filter_combo.currentText()
         if difficulty_filter == "Todas":
             difficulty_filter = None
-
+        
         questions = self.db_manager.get_all_questions(subject=subject_filter, difficulty=difficulty_filter)
 
         for question in questions:
@@ -104,10 +104,10 @@ class QuestionsView(QWidget):
 
             subject_item = QTableWidgetItem(question.subject or "N/A")
             difficulty_item = QTableWidgetItem(question.difficulty or "N/A")
-
+            
             options_str = ", ".join(question.options) if question.options else "N/A"
             options_item = QTableWidgetItem(options_str)
-
+            
             answer_item = QTableWidgetItem(question.answer)
 
             self.questions_table.setItem(row_position, 0, text_item)
@@ -115,7 +115,7 @@ class QuestionsView(QWidget):
             self.questions_table.setItem(row_position, 2, difficulty_item)
             self.questions_table.setItem(row_position, 3, options_item)
             self.questions_table.setItem(row_position, 4, answer_item)
-
+        
         if self.questions_table.rowCount() > 0:
             self.questions_table.selectRow(0)
 
@@ -213,7 +213,7 @@ if __name__ == '__main__':
     if not db_manager_instance.conn:
         print("Falha ao conectar ao DB.")
         sys.exit(1)
-
+    
     # Adicionar algumas perguntas de exemplo se não houver
     if not db_manager_instance.get_all_questions():
         print("Populando com perguntas de exemplo para teste da QuestionsView...")
@@ -225,7 +225,7 @@ if __name__ == '__main__':
     questions_widget.setWindowTitle("Teste da QuestionsView")
     questions_widget.setGeometry(100, 100, 1000, 600)
     questions_widget.show()
-
+    
     exit_code = app.exec()
     if db_manager_instance.conn:
         db_manager_instance.close()

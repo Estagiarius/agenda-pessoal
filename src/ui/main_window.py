@@ -1,6 +1,6 @@
 import sys
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
+    QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, 
     QListWidget, QListWidgetItem, QStackedWidget, QLabel, QFrame
 )
 from PyQt6.QtCore import Qt, QSize
@@ -11,7 +11,7 @@ from src.ui.tasks_view import TasksView
 from src.ui.questions_view import QuestionsView
 from src.ui.quiz_section_widget import QuizSectionWidget
 from src.ui.entities_view import EntitiesView
-from src.ui.settings_view import SettingsView
+from src.ui.settings_view import SettingsView 
 from src.core.database_manager import DatabaseManager
 
 class MainWindow(QMainWindow):
@@ -65,8 +65,8 @@ class MainWindow(QMainWindow):
 
         # Itens do Menu e Páginas Correspondentes
         # Agora passamos o db_manager para todas as views principais
-        self.add_menu_item("Agenda", AgendaView(self.db_manager))
-        self.add_menu_item("Tarefas", TasksView(self.db_manager))
+        self.add_menu_item("Agenda", AgendaView(self.db_manager)) 
+        self.add_menu_item("Tarefas", TasksView(self.db_manager)) 
         self.add_menu_item("Banco de Perguntas", QuestionsView(self.db_manager))
         self.add_menu_item("Quiz", QuizSectionWidget(self.db_manager))
         self.add_menu_item("Entidades", EntitiesView(self.db_manager))
@@ -84,7 +84,7 @@ class MainWindow(QMainWindow):
         list_item = QListWidgetItem(name)
         # list_item.setIcon(QIcon.fromTheme("nome-do-icone")) # Exemplo
         self.nav_menu.addItem(list_item)
-
+        
         # Se for um QLabel placeholder, centralizar e estilizar
         is_complex_view = isinstance(page_widget, (AgendaView, TasksView, QuestionsView, QuizSectionWidget, EntitiesView, SettingsView))
         if isinstance(page_widget, QLabel) and not is_complex_view:
@@ -98,7 +98,7 @@ class MainWindow(QMainWindow):
         if current_item:
             index = self.nav_menu.row(current_item)
             self.content_stack.setCurrentIndex(index)
-
+    
     def cleanup_db_connection(self):
         """Fecha a conexão com o banco de dados."""
         print("Fechando conexão com o banco de dados...")
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     # Este bloco é para teste direto, mas agora MainWindow requer um db_manager.
     print("Para testar MainWindow diretamente, execute src/main.py.")
     print("Este if __name__ == '__main__' em main_window.py não iniciará a UI completa.")
-
+    
     # Se ainda quiser testar isoladamente (exigirá um db_manager mock ou real):
     # app = QApplication(sys.argv)
     # # Criar um db_manager real para teste (cuidado com o caminho do DB)

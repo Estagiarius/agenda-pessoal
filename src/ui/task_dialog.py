@@ -1,6 +1,6 @@
 import sys
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QFormLayout, QLineEdit, QTextEdit,
+    QDialog, QVBoxLayout, QFormLayout, QLineEdit, QTextEdit, 
     QComboBox, QDateEdit, QPushButton, QDialogButtonBox, QMessageBox,
     QCheckBox
 )
@@ -46,7 +46,7 @@ class TaskDialog(QDialog):
 
         self.status_combo = QComboBox()
         self.status_combo.addItems(["Open", "In Progress", "Completed"])
-
+        
         # parent_event_id_edit - Opcional, não incluído nesta fase
 
         form_layout.addRow("Título:", self.title_edit)
@@ -69,7 +69,7 @@ class TaskDialog(QDialog):
             self.title_edit.setText(self.task.title)
             self.description_edit.setPlainText(self.task.description or "")
             self.priority_combo.setCurrentText(self.task.priority or "Medium")
-
+            
             if self.task.due_date:
                 self.due_date_checkbox.setChecked(True)
                 self.due_date_edit.setDate(QDate(self.task.due_date.year, self.task.due_date.month, self.task.due_date.day))
@@ -90,22 +90,22 @@ class TaskDialog(QDialog):
 
     def get_task_data(self) -> Optional[Task]:
         title = self.title_edit.text().strip()
-
+        
         if not title:
             QMessageBox.warning(self, "Campo Obrigatório", "O título da tarefa não pode estar vazio.")
             return None
 
         description = self.description_edit.toPlainText().strip()
         priority = self.priority_combo.currentText()
-
+        
         due_date: Optional[datetime] = None
         if self.due_date_checkbox.isChecked():
             q_date = self.due_date_edit.date()
             # Convert QDate to datetime.datetime (at start of day)
             due_date = datetime(q_date.year(), q_date.month(), q_date.day())
-
+            
         status = self.status_combo.currentText()
-
+        
         # parent_event_id - não tratado nesta fase
 
         # Se estiver editando, use o ID existente e os timestamps de criação/atualização originais
@@ -156,8 +156,8 @@ if __name__ == '__main__':
     print("\nTestando diálogo de Editar Tarefa:")
     sample_due_date = datetime(2024, 9, 15)
     existing_task = Task(
-        id=1,
-        title="Tarefa Existente para Edição",
+        id=1, 
+        title="Tarefa Existente para Edição", 
         description="Descrição original da tarefa.",
         priority="High",
         due_date=sample_due_date,
@@ -176,5 +176,5 @@ if __name__ == '__main__':
             print(f"    Status: {edited_task.status}")
     else:
         print("  Edição de tarefa cancelada.")
-
+        
     sys.exit(0)
