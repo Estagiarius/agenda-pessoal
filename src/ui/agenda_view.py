@@ -2,12 +2,12 @@ import sys
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QCalendarWidget, QListWidget,
     QListWidgetItem, QTextEdit, QLabel, QSplitter, QPushButton, QMessageBox,
-    QSpacerItem, QSizePolicy
+    QSpacerItem, QSizePolicy, QScrollArea, QFormLayout # Adicionado QScrollArea, QFormLayout
 )
 from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtGui import QFont
 from datetime import date, datetime
-from typing import Optional
+from typing import Optional, Dict # Adicionado Dict
 
 from src.core.database_manager import DatabaseManager
 from src.core.models import Event
@@ -20,12 +20,12 @@ class AgendaView(QWidget):
         self.current_selected_event_id: Optional[int] = None
 
         main_layout = QHBoxLayout(self)
-        main_layout.setContentsMargins(10, 10, 10, 10) # Adicionar algumas margens
-        main_layout.setSpacing(10) # Adicionar espaçamento
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(10)
 
         # --- Lado Esquerdo: Calendário e Lista de Eventos ---
         left_layout_widget = QWidget()
-        left_v_layout = QVBoxLayout(left_layout_widget) # Renomeado para clareza
+        left_v_layout = QVBoxLayout(left_layout_widget)
         left_v_layout.setContentsMargins(0,0,0,0)
         left_v_layout.setSpacing(10)
 
@@ -34,7 +34,6 @@ class AgendaView(QWidget):
         self.calendar.selectionChanged.connect(self._on_date_selected)
         left_v_layout.addWidget(self.calendar)
 
-        # Botões de Ação para Eventos
         action_buttons_layout = QHBoxLayout()
         self.add_event_button = QPushButton("Adicionar Evento")
         self.add_event_button.clicked.connect(self._add_event_dialog)
@@ -42,12 +41,12 @@ class AgendaView(QWidget):
 
         self.edit_event_button = QPushButton("Editar Evento")
         self.edit_event_button.clicked.connect(self._edit_event_dialog)
-        self.edit_event_button.setEnabled(False) # Desabilitado até um evento ser selecionado
+        self.edit_event_button.setEnabled(False)
         action_buttons_layout.addWidget(self.edit_event_button)
 
         self.delete_event_button = QPushButton("Excluir Evento")
         self.delete_event_button.clicked.connect(self._delete_event)
-        self.delete_event_button.setEnabled(False) # Desabilitado
+        self.delete_event_button.setEnabled(False)
         action_buttons_layout.addWidget(self.delete_event_button)
 
         left_v_layout.addLayout(action_buttons_layout)
@@ -57,33 +56,79 @@ class AgendaView(QWidget):
         self.events_list.setStyleSheet("QListWidget::item { padding: 5px; }")
         left_v_layout.addWidget(self.events_list)
 
-        # --- Lado Direito: Detalhes do Evento ---
-        right_widget = QWidget()
-        right_layout = QVBoxLayout(right_widget)
-        right_layout.setContentsMargins(0,0,0,0)
+        # --- Lado Direito: Detalhes do Evento com QLabels ---
+        right_panel_widget = QWidget()
+        right_panel_layout = QVBoxLayout(right_panel_widget)
+        right_panel_layout.setContentsMargins(0,0,0,0)
 
-        details_label = QLabel("Detalhes do Evento")
-        details_label.setFont(QFont("Arial", 14, QFont.Weight.Bold))
-        right_layout.addWidget(details_label)
+        details_title_label = QLabel("Detalhes do Evento")
+        details_title_label.setFont(QFont("Arial", 14, QFont.Weight.Bold))
+        right_panel_layout.addWidget(details_title_label)
 
-        self.event_details_area = QTextEdit()
-        self.event_details_area.setReadOnly(True)
-        self.event_details_area.setFont(QFont("Arial", 12))
-        self.event_details_area.setStyleSheet("QTextEdit { border: 1px solid #ccc; padding: 10px; background-color: #f9f9f9; }")
-        right_layout.addWidget(self.event_details_area)
+        # ScrollArea para os detalhes
+        details_scroll_area = QScrollArea()
+        details_scroll_area.setWidgetResizable(True)
+        details_scroll_area.setStyleSheet("QScrollArea { border: none; background-color: #f9f9f9; }") # Estilo similar ao QTextEdit anterior
 
-        # --- Splitter para redimensionamento ---
+        self.event_details_widget = QWidget() # Widget que conterá o QFormLayout
+        details_form_layout = QFormLayout(self.event_details_widget)
+        details_form_layout.setContentsMargins(10, 10, 10, 10)
+        details_form_layout.setSpacing(8)
+        details_form_layout.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
+        details_form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
+
+        # Inicializar QLabels para cada campo de detalhe
+        self.detail_title_label = QLabel("-")
+        self.detail_description_label = QLabel("-")
+        self.detail_description_label.setWordWrap(True)
+        self.detail_start_time_label = QLabel("-")
+        self.detail_end_time_label = QLabel("-")
+        self.detail_event_type_label = QLabel("-")
+        self.detail_location_label = QLabel("-")
+        self.detail_participants_label = QLabel("-")
+        self.detail_participants_label.setWordWrap(True)
+
+        # Adicionar QLabels ao QFormLayout
+        details_form_layout.addRow("<b>Título:</b>", self.detail_title_label)
+        details_form_layout.addRow("<b>Tipo:</b>", self.detail_event_type_label)
+        details_form_layout.addRow("<b>Início:</b>", self.detail_start_time_label)
+        details_form_layout.addRow("<b>Fim:</b>", self.detail_end_time_label)
+        details_form_layout.addRow("<b>Local:</b>", self.detail_location_label)
+
+        # Descrição e Participantes podem precisar de mais espaço ou formatação especial
+        desc_title = QLabel("<b>Descrição:</b>")
+        desc_title.setAlignment(Qt.AlignmentFlag.AlignTop) # Alinhar o rótulo "Descrição" ao topo
+        details_form_layout.addRow(desc_title, self.detail_description_label)
+
+        part_title = QLabel("<b>Participantes:</b>")
+        part_title.setAlignment(Qt.AlignmentFlag.AlignTop)
+        details_form_layout.addRow(part_title, self.detail_participants_label)
+
+        details_scroll_area.setWidget(self.event_details_widget)
+        right_panel_layout.addWidget(details_scroll_area)
+
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(left_layout_widget)
-        # splitter.addWidget(self.event_details_area) # Agora o painel direito é um widget
-        splitter.addWidget(right_widget)
-        splitter.setSizes([350, 650]) # Tamanhos iniciais para as seções
+        splitter.addWidget(right_panel_widget)
+        splitter.setSizes([350, 650])
 
         main_layout.addWidget(splitter)
 
-        # Carregar eventos para a data atual ao iniciar e configurar placeholder
-        self.event_details_area.setPlaceholderText("Selecione uma data no calendário e um evento na lista para ver os detalhes, ou adicione um novo evento.")
+        self._clear_details_labels() # Limpa os labels inicialmente
         self._on_date_selected()
+
+    def _clear_details_labels(self):
+        """Limpa o texto de todos os QLabels de detalhes."""
+        self.detail_title_label.setText("-")
+        self.detail_description_label.setText("-")
+        self.detail_start_time_label.setText("-")
+        self.detail_end_time_label.setText("-")
+        self.detail_event_type_label.setText("-")
+        self.detail_location_label.setText("-")
+        self.detail_participants_label.setText("Nenhum participante listado ou evento não selecionado.")
+        # Adicionar um placeholder mais informativo se a área ficar muito vazia
+        self.event_details_widget.setToolTip("Selecione um evento para ver os detalhes.")
+
 
     def _refresh_event_list_for_selected_date(self):
         """Atualiza a lista de eventos para a data atualmente selecionada no calendário."""
@@ -165,31 +210,120 @@ class AgendaView(QWidget):
 
         if event_obj:
             details_html = f"<h3>{event_obj.title}</h3>"
-            details_html += f"<p><strong>Tipo:</strong> {event.event_type}</p>"
+            details_html += f"<p><strong>Tipo:</strong> {event_obj.event_type}</p>" # Corrigido para event_obj
 
-            if event.start_time:
-                details_html += f"<p><strong>Início:</strong> {event.start_time.strftime('%d/%m/%Y %H:%M')}</p>"
-            if event.end_time:
-                details_html += f"<p><strong>Fim:</strong> {event.end_time.strftime('%d/%m/%Y %H:%M')}</p>"
+            if event_obj.start_time: # Corrigido para event_obj
+                details_html += f"<p><strong>Início:</strong> {event_obj.start_time.strftime('%d/%m/%Y %H:%M')}</p>"
+            if event_obj.end_time: # Corrigido para event_obj
+                details_html += f"<p><strong>Fim:</strong> {event_obj.end_time.strftime('%d/%m/%Y %H:%M')}</p>"
 
-            if event.description:
-                details_html += f"<p><strong>Descrição:</strong><br>{event.description.replace(chr(10), '<br>')}</p>" # chr(10) é \n
+            if event_obj.description: # Corrigido para event_obj
+                details_html += f"<p><strong>Descrição:</strong><br>{event_obj.description.replace(chr(10), '<br>')}</p>"
 
-            if event.location:
-                details_html += f"<p><strong>Local:</strong> {event.location}</p>"
+            if event_obj.location: # Corrigido para event_obj
+                details_html += f"<p><strong>Local:</strong> {event_obj.location}</p>"
 
-            if event.recurrence_rule:
-                details_html += f"<p><strong>Recorrência:</strong> {event.recurrence_rule}</p>"
+            if event_obj.recurrence_rule: # Corrigido para event_obj (e notado que não está no dialog)
+                details_html += f"<p><strong>Recorrência:</strong> {event_obj.recurrence_rule}</p>"
 
-            # Informações de auditoria (opcional na UI principal, mas útil para debug)
-            # if event.created_at:
-            #     details_html += f"<p><small>Criado em: {event.created_at.strftime('%d/%m/%Y %H:%M')}</small></p>"
-            # if event.updated_at:
-            #     details_html += f"<p><small>Atualizado em: {event.updated_at.strftime('%d/%m/%Y %H:%M')}</small></p>"
+            # Mostrar entidades vinculadas
+            linked_entities = self.db_manager.get_entities_for_event(event_obj.id) # type: ignore
+            if linked_entities:
+                details_html += "<p><strong>Participantes/Entidades:</strong><ul>"
+                for entity, role in linked_entities:
+                    details_html += f"<li>{entity.name} ({entity.type}) - <i>{role}</i></li>"
+                details_html += "</ul></p>"
 
             self.event_details_area.setHtml(details_html)
         else:
-            self.event_details_area.setPlaceholderText(f"Detalhes do evento com ID {event_id} não encontrados.")
+            # self.event_details_area.setPlaceholderText(f"Detalhes do evento com ID {event_id} não encontrados.") # event_id não definido aqui
+            self.event_details_area.setPlaceholderText(f"Detalhes do evento com ID {self.current_selected_event_id} não encontrados.")
+            self.edit_event_button.setEnabled(False) # Adicionado para consistência
+            self.delete_event_button.setEnabled(False)# Adicionado para consistência
+
+
+    def _add_event_dialog(self):
+        # Passar db_manager para o EventDialog
+        dialog = EventDialog(db_manager=self.db_manager, parent=self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            # Acessar os dados salvos no diálogo
+            event_data, selected_entities_map = dialog.event_data_to_save
+
+            if event_data:
+                new_event = self.db_manager.add_event(event_data)
+                if new_event and new_event.id:
+                    # Salvar associações
+                    for entity_id, role in selected_entities_map.items():
+                        self.db_manager.link_entity_to_event(new_event.id, entity_id, role)
+
+                    QMessageBox.information(self, "Sucesso", f"Evento '{new_event.title}' adicionado com ID: {new_event.id}.")
+                    if new_event.start_time:
+                        self.calendar.setSelectedDate(QDate(new_event.start_time.year, new_event.start_time.month, new_event.start_time.day))
+                    self.current_selected_event_id = new_event.id
+                    self._refresh_event_list_for_selected_date()
+                else:
+                    QMessageBox.critical(self, "Erro", "Falha ao adicionar o evento no banco de dados.")
+
+    def _edit_event_dialog(self):
+        if not self.current_selected_event_id:
+            QMessageBox.warning(self, "Nenhum Evento Selecionado", "Por favor, selecione um evento para editar.")
+            return
+
+        event_to_edit = self.db_manager.get_event_by_id(self.current_selected_event_id)
+        if not event_to_edit:
+            QMessageBox.critical(self, "Erro", "Não foi possível carregar o evento para edição.")
+            self._load_tasks() # Deveria ser _refresh_event_list_for_selected_date ou _load_events
+            return
+
+        # Passar db_manager para o EventDialog
+        dialog = EventDialog(db_manager=self.db_manager, event=event_to_edit, parent=self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            event_data, selected_entities_map = dialog.event_data_to_save
+
+            if event_data and event_data.id is not None:
+                if self.db_manager.update_event(event_data):
+                    # Atualizar associações:
+                    existing_linked_entities = self.db_manager.get_entities_for_event(event_data.id)
+                    for entity, _ in existing_linked_entities:
+                        if entity.id is not None:
+                             self.db_manager.unlink_entity_from_event(event_data.id, entity.id)
+
+                    for entity_id, role in selected_entities_map.items():
+                        self.db_manager.link_entity_to_event(event_data.id, entity_id, role)
+
+                    QMessageBox.information(self, "Sucesso", f"Evento '{event_data.title}' atualizado.")
+                    if event_data.start_time:
+                         self.calendar.setSelectedDate(QDate(event_data.start_time.year, event_data.start_time.month, event_data.start_time.day))
+                    self.current_selected_event_id = event_data.id
+                    self._refresh_event_list_for_selected_date()
+                else:
+                    QMessageBox.critical(self, "Erro", "Falha ao atualizar o evento no banco de dados.")
+
+    def _delete_event(self):
+        if not self.current_selected_event_id:
+            QMessageBox.warning(self, "Nenhum Evento Selecionado", "Por favor, selecione um evento para excluir.")
+            return
+
+        event_to_delete = self.db_manager.get_event_by_id(self.current_selected_event_id)
+        if not event_to_delete: # Deve ser raro, mas por segurança
+            QMessageBox.critical(self, "Erro", "Evento não encontrado.")
+            self._refresh_event_list_for_selected_date() # Atualiza a lista
+            return
+
+        reply = QMessageBox.question(self, "Confirmar Exclusão",
+                                     f"Tem certeza que deseja excluir o evento '{event_to_delete.title}'?",
+                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                     QMessageBox.StandardButton.No)
+
+        if reply == QMessageBox.StandardButton.Yes:
+            if self.db_manager.delete_event(self.current_selected_event_id):
+                QMessageBox.information(self, "Sucesso", f"Evento '{event_to_delete.title}' excluído.")
+                self.current_selected_event_id = None
+                self.event_details_area.clear()
+                self._refresh_event_list_for_selected_date()
+            else:
+                QMessageBox.critical(self, "Erro", "Falha ao excluir o evento no banco de dados.")
+
 
 # Bloco para teste independente da AgendaView (opcional)
 if __name__ == '__main__':

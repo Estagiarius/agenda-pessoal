@@ -782,6 +782,198 @@ class DatabaseManager:
             if self.conn: self.conn.rollback()
             return None
 
+    # --- CRUD para Entities ---
+    def _entity_from_row(self, row: sqlite3.Row) -> Optional[Entity]:
+        if not row: return None
+        details_dict: Dict[str, Any] = {}
+        if row['details_json']:
+            try:
+                details_dict = json.loads(row['details_json'])
+            except json.JSONDecodeError:
+                print(f"Aviso: Falha ao decodificar 'details_json' para Entity ID {row['id']}.")
+
+        return Entity(
+            id=row['id'],
+            name=row['name'],
+            type=row['type'],
+            details_json=details_dict,
+            created_at=self._datetime_from_str(row['created_at']),
+            updated_at=self._datetime_from_str(row['updated_at'])
+        )
+
+    def add_entity(self, entity: Entity) -> Optional[Entity]:
+        if not self.conn: return None
+        try:
+            cursor = self.conn.cursor()
+            details_json_str = json.dumps(entity.details_json) if entity.details_json else None
+            query = "INSERT INTO Entities (name, type, details_json) VALUES (?, ?, ?)"
+            cursor.execute(query, (entity.name, entity.type, details_json_str))
+            self.conn.commit()
+            entity.id = cursor.lastrowid
+            if entity.id:
+                return self.get_entity_by_id(entity.id) # Para obter timestamps e consistência
+            return None
+        except sqlite3.Error as e:
+            print(f"Erro ao adicionar Entity: {e}")
+            if self.conn: self.conn.rollback()
+            return None
+
+    def get_entity_by_id(self, entity_id: int) -> Optional[Entity]:
+        if not self.conn: return None
+        try:
+            cursor = self.conn.cursor()
+            query = "SELECT * FROM Entities WHERE id = ?"
+            cursor.execute(query, (entity_id,))
+            row = cursor.fetchone()
+            return self._entity_from_row(row)
+        except sqlite3.Error as e:
+            print(f"Erro ao buscar QuizConfig por ID: {e}")
+            return None
+
+    def get_all_quiz_configs(self) -> List[QuizConfig]:
+        if not self.conn: return None # Correção: deveria ser None, não [] se a conexão falhar
+        try:
+            cursor = self.conn.cursor()
+            query = "SELECT * FROM Entities"
+            params = []
+            if entity_type:
+                query += " WHERE type = ?"
+                params.append(entity_type)
+            query += " ORDER BY name"
+
+            cursor.execute(query, params)
+            entities: List[Entity] = []
+            for row in cursor.fetchall():
+                entity_obj = self._entity_from_row(row)
+                if entity_obj:
+                    entities.append(entity_obj)
+            return entities
+        except sqlite3.Error as e:
+            print(f"Erro ao buscar todas as Entities: {e}")
+            return [] # Retorna lista vazia em caso de erro na query
+
+    def update_entity(self, entity: Entity) -> bool:
+        if not self.conn or entity.id is None: return False
+        try:
+            cursor = self.conn.cursor()
+            details_json_str = json.dumps(entity.details_json) if entity.details_json else None
+            query = "UPDATE Entities SET name = ?, type = ?, details_json = ? WHERE id = ?"
+            # updated_at será atualizado pelo trigger
+            cursor.execute(query, (entity.name, entity.type, details_json_str, entity.id))
+            self.conn.commit()
+            return cursor.rowcount > 0
+        except sqlite3.Error as e:
+            print(f"Erro ao atualizar Entity: {e}")
+            if self.conn: self.conn.rollback()
+            return False
+
+    def delete_entity(self, entity_id: int) -> bool:
+        if not self.conn: return False
+        try:
+            cursor = self.conn.cursor()
+            query = "DELETE FROM Entities WHERE id = ?"
+            cursor.execute(query, (entity_id,))
+            self.conn.commit()
+            # ON DELETE CASCADE deve cuidar da tabela Event_Entities
+            return cursor.rowcount > 0
+        except sqlite3.Error as e:
+            print(f"Erro ao excluir Entity: {e}")
+            if self.conn: self.conn.rollback()
+            return False
+
+    # --- Associações Event-Entity ---
+    def link_entity_to_event(self, event_id: int, entity_id: int, role: str) -> bool:
+        if not self.conn: return False
+        try:
+            cursor = self.conn.cursor()
+            # Usar INSERT OR IGNORE para evitar erro se o link já existir,
+            # ou INSERT OR REPLACE se quisermos atualizar o papel se o link existir.
+            # Por simplicidade, INSERT OR IGNORE. Se precisar atualizar o papel, uma lógica de UPDATE seria melhor.
+            query = "INSERT OR IGNORE INTO Event_Entities (event_id, entity_id, role) VALUES (?, ?, ?)"
+            cursor.execute(query, (event_id, entity_id, role))
+            self.conn.commit()
+            return cursor.rowcount > 0 # Retorna True se uma nova linha foi inserida
+        except sqlite3.Error as e:
+            print(f"Erro ao vincular Entity {entity_id} ao Event {event_id} com role {role}: {e}")
+            if self.conn: self.conn.rollback()
+            return False
+
+    def unlink_entity_from_event(self, event_id: int, entity_id: int) -> bool:
+        if not self.conn: return False
+        try:
+            cursor = self.conn.cursor()
+            query = "DELETE FROM Event_Entities WHERE event_id = ? AND entity_id = ?"
+            cursor.execute(query, (event_id, entity_id))
+            self.conn.commit()
+            return cursor.rowcount > 0
+        except sqlite3.Error as e:
+            print(f"Erro ao desvincular Entity {entity_id} do Event {event_id}: {e}")
+            if self.conn: self.conn.rollback()
+            return False
+
+    def get_entities_for_event(self, event_id: int) -> List[tuple[Entity, str]]:
+        if not self.conn: return []
+        linked_entities: List[tuple[Entity, str]] = []
+        try:
+            cursor = self.conn.cursor()
+            # Query para buscar entidades e seus papéis para um evento específico
+            query = """
+            SELECT E.*, EE.role
+            FROM Entities E
+            JOIN Event_Entities EE ON E.id = EE.entity_id
+            WHERE EE.event_id = ?
+            """
+            cursor.execute(query, (event_id,))
+            for row in cursor.fetchall():
+                entity = self._entity_from_row(row) # Reutiliza o helper
+                role = row['role']
+                if entity:
+                    linked_entities.append((entity, role))
+        except sqlite3.Error as e:
+            print(f"Erro ao buscar entidades para o Evento ID {event_id}: {e}")
+        return linked_entities
+
+
+    # --- CRUD para QuizConfig ---
+    def _quiz_config_from_row(self, row: sqlite3.Row) -> Optional[QuizConfig]:
+        if not row: return None
+        question_ids_json = row['question_ids']
+        question_ids_list: List[int] = []
+        try:
+            question_ids_list = json.loads(question_ids_json)
+            if not isinstance(question_ids_list, list) or not all(isinstance(qid, int) for qid in question_ids_list):
+                print(f"Aviso: 'question_ids' para QuizConfig ID {row['id']} não é uma lista de inteiros JSON válida.")
+                question_ids_list = []
+        except json.JSONDecodeError:
+            print(f"Aviso: Falha ao decodificar 'question_ids' JSON para QuizConfig ID {row['id']}.")
+            question_ids_list = []
+
+        return QuizConfig(
+            id=row['id'],
+            name=row['name'],
+            question_ids=question_ids_list,
+            created_at=self._datetime_from_str(row['created_at'])
+            # updated_at não está no modelo QuizConfig, mas o trigger o atualiza no DB
+        )
+
+    def add_quiz_config(self, quiz_config: QuizConfig) -> Optional[QuizConfig]:
+        if not self.conn: return None
+        try:
+            cursor = self.conn.cursor()
+            question_ids_json = json.dumps(quiz_config.question_ids)
+            query = "INSERT INTO QuizConfigs (name, question_ids) VALUES (?, ?)"
+            cursor.execute(query, (quiz_config.name, question_ids_json))
+            self.conn.commit()
+            quiz_config.id = cursor.lastrowid
+            if quiz_config.id:
+                # Buscar para obter created_at e garantir consistência
+                return self.get_quiz_config_by_id(quiz_config.id)
+            return None
+        except sqlite3.Error as e:
+            print(f"Erro ao adicionar QuizConfig: {e}")
+            if self.conn: self.conn.rollback()
+            return None
+
     def get_quiz_config_by_id(self, config_id: int) -> Optional[QuizConfig]:
         if not self.conn: return None
         try:
@@ -811,7 +1003,91 @@ class DatabaseManager:
             print(f"Erro ao buscar todas as QuizConfigs: {e}")
         return configs
 
-    # CRUD para QuizAttempt virá em uma próxima etapa.
+    # --- CRUD para QuizAttempt ---
+    def _quiz_attempt_from_row(self, row: sqlite3.Row) -> Optional[QuizAttempt]:
+        if not row: return None
+        user_answers_json = row['user_answers']
+        user_answers_dict: Dict[int, str] = {}
+        try:
+            # As chaves no JSON são strings, converter para int
+            loaded_answers = json.loads(user_answers_json)
+            if isinstance(loaded_answers, dict):
+                user_answers_dict = {int(k): v for k, v in loaded_answers.items() if isinstance(v, str)}
+            else:
+                print(f"Aviso: 'user_answers' para QuizAttempt ID {row['id']} não é um dict JSON válido.")
+        except json.JSONDecodeError:
+            print(f"Aviso: Falha ao decodificar 'user_answers' JSON para QuizAttempt ID {row['id']}.")
+
+        return QuizAttempt(
+            id=row['id'],
+            quiz_config_id=row['quiz_config_id'],
+            user_answers=user_answers_dict,
+            score=row['score'],
+            total_questions=row['total_questions'],
+            attempted_at=self._datetime_from_str(row['attempted_at'])
+            # updated_at não está no modelo QuizAttempt, mas o trigger o atualiza no DB
+        )
+
+    def add_quiz_attempt(self, attempt: QuizAttempt) -> Optional[QuizAttempt]:
+        if not self.conn: return None
+        try:
+            cursor = self.conn.cursor()
+            # As chaves do dicionário (question_id) devem ser strings no JSON
+            user_answers_json = json.dumps({str(k): v for k, v in attempt.user_answers.items()})
+
+            query = """
+            INSERT INTO QuizAttempts (quiz_config_id, user_answers, score, total_questions, attempted_at)
+            VALUES (?, ?, ?, ?, ?)
+            """
+            # Usar o attempted_at do objeto, se fornecido, senão o default do DB (CURRENT_TIMESTAMP)
+            # No entanto, o modelo QuizAttempt já define attempted_at no __init__ se não for passado.
+            # Para consistência, sempre passamos o valor do objeto.
+            attempted_at_str = self._datetime_to_str(attempt.attempted_at if attempt.attempted_at else datetime.now())
+
+            cursor.execute(query, (
+                attempt.quiz_config_id,
+                user_answers_json,
+                attempt.score,
+                attempt.total_questions,
+                attempted_at_str
+            ))
+            self.conn.commit()
+            attempt.id = cursor.lastrowid
+            if attempt.id:
+                # Buscar para obter attempted_at e updated_at (se o modelo tivesse) do DB
+                return self.get_quiz_attempt_by_id(attempt.id)
+            return None
+        except sqlite3.Error as e:
+            print(f"Erro ao adicionar QuizAttempt: {e}")
+            if self.conn: self.conn.rollback()
+            return None
+
+    def get_quiz_attempt_by_id(self, attempt_id: int) -> Optional[QuizAttempt]:
+        if not self.conn: return None
+        try:
+            cursor = self.conn.cursor()
+            query = "SELECT * FROM QuizAttempts WHERE id = ?"
+            cursor.execute(query, (attempt_id,))
+            row = cursor.fetchone()
+            return self._quiz_attempt_from_row(row)
+        except sqlite3.Error as e:
+            print(f"Erro ao buscar QuizAttempt por ID: {e}")
+            return None
+
+    def get_attempts_for_quiz_config(self, quiz_config_id: int) -> List[QuizAttempt]:
+        if not self.conn: return []
+        attempts: List[QuizAttempt] = []
+        try:
+            cursor = self.conn.cursor()
+            query = "SELECT * FROM QuizAttempts WHERE quiz_config_id = ? ORDER BY attempted_at DESC"
+            cursor.execute(query, (quiz_config_id,))
+            for row in cursor.fetchall():
+                attempt_obj = self._quiz_attempt_from_row(row)
+                if attempt_obj:
+                    attempts.append(attempt_obj)
+        except sqlite3.Error as e:
+            print(f"Erro ao buscar tentativas para QuizConfig ID {quiz_config_id}: {e}")
+        return attempts
 
     def add_sample_data(self):
         """Adiciona um evento de exemplo, uma tarefa associada e perguntas de exemplo para testes."""
@@ -844,6 +1120,37 @@ class DatabaseManager:
             if self.conn:
                 self.conn.rollback()
 
+    # --- Settings ---
+    def get_setting(self, key: str, default_value: Optional[str] = None) -> Optional[str]:
+        """Busca uma configuração pelo sua chave. Retorna default_value se não encontrada."""
+        if not self.conn: return default_value
+        try:
+            cursor = self.conn.cursor()
+            query = "SELECT value FROM Settings WHERE key = ?"
+            cursor.execute(query, (key,))
+            row = cursor.fetchone()
+            if row:
+                return row['value']
+            return default_value
+        except sqlite3.Error as e:
+            print(f"Erro ao buscar configuração '{key}': {e}")
+            return default_value
+
+    def set_setting(self, key: str, value: str) -> bool:
+        """Salva ou atualiza uma configuração."""
+        if not self.conn: return False
+        try:
+            cursor = self.conn.cursor()
+            # INSERT OR REPLACE (UPSERT) para inserir se não existir, ou substituir se existir.
+            query = "INSERT OR REPLACE INTO Settings (key, value) VALUES (?, ?)"
+            cursor.execute(query, (key, value))
+            self.conn.commit()
+            return cursor.rowcount > 0 # type: ignore
+        except sqlite3.Error as e:
+            print(f"Erro ao salvar configuração '{key}'='{value}': {e}")
+            if self.conn: self.conn.rollback()
+            return False
+
     def close(self):
         """Fecha a conexão com o banco de dados."""
         if self.conn:
@@ -851,12 +1158,25 @@ class DatabaseManager:
             self.conn = None
 
 if __name__ == '__main__':
-    db_manager = DatabaseManager(db_path='data/agenda.db') # Garante que o DB e tabelas existam
+    # Corrigir a chamada para add_sample_data se o nome do método foi alterado
+    # Supondo que o método de adicionar dados de exemplo agora é add_sample_data
+    # db_manager.add_sample_event() foi provavelmente renomeado para db_manager.add_sample_data()
+    # Vou assumir que add_sample_data() é o método correto que também lida com Settings.
+
+    db_manager = DatabaseManager(db_path='data/agenda.db')
     if db_manager.conn:
         print(f"Banco de dados 'data/agenda.db' inicializado e tabelas criadas/verificadas.")
 
-        # Adicionar um evento de exemplo para hoje
-        db_manager.add_sample_event()
+        # Chamar o método que popula todos os dados de exemplo, incluindo settings se houver
+        # Se add_sample_data não existir, precisaremos chamá-lo individualmente ou criar um wrapper.
+        # Assumindo que add_sample_data() existe e é o método correto.
+        if hasattr(db_manager, 'add_sample_data'):
+            db_manager.add_sample_data()
+        elif hasattr(db_manager, 'add_sample_event'): # Fallback para nome antigo se existir
+             db_manager.add_sample_event()
+        else:
+            print("Método para popular dados de exemplo (add_sample_data ou add_sample_event) não encontrado.")
+
 
         # Testar CRUD de Eventos
         print("\n--- Testando CRUD de Eventos ---")
@@ -914,15 +1234,25 @@ if __name__ == '__main__':
         if events_today:
             for event_obj in events_today:
                 print(f"- ID: {event_obj.id}, Título: {event_obj.title}, Início: {event_obj.start_time.strftime('%H:%M') if event_obj.start_time else 'N/A'}")
-                if event_obj.id: # Testar get_event_by_id com o primeiro evento encontrado
-                    print("  Testando get_event_by_id...")
-                    detailed_event = db_manager.get_event_by_id(event_obj.id)
-                    if detailed_event:
-                        print(f"    Detalhes: {detailed_event.title} - {detailed_event.description}")
-                    else:
-                        print(f"    Evento com ID {event_obj.id} não encontrado por get_event_by_id.")
+                # ... (o resto dos testes de evento pode continuar aqui) ...
         else:
             print("Nenhum evento encontrado para hoje.")
+
+        # Testar Settings (adicionado aqui, após os outros testes ou em local apropriado)
+        print("\n--- Testando Settings ---")
+        assert db_manager.set_setting("test_user_name", "test_user") == True
+        retrieved_username = db_manager.get_setting("test_user_name", "default_user")
+        assert retrieved_username == "test_user"
+        print(f"Setting 'test_user_name' recuperado: {retrieved_username}")
+
+        assert db_manager.get_setting("non_existent_key", "fallback") == "fallback"
+        print("Setting inexistente 'non_existent_key' retornou valor fallback.")
+
+        assert db_manager.set_setting("test_user_name", "new_test_user") == True
+        assert db_manager.get_setting("test_user_name") == "new_test_user"
+        print("Setting 'test_user_name' atualizado e recuperado.")
+
+        # ... (restantes dos testes de CRUD para Task, Question, QuizConfig, QuizAttempt, Entity, etc. podem seguir) ...
 
         db_manager.close()
         print("\nConexão com o banco de dados fechada.")

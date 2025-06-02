@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (
     QPushButton, QListWidget, QListWidgetItem, QLabel, QLineEdit,
     QMessageBox, QHeaderView, QAbstractItemView, QSplitter
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal # Adicionado pyqtSignal
 from PyQt6.QtGui import QFont
 from typing import Optional, List, Set
 
@@ -13,6 +13,8 @@ from src.core.database_manager import DatabaseManager
 from src.core.models import Question, QuizConfig
 
 class QuizConfigView(QWidget):
+    start_quiz_signal = pyqtSignal(QuizConfig) # Sinal para iniciar o quiz
+
     def __init__(self, db_manager: DatabaseManager, parent=None):
         super().__init__(parent)
         self.db_manager = db_manager
@@ -161,11 +163,13 @@ class QuizConfigView(QWidget):
         if added_config and added_config.id is not None:
             QMessageBox.information(self, "Sucesso",
                                    f"Configuração de Quiz '{added_config.name or f'ID: {added_config.id}'}' salva com {len(added_config.question_ids)} perguntas.")
-            # Limpar para próxima configuração (opcional)
+            # Limpar para próxima configuração
             self.quiz_name_edit.clear()
             self.selected_questions_list.clear()
             self.selected_question_ids_for_quiz.clear()
-            # No futuro: navegar para a tela de iniciar o quiz ou listar configs salvas
+
+            # Emitir o sinal para iniciar o quiz
+            self.start_quiz_signal.emit(added_config)
         else:
             QMessageBox.critical(self, "Erro", "Falha ao salvar a configuração do quiz no banco de dados.")
 

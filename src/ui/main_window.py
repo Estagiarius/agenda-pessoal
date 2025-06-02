@@ -9,7 +9,9 @@ from PyQt6.QtCore import Qt, QSize
 from src.ui.agenda_view import AgendaView
 from src.ui.tasks_view import TasksView
 from src.ui.questions_view import QuestionsView
-from src.ui.quiz_config_view import QuizConfigView # Adicionado QuizConfigView
+from src.ui.quiz_section_widget import QuizSectionWidget
+from src.ui.entities_view import EntitiesView
+from src.ui.settings_view import SettingsView # Adicionado SettingsView
 from src.core.database_manager import DatabaseManager
 
 class MainWindow(QMainWindow):
@@ -73,8 +75,9 @@ class MainWindow(QMainWindow):
         self.add_menu_item("Agenda", AgendaView(self.db_manager))
         self.add_menu_item("Tarefas", TasksView(self.db_manager))
         self.add_menu_item("Banco de Perguntas", QuestionsView(self.db_manager))
-        self.add_menu_item("Quiz", QuizConfigView(self.db_manager)) # Substituído Placeholder
-        self.add_menu_item("Configurações", QLabel("Conteúdo das Configurações")) # Placeholder
+        self.add_menu_item("Quiz", QuizSectionWidget(self.db_manager))
+        self.add_menu_item("Entidades", EntitiesView(self.db_manager))
+        self.add_menu_item("Configurações", SettingsView(self.db_manager)) # Substituído Placeholder
 
         # Conectar sinal do menu para mudar a página no QStackedWidget
         self.nav_menu.currentItemChanged.connect(self.change_page)
@@ -90,8 +93,8 @@ class MainWindow(QMainWindow):
         self.nav_menu.addItem(list_item)
 
         # Se for um QLabel placeholder, centralizar e estilizar
-        # Garantir que não estamos tentando estilizar Views complexas como um simples QLabel
-        if isinstance(page_widget, QLabel) and not isinstance(page_widget, (AgendaView, TasksView, QuestionsView, QuizConfigView)):
+        is_complex_view = isinstance(page_widget, (AgendaView, TasksView, QuestionsView, QuizSectionWidget, EntitiesView, SettingsView))
+        if isinstance(page_widget, QLabel) and not is_complex_view:
             page_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
             page_widget.setStyleSheet("font-size: 18px; color: #333;")
 
