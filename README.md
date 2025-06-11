@@ -1,6 +1,24 @@
 # agenda-pessoal
 Uma agenda pessoal, construida para você.
 
+## Launching the Application
+
+To easily open the application in your default web browser, you can use the `launch.py` script.
+This script automates the process of finding and opening the `index.html` file.
+
+**How to run the script:**
+1. Open your terminal or command prompt.
+2. Navigate to the root directory of this project.
+3. Execute the script using one of the following commands:
+   ```bash
+   python launch.py
+   ```
+   or, if you have Python 3 installed as `python3`:
+   ```bash
+   python3 launch.py
+   ```
+This will open `index.html` in your browser.
+
 ## Features
 
 ### Personal Journal & Calendar
