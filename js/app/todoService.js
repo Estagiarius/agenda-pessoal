@@ -2,109 +2,147 @@
 (function(window) {
     'use strict';
 
-    const TODOS_STORAGE_KEY = 'teacherAgendaTodos';
-    let todos = [];
-    let nextTodoId = 1;
+    const TASKS_STORAGE_KEY = 'TASKS_STORAGE_KEY'; // Renamed key
+    let tasks = []; // Renamed array
+    let nextId = 1; // Renamed ID generator
 
-    function loadTodos() {
-        const storedTodos = localStorage.getItem(TODOS_STORAGE_KEY);
-        if (storedTodos) {
+    function _loadTasks() { // Renamed and made "private"
+        const storedTasks = localStorage.getItem(TASKS_STORAGE_KEY);
+        if (storedTasks) {
             try {
-                const parsedTodos = JSON.parse(storedTodos);
-                if (Array.isArray(parsedTodos) && parsedTodos.length > 0) {
-                    todos = parsedTodos;
-                    let maxId = 0;
-                    todos.forEach(todo => {
-                        if (todo.id && typeof todo.id === 'number') {
-                            if (todo.id > maxId) {
-                                maxId = todo.id;
-                            }
-                        } else {
-                            todo.id = nextTodoId++;
+                const parsedTasks = JSON.parse(storedTasks);
+                if (Array.isArray(parsedTasks)) {
+                    tasks = parsedTasks.map(task => {
+                        // Migration: Ensure 'completed' field exists, converting from 'status' if necessary
+                        if (typeof task.completed === 'undefined') {
+                            task.completed = task.status === 'Completed'; // Assuming 'Completed' status means true
                         }
+                        delete task.status; // Remove old 'status' field
+
+                        // Add default priority for tasks loaded from storage that don't have it
+                        if (typeof task.priority === 'undefined') {
+                            task.priority = 'Medium'; // Default priority
+                        }
+                        return task;
                     });
-                    nextTodoId = Math.max(1, maxId + 1);
+
+                    if (tasks.length > 0) {
+                        let maxId = 0;
+                        tasks.forEach(task => {
+                            if (task.id && typeof task.id === 'number') {
+                                if (task.id > maxId) {
+                                    maxId = task.id;
+                                }
+                            } else {
+                                task.id = nextId++; // Assign new ID if missing or invalid
+                            }
+                        });
+                        nextId = Math.max(1, maxId + 1);
+                    } else {
+                        // tasks array is empty after parsing or was initially empty
+                        nextId = 1;
+                    }
                 } else {
-                     todos = [];
-                     nextTodoId = 1;
+                     // storedTasks was not an array
+                     tasks = [];
+                     nextId = 1;
                 }
             } catch (e) {
-                console.error('Error parsing stored todos:', e);
-                todos = [];
-                nextTodoId = 1;
+                console.error('Error parsing stored tasks:', e);
+                tasks = [];
+                nextId = 1;
             }
         } else {
-            todos = [];
-            nextTodoId = 1;
+            // No tasks in storage
+            tasks = [];
+            nextId = 1;
         }
     }
-    loadTodos(); // Load todos when the service initializes
+    _loadTasks(); // Load tasks when the service initializes
 
-    function saveTodos() {
-        localStorage.setItem(TODOS_STORAGE_KEY, JSON.stringify(todos));
+    function _saveTasks() { // Renamed and made "private"
+        localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
     }
 
-    function addTodo(itemObject) {
-        if (!itemObject || !itemObject.text) {
-            console.error('To-do item must have text.');
+    function addTask(taskData) { // Renamed
+        if (!taskData || !taskData.text) {
+            console.error('Task must have text.');
             return null;
         }
-        const newTodo = {
-            id: nextTodoId++,
-            text: itemObject.text,
-            priority: itemObject.priority || 'Medium',
-            status: 'Open',
-            dueDate: itemObject.dueDate || null
+        const newTask = {
+            id: nextId++,
+            text: taskData.text,
+            completed: false, // Default to not completed
+            priority: taskData.priority || 'Medium',
+            dueDate: taskData.dueDate || null
         };
-        todos.push(newTodo);
-        saveTodos();
-        // console.log('To-do added:', newTodo);
-        return newTodo;
+        tasks.push(newTask);
+        _saveTasks();
+        return {...newTask}; // Return a copy
     }
 
-    function getTodos() {
-        return [...todos]; // Return a copy
+    function getTasks() { // Renamed
+        return tasks.map(task => ({...task})); // Return a copy of all tasks
     }
 
-    function updateTodoStatus(id, newStatus) {
-        const todo = todos.find(t => t.id === id);
-        if (todo) {
-            todo.status = newStatus;
-            saveTodos();
-            // console.log('Updated_todo_status:', todo);
-            return todo;
+    function updateTask(id, updatedData) {
+        const taskId = parseInt(id);
+        const taskIndex = tasks.findIndex(t => t.id === taskId);
+        if (taskIndex !== -1) {
+            // Merge existing task with updatedData, but ensure 'id' and 'completed' status are handled carefully
+            const originalTask = tasks[taskIndex];
+            tasks[taskIndex] = {
+                ...originalTask,
+                ...updatedData,
+                id: taskId // Ensure original ID is preserved
+            };
+            _saveTasks();
+            return {...tasks[taskIndex]}; // Return a copy
         }
-        console.error('To-do not found for status update:', id);
+        console.error('Task not found for update:', id);
         return null;
     }
 
-    function deleteTodo(id) {
-        const index = todos.findIndex(t => t.id === id);
-        if (index > -1) {
-            const deletedTodo = todos.splice(index, 1);
-            saveTodos();
-            // console.log('Deleted_todo:', deletedTodo[0]);
-            return true;
+    function toggleTaskCompleted(id) {
+        const taskId = parseInt(id);
+        const task = tasks.find(t => t.id === taskId);
+        if (task) {
+            task.completed = !task.completed;
+            _saveTasks();
+            return {...task}; // Return a copy
         }
-        console.error('To-do not found for deletion:', id);
-        return false;
+        console.error('Task not found for toggle:', id);
+        return null;
     }
 
-    function getOpenTodos() {
-        return todos.filter(todo => todo.status === 'Open');
+    function deleteTask(id) { // Renamed
+        const taskId = parseInt(id);
+        const index = tasks.findIndex(t => t.id === taskId);
+        if (index > -1) {
+            const deletedTaskArray = tasks.splice(index, 1);
+            _saveTasks();
+            return deletedTaskArray[0]; // Return the deleted task (which is a copy already due to splice)
+        }
+        console.error('Task not found for deletion:', id);
+        return null;
     }
 
-    function getCompletedTodos() {
-        return todos.filter(todo => todo.status === 'Completed');
+    function getOpenTasks() {
+        return tasks.filter(task => !task.completed).map(task => ({...task}));
+    }
+
+    function getCompletedTasks() {
+        return tasks.filter(task => task.completed).map(task => ({...task}));
     }
 
     window.todoService = {
-        addTodo: addTodo,
-        getTodos: getTodos,
-        updateTodoStatus: updateTodoStatus,
-        deleteTodo: deleteTodo,
-        getOpenTodos: getOpenTodos,
-        getCompletedTodos: getCompletedTodos
+        addTask: addTask,
+        getTasks: getTasks,
+        updateTask: updateTask,
+        toggleTaskCompleted: toggleTaskCompleted,
+        deleteTask: deleteTask,
+        getOpenTasks: getOpenTasks,
+        getCompletedTasks: getCompletedTasks
     };
 
 })(window);
