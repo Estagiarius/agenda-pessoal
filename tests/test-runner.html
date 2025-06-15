@@ -19,15 +19,31 @@
     <div id="qunit-fixture"></div> <!-- Mock DOM area if needed by ui.js tests later -->
     
     <h2>Question Service Tests</h2>
-    <div id="test-results-questionService" class="test-results"></div>
+    <div id="test-results-questionService" class="test-results" data-testid="test-results-questionService"></div>
+
+    <h2>Event Service Tests</h2>
+    <div id="test-results-eventService" class="test-results" data-testid="test-results-eventService"></div>
+
+    <h2>Todo Service Tests</h2>
+    <div id="test-results-todoService" class="test-results" data-testid="test-results-todoService"></div>
 
     <!-- Scripts for application logic (order is important) -->
+    <!-- Common models -->
     <script src="../js/app/models.js"></script>
-    <script src="../js/app/questionService.js"></script>
-    <!-- ui.js might not be strictly needed for questionService tests, but include if there are dependencies -->
-    <!-- <script src="../js/app/ui.js"></script> -->
 
-    <!-- Test Script -->
+    <!-- Question Service and its test -->
+    <script src="../js/app/questionService.js"></script>
     <script src="questionService.test.js"></script>
+
+    <!-- Event Service and its test -->
+    <script src="../js/app/eventService.js"></script>
+    <script src="eventService.test.js"></script>
+
+    <!-- Todo Service and its test -->
+    <script src="../js/app/todoService.js"></script>
+    <script src="todoService.test.js"></script>
+
+    <!-- Other app scripts if needed for specific service tests, though ideally services are testable in isolation -->
+    <!-- <script src="../js/app/ui.js"></script> -->
 </body>
 </html>

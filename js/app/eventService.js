@@ -121,13 +121,33 @@
         return true;
     }
     
+
+    function deleteEvent(eventId) {
+        if (typeof eventId === 'undefined' || eventId === null) {
+            console.error('Event ID must be provided for deletion.');
+            return false;
+        }
+        const eventIndex = events.findIndex(event => String(event.id) === String(eventId));
+
+        if (eventIndex === -1) {
+            console.error('Event with id ' + eventId + ' not found for deletion.');
+            return false;
+        }
+
+        const deletedEvent = events.splice(eventIndex, 1);
+        console.log('eventService: Event deleted:', JSON.stringify(deletedEvent[0]));
+        saveEvents();
+        return true;
+    }
+
     // Expose 
     window.eventService = {
         addEvent: addEvent,
         getEvents: getEvents,
         getEventsForDate: getEventsForDate,
-        getEventById: getEventById, // Expose the new function
-        updateEvent: updateEvent 
+        getEventById: getEventById,
+        updateEvent: updateEvent,
+        deleteEvent: deleteEvent // Expose deleteEvent
     };
 
 })(window);
