@@ -1,50 +1,12 @@
-document.addEventListener('DOMContentLoaded', function() {
+function initChatApp() {
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
     const chatMessages = document.getElementById('chat-messages');
 
-    if (chatForm) {
-        chatForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            const message = chatInput.value.trim();
-
-            if (message) {
-                appendMessage('user', message);
-                chatInput.value = '';
-                // Exibir um indicador de "digitando..."
-                appendMessage('bot', 'Digitando...');
-
-                // Enviar mensagem para o backend (que será criado a seguir)
-                fetch('/api/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ message: message }),
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Remover o indicador de "digitando..."
-                    const typingIndicator = document.querySelector('.message.bot:last-child');
-                    if (typingIndicator && typingIndicator.textContent === 'Digitando...') {
-                        typingIndicator.remove();
-                    }
-                    appendMessage('bot', data.reply);
-                })
-                .catch(error => {
-                    console.error('Erro ao contatar o servidor de chat:', error);
-                    // Remover o indicador de "digitando..."
-                    const typingIndicator = document.querySelector('.message.bot:last-child');
-                    if (typingIndicator && typingIndicator.textContent === 'Digitando...') {
-                        typingIndicator.remove();
-                    }
-                    appendMessage('bot', 'Desculpe, ocorreu um erro. Tente novamente.');
-                });
-            }
-        });
-    }
-
+    // Função para adicionar mensagens à interface
     function appendMessage(sender, text) {
+        if (!chatMessages) return;
+
         const messageElement = document.createElement('div');
         messageElement.classList.add('message', sender);
 
@@ -60,4 +22,53 @@ document.addEventListener('DOMContentLoaded', function() {
         chatMessages.appendChild(messageElement);
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
-});
+
+    // Verifica se o formulário de chat existe na view atual
+    if (chatForm) {
+        chatForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const message = chatInput.value.trim();
+
+            if (message) {
+                appendMessage('user', message);
+                chatInput.value = '';
+                // Exibir um indicador de "digitando..."
+                const typingIndicator = appendMessage('bot', 'Digitando...');
+
+                // Enviar mensagem para o backend
+                fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message }),
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Erro na rede: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Remover o indicador de "digitando..."
+                    const lastBotMessage = chatMessages.querySelector('.message.bot:last-child');
+                    if (lastBotMessage && lastBotMessage.textContent.includes('Digitando...')) {
+                        lastBotMessage.remove();
+                    }
+                    appendMessage('bot', data.reply);
+                })
+                .catch(error => {
+                    console.error('Erro ao contatar o servidor de chat:', error);
+                    // Remover o indicador de "digitando..."
+                    const lastBotMessage = chatMessages.querySelector('.message.bot:last-child');
+                    if (lastBotMessage && lastBotMessage.textContent.includes('Digitando...')) {
+                        lastBotMessage.remove();
+                    }
+                    appendMessage('bot', `Desculpe, ocorreu um erro: ${error.message}. Tente novamente.`);
+                });
+            }
+        });
+    }
+}
+
+// O DOMContentLoaded é removido para que a inicialização seja controlada pelo router.
