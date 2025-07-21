@@ -53,7 +53,7 @@ def chat():
     def generate():
         try:
             print(f"INFO: Enviando para Maritaca (stream): {payload}", file=sys.stdout)
-            response = requests.post(API_URL, json=payload, headers=headers, stream=True, timeout=60)
+            response = requests.post(API_URL, json=payload, headers=headers, stream=True, timeout=120)
             print(f"INFO: Resposta da Maritaca (status): {response.status_code}", file=sys.stdout)
             response.raise_for_status()
 
