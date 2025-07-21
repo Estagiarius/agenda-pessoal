@@ -45,13 +45,46 @@ function initChatApp() {
                     body: JSON.stringify({ message: message, model: model }),
                 });
 
-                const data = await response.json();
+                if (!response.body) throw new Error("A resposta não contém um corpo para streaming.");
 
-                if (!response.ok) {
-                    throw new Error(data.reply || "Ocorreu um erro desconhecido.");
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let fullResponse = '';
+
+                botMessageElement.innerHTML = '';
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+
+                    let boundary = buffer.indexOf('\n\n');
+                    while (boundary !== -1) {
+                        const message = buffer.substring(0, boundary);
+                        buffer = buffer.substring(boundary + 2);
+
+                        if (message.startsWith('data: ')) {
+                            const jsonData = message.substring(6);
+                            try {
+                                const parsedData = JSON.parse(jsonData);
+                                if (parsedData.error) throw new Error(parsedData.error);
+
+                                if (parsedData.answer) {
+                                    fullResponse += parsedData.answer;
+                                    botMessageElement.innerHTML = marked.parse(fullResponse);
+                                }
+                            } catch (e) {
+                                console.warn("Erro ao fazer parse do JSON, pode ser um objeto incompleto. Buffer:", jsonData);
+                            }
+                        }
+                        boundary = buffer.indexOf('\n\n');
+                    }
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
                 }
 
-                botMessageElement.innerHTML = marked.parse(data.reply);
+                botMessageElement.innerHTML = marked.parse(fullResponse);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
 
             } catch (error) {
