@@ -45,7 +45,7 @@ def chat():
         ],
         "stream": True,  # Habilita o streaming
         "do_sample": True,
-        "max_tokens": 128000, # Aumenta o limite de tokens
+        "max_tokens": 100000, # Aumenta o limite de tokens
         "temperature": 0.5,
         "top_p": 0.95
     }
