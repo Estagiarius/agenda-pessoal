@@ -49,47 +49,21 @@ function initChatApp() {
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
-                let buffer = '';
-                let fullResponse = '';
 
-                botMessageElement.innerHTML = '';
+                botMessageElement.innerHTML = 'Recebendo dados...';
 
                 while (true) {
                     const { value, done } = await reader.read();
-                    if (done) break;
-
-                    buffer += decoder.decode(value, { stream: true });
-
-                    // Processa o buffer, procurando por mensagens completas (delimitadas por \n\n)
-                    let boundary = buffer.indexOf('\n\n');
-                    while (boundary !== -1) {
-                        const message = buffer.substring(0, boundary);
-                        buffer = buffer.substring(boundary + 2);
-
-                        if (message.startsWith('data: ')) {
-                            const jsonData = message.substring(6);
-                            if (jsonData.trim() === '[DONE]') {
-                                continue;
-                            }
-                            try {
-                                const parsedData = JSON.parse(jsonData);
-                                if (parsedData.error) throw new Error(parsedData.error);
-
-                                if (parsedData.answer) {
-                                    fullResponse += parsedData.answer;
-                                    botMessageElement.innerHTML = marked.parse(fullResponse);
-                                }
-                            } catch (e) {
-                                console.warn("Erro ao fazer parse do JSON, pode ser um objeto incompleto. Buffer:", jsonData);
-                            }
-                        }
-                        boundary = buffer.indexOf('\n\n');
+                    if (done) {
+                        console.log("Stream concluído.");
+                        botMessageElement.innerHTML += "<br><strong>Stream concluído. Verifique o console.</strong>";
+                        break;
                     }
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                }
 
-                botMessageElement.innerHTML = marked.parse(fullResponse);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+                    const chunk = decoder.decode(value, { stream: true });
+                    console.log("CHUNK BRUTO RECEBIDO:", chunk);
+                    botMessageElement.innerHTML += "."; // Indicador visual de que dados estão chegando
+                }
 
             } catch (error) {
                 console.error('Erro ao contatar o servidor de chat:', error);
