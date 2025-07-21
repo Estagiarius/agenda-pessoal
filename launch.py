@@ -40,8 +40,8 @@ def chat():
                     {"role": "user", "content": message}
                 ],
                 stream=True,
-                max_tokens=2048,
-                temperature=0.7,
+                max_tokens=16384,
+                temperature=0.5,
                 top_p=0.95
             )
             for chunk in stream:
