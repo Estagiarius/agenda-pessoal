@@ -91,7 +91,13 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (viewKey === '#/settings') {
             fetchView('views/settings.html', initSettingsViewLogic);
         } else if (viewKey === '#/tasks') {
-            fetchView('views/tasks.html');
+            fetchView('views/tasks.html', () => {
+                if (typeof initTodoApp === 'function') {
+                    initTodoApp();
+                } else {
+                    console.error('A função initTodoApp não está definida.');
+                }
+            });
         } else if (viewKey === '#/questions') {
             fetchView('views/question_bank.html', () => {
                 if (typeof ui !== 'undefined' && typeof ui.showQuestionBank === 'function') {

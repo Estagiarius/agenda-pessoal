@@ -139,28 +139,3 @@ function initTodoApp() {
     renderTasks();
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    // This will run after the DOM is fully loaded, but we need to make sure
-    // the view is the tasks view.
-    if (window.location.hash === '#/tasks') {
-        // A small delay to ensure todoService has time to load.
-        // A more robust solution might involve custom events or promises.
-        setTimeout(() => {
-            if (typeof initTodoApp === 'function') {
-                initTodoApp();
-            }
-        }, 100);
-    }
-});
-
-// Also, re-check when hash changes
-window.addEventListener('hashchange', function() {
-    if (window.location.hash === '#/tasks') {
-        setTimeout(() => {
-            if (typeof initTodoApp === 'function') {
-                // The initTodoApp itself should be idempotent or handle re-initialization safely.
-                initTodoApp();
-            }
-        }, 100);
-    }
-});
