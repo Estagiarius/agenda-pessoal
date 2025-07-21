@@ -30,3 +30,10 @@
     font-size: 0.9em;
     color: #555;
 }
+
+/* Garante que as listas renderizadas por Markdown fiquem dentro da caixa de mensagem */
+.message div ul,
+.message div ol {
+    padding-left: 20px;
+    margin-bottom: 10px;
+}
