@@ -143,6 +143,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             });
+        } else if (viewKey === '#/chat') {
+            fetchView('views/chat.html', () => {
+                // Lógica de inicialização para o chat, se necessário
+            });
         } else {
             mainContentArea.innerHTML = '<h2>404 - Página Não Encontrada</h2><p>A página que você solicitou não pôde ser encontrada.</p>';
             mainContentArea.style.display = 'block';
