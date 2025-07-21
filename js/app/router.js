@@ -92,10 +92,10 @@ document.addEventListener('DOMContentLoaded', function() {
             fetchView('views/settings.html', initSettingsViewLogic);
         } else if (viewKey === '#/tasks') {
             fetchView('views/tasks.html', () => {
-                if (typeof initTodoApp === 'function') { // Assuming todo.js has an init function
+                if (typeof initTodoApp === 'function') {
                     initTodoApp();
                 } else {
-                    console.warn('initTodoApp function not found. Tasks view might not be interactive.');
+                    console.error('A função initTodoApp não está definida.');
                 }
             });
         } else if (viewKey === '#/questions') {

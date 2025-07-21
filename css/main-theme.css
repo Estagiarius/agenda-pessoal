@@ -664,3 +664,57 @@ body {
 #todays-overview .badge {
     background-color: #337ab7; /* Bootstrap's primary blue */
 }
+
+/* Task list styles */
+.task-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+}
+
+.task-main-content {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.task-checkbox {
+    margin-right: 15px;
+}
+
+.task-text {
+    font-size: 1.1em;
+}
+
+.task-item.completed .task-text {
+    text-decoration: line-through;
+    color: #888;
+}
+
+.task-details {
+    display: flex;
+    align-items: center;
+}
+
+.task-details .badge {
+    margin-right: 15px;
+    padding: 5px 10px;
+    font-size: 0.9em;
+    color: white;
+}
+
+.priority-high { background-color: #d9534f; }
+.priority-medium { background-color: #f0ad4e; }
+.priority-low { background-color: #5cb85c; }
+
+.due-date {
+    margin-right: 15px;
+    font-style: italic;
+    color: #666;
+}
+
+.task-item.overdue .due-date {
+    color: #d9534f;
+    font-weight: bold;
+}
