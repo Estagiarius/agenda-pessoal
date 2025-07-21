@@ -72,11 +72,13 @@ function initChatApp() {
                                 if (parsedData.error) {
                                     throw new Error(parsedData.error);
                                 }
-                                fullResponse += parsedData.answer || '';
-                                // Renderiza o markdown a cada atualização
-                                botMessageElement.innerHTML = marked.parse(fullResponse);
+                                if (parsedData.answer) {
+                                    fullResponse += parsedData.answer;
+                                    botMessageElement.innerHTML = marked.parse(fullResponse);
+                                }
                             } catch (e) {
-                                // Ignora JSONs malformados que podem ocorrer no meio do stream
+                                // Ignora chunks que não são JSONs válidos, como o [DONE]
+                                // console.warn("Chunk ignorado por não ser um JSON válido:", jsonData);
                             }
                         }
                     }
