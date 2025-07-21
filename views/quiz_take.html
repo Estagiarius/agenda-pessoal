@@ -1,17 +1,17 @@
-<div class="container mt-4" id="quiz-taking-actual-content">
-    <h2 id="quiz-progress-indicator">Questão X de Y</h2>
-    <div id="quiz-question-card" class="card mt-3">
-        <div class="card-body">
-            <p id="quiz-question-text" class="card-text lead">Texto da pergunta aqui...</p>
-            <div id="quiz-options-container" class="mt-3">
-                <!-- Options will be rendered here by ui.js -->
+<div class="container" id="quiz-taking-actual-content">
+    <h2 id="quiz-progress-indicator" class="text-center">Questão X de Y</h2>
+    <div class="panel panel-default" id="quiz-question-card">
+        <div class="panel-body">
+            <p id="quiz-question-text" class="lead">Texto da pergunta aqui...</p>
+            <div id="quiz-options-container" class="list-group">
+                <!-- As opções serão renderizadas aqui por ui.js -->
             </div>
         </div>
     </div>
     <div id="quiz-taking-feedback" class="mt-3"></div>
-    <div class="mt-3">
-        <button id="quiz-prev-btn" class="btn btn-secondary mr-2" style="display: none;">Anterior</button>
-        <button id="quiz-next-btn" class="btn btn-info mr-2" style="display: none;">Próxima</button>
+    <div class="text-center">
+        <button id="quiz-prev-btn" class="btn btn-default" style="display: none;">Anterior</button>
+        <button id="quiz-next-btn" class="btn btn-primary" style="display: none;">Próxima</button>
         <button id="quiz-submit-btn" class="btn btn-success" style="display: none;">Finalizar Quiz</button>
     </div>
 </div>

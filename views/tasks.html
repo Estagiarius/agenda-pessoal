@@ -1,20 +1,26 @@
-<div class="container" id="todo-list-container" style="margin-top: 20px;">
-  <h2>Minhas Tarefas</h2>
-  <div class="input-group" style="margin-bottom: 10px;">
-    <input type="text" id="taskInput" class="form-control" placeholder="Adicionar nova tarefa" style="margin-right: 5px;">
-    <select id="taskPriorityInput" class="form-control" style="margin-right: 5px; max-width: 120px;">
-      <option value="Medium">Média</option>
-      <option value="High">Alta</option>
-      <option value="Low">Baixa</option>
-    </select>
-    <span class="input-group-btn">
-      <button id="addTaskButton" class="btn btn-primary">Adicionar Tarefa</button>
-    </span>
-  </div>
-  <div style="margin-bottom: 10px;">
-    <button id="sortTasksByPriorityButton" class="btn btn-default btn-sm">Ordenar por Prioridade</button>
-  </div>
-  <ul id="taskList" class="list-group">
-    <!-- Tasks will be rendered here by todo.js -->
-  </ul>
+<div class="container" id="todo-list-container">
+    <h2>Minhas Tarefas</h2>
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <div class="form-group">
+                <label for="taskInput" class="sr-only">Nova Tarefa</label>
+                <input type="text" id="taskInput" class="form-control" placeholder="Adicionar nova tarefa">
+            </div>
+            <div class="form-group">
+                <label for="taskPriorityInput" class="sr-only">Prioridade</label>
+                <select id="taskPriorityInput" class="form-control">
+                    <option value="High">Alta</option>
+                    <option value="Medium" selected>Média</option>
+                    <option value="Low">Baixa</option>
+                </select>
+            </div>
+            <button id="addTaskButton" class="btn btn-primary btn-block">Adicionar Tarefa</button>
+        </div>
+    </div>
+    <div class="text-right" style="margin-bottom: 10px;">
+        <button id="sortTasksByPriorityButton" class="btn btn-default btn-sm">Ordenar por Prioridade</button>
+    </div>
+    <ul id="taskList" class="list-group">
+        <!-- As tarefas serão renderizadas aqui por todo.js -->
+    </ul>
 </div>
