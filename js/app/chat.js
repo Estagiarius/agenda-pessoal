@@ -2,6 +2,7 @@ function initChatApp() {
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
     const chatMessages = document.getElementById('chat-messages');
+    const modelSelect = document.getElementById('model-select');
 
     // Função para adicionar mensagens à interface
     function appendMessage(sender, text) {
@@ -28,6 +29,7 @@ function initChatApp() {
         chatForm.addEventListener('submit', function(event) {
             event.preventDefault();
             const message = chatInput.value.trim();
+            const model = modelSelect.value;
 
             if (message) {
                 appendMessage('user', message);
@@ -41,7 +43,7 @@ function initChatApp() {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ message: message }),
+                    body: JSON.stringify({ message: message, model: model }),
                 })
                 .then(response => {
                     if (!response.ok) {

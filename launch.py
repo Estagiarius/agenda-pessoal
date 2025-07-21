@@ -15,6 +15,7 @@ if not API_KEY:
     raise ValueError("A variável de ambiente MARITACA_API_KEY não foi definida.")
 
 API_URL = "https://chat.maritaca.ai/api/chat/inference"
+DEFAULT_MODEL = "sabia-3.1"
 
 @app.route('/')
 def serve_index():
@@ -25,6 +26,7 @@ def chat():
     data = request.get_json()
     print(f"INFO: Requisição recebida: {data}", file=sys.stdout)
     message = data.get('message')
+    model = data.get('model', DEFAULT_MODEL) # Usa o modelo do request ou o padrão
 
     if not message:
         print("ERRO: Nenhuma mensagem fornecida na requisição.", file=sys.stderr)
@@ -36,6 +38,7 @@ def chat():
     }
 
     payload = {
+        "model": model,
         "messages": [
             {"role": "user", "content": message}
         ],
