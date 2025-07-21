@@ -143,6 +143,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             });
+        } else if (viewKey === '#/chat') {
+            fetchView('views/chat.html', () => {
+                if (typeof initChatApp === 'function') {
+                    initChatApp();
+                } else {
+                    console.error('A função initChatApp não está definida.');
+                }
+            });
         } else {
             mainContentArea.innerHTML = '<h2>404 - Página Não Encontrada</h2><p>A página que você solicitou não pôde ser encontrada.</p>';
             mainContentArea.style.display = 'block';

@@ -1,112 +1,62 @@
-# Import necessary modules
-import webbrowser
 import os
-import http.server
-import socketserver
-import threading
-import socket
+from flask import Flask, request, Response, send_from_directory
+from openai import OpenAI
+import sys
+import json
 
-# --- Configuration ---
-DEFAULT_PORT = 8000
-HOST_NAME = "localhost" # Or "127.0.0.1"
+# Configuração do Flask
+app = Flask(__name__, static_folder='.', static_url_path='')
 
-def find_available_port(start_port):
-    """
-    Finds an available network port, starting from start_port and incrementing.
-    """
-    port = start_port
-    while True:
+# Configuração do Cliente OpenAI para a API da Maritaca
+try:
+    client = OpenAI(
+        api_key=os.environ.get("MARITACA_API_KEY"),
+        base_url="https://chat.maritaca.ai/api",
+    )
+except Exception as e:
+    print(f"ERRO CRÍTICO: Falha ao inicializar o cliente da API: {e}", file=sys.stderr)
+    sys.exit(1)
+
+DEFAULT_MODEL = "sabia-3.1"
+
+@app.route('/')
+def serve_index():
+    return send_from_directory('.', 'index.html')
+
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    data = request.get_json()
+    message = data.get('message')
+    model = data.get('model', DEFAULT_MODEL)
+
+    if not message:
+        return Response(json.dumps({'error': 'Nenhuma mensagem fornecida'}), status=400, mimetype='application/json')
+
+    def generate():
         try:
-            # Attempt to create a socket and bind it to the port
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.bind((HOST_NAME, port))
-            # If bind was successful, the port is available
-            return port
-        except OSError:
-            # Port is already in use, try the next one
-            print(f"Port {port} is in use, trying next port...")
-            port += 1
+            stream = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "user", "content": message}
+                ],
+                stream=True,
+                max_tokens=8192,
+                temperature=0.5,
+                top_p=0.95
+            )
+            for chunk in stream:
+                content = chunk.choices[0].delta.content or ""
+                if content:
+                    # Formato Server-Sent Events (SSE)
+                    yield f"data: {json.dumps({'answer': content})}\n\n"
         except Exception as e:
-            # Other unexpected error
-            print(f"Error checking port {port}: {e}")
-            port +=1 # Try next port anyway
+            print(f"ERRO: Erro ao chamar a API da Maritaca: {e}", file=sys.stderr)
+            error_message = json.dumps({"error": "Ocorreu um erro ao se comunicar com a IA."})
+            yield f"data: {error_message}\n\n"
 
-def start_server_and_open_browser():
-    """
-    Starts a simple HTTP server in a separate thread and opens the browser.
-    """
-    # Get the absolute path to the directory where this script is located
-    script_dir = os.path.abspath(os.path.dirname(__file__))
+    return Response(generate(), mimetype='text/event-stream')
 
-    # Change the current working directory to the script's directory
-    # This is so SimpleHTTPRequestHandler serves files from this location
-    os.chdir(script_dir)
-    print(f"Serving files from: {script_dir}")
-
-    # Find an available port
-    port = find_available_port(DEFAULT_PORT)
-
-    # Set up the HTTP server
-    handler = http.server.SimpleHTTPRequestHandler
-
-    # Using socketserver.TCPServer for more robust port handling
-    # and to allow address reuse quickly after script restart (though not strictly necessary for this script)
-    # httpd = socketserver.TCPServer(("", port), handler)
-    # Binding to HOST_NAME instead of "" to be specific, though "" often works for localhost.
-    try:
-        httpd = socketserver.TCPServer((HOST_NAME, port), handler)
-    except OSError as e:
-        print(f"Fatal Error: Could not bind to {HOST_NAME}:{port}. Error: {e}")
-        print("This might be due to the address not being available or permission issues.")
-        return # Exit if server cannot be created
-
-    print(f"Starting HTTP server on {HOST_NAME}:{port}...")
-
-    # Start the server in a separate daemon thread
-    # Daemon threads automatically exit when the main program exits
-    server_thread = threading.Thread(target=httpd.serve_forever)
-    server_thread.daemon = True
-    server_thread.start()
-
-    # Construct the URL to open (index.html is the default for SimpleHTTPRequestHandler)
-    # Using HOST_NAME ensures consistency with what the server is bound to.
-    url_to_open = f"http://{HOST_NAME}:{port}/"
-
-    # Give the server a moment to start (optional, but can be helpful)
-    # import time
-    # time.sleep(0.5)
-
-    print(f"Attempting to open in browser: {url_to_open}")
-    try:
-        webbrowser.open(url_to_open)
-        print("Browser launch attempted. The server will run in the background.")
-        print("Close this window or press Ctrl+C to stop the server.")
-    except Exception as e:
-        print(f"An error occurred while trying to open the web browser: {e}")
-
-    # Keep the main thread alive until interrupted (e.g., by Ctrl+C)
-    # This is necessary because the server is in a daemon thread.
-    # If the main thread exits, daemon threads are also terminated.
-    try:
-        while True:
-            pass # Keep main thread alive
-    except KeyboardInterrupt:
-        print("\nShutting down server...")
-    finally:
-        httpd.shutdown() # Properly shut down the server
-        httpd.server_close() # Close the server socket
-        print("Server stopped.")
-
-if __name__ == "__main__":
-    # Create a dummy index.html if it doesn't exist for testing
-    # In a real scenario, index.html should already exist.
-    html_file_name = "index.html"
-    if not os.path.exists(html_file_name): # Checks in current dir due to os.chdir()
-        print(f"Creating dummy {html_file_name} for testing purposes in {os.getcwd()}.")
-        with open(html_file_name, "w") as f:
-            f.write("<h1>Hello World from HTTP Server!</h1><p>This is a test page served locally.</p>")
-        print(f"{html_file_name} created.")
-    else:
-        print(f"{html_file_name} already exists in {os.getcwd()}.")
-
-    start_server_and_open_browser()
+if __name__ == '__main__':
+    PORT = 8000
+    print(f"Servidor Flask rodando em http://127.0.0.1:{PORT}", file=sys.stdout)
+    app.run(port=PORT)
