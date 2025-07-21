@@ -13,8 +13,8 @@ function initChatApp() {
         const senderName = document.createElement('strong');
         senderName.textContent = sender === 'user' ? 'Você' : 'Assistente';
 
-        const messageText = document.createElement('div'); // Mudar para div para renderizar HTML
-        messageText.innerHTML = text; // Usar innerHTML para Markdown
+        const messageText = document.createElement('div');
+        messageText.innerHTML = text;
 
         messageElement.appendChild(senderName);
         messageElement.appendChild(messageText);
@@ -22,7 +22,7 @@ function initChatApp() {
         chatMessages.appendChild(messageElement);
         chatMessages.scrollTop = chatMessages.scrollHeight;
 
-        return messageText; // Retorna o elemento de texto para atualização
+        return messageText;
     }
 
     if (chatForm) {
@@ -33,7 +33,7 @@ function initChatApp() {
 
             if (!message) return;
 
-            appendMessage('user', message);
+            appendMessage('user', marked.parse(message));
             chatInput.value = '';
 
             const botMessageElement = appendMessage('bot', '<span class="typing-indicator"></span>');
@@ -41,51 +41,53 @@ function initChatApp() {
             try {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: message, model: model }),
                 });
 
-                if (!response.body) {
-                    throw new Error("A resposta não contém um corpo para streaming.");
-                }
+                if (!response.body) throw new Error("A resposta não contém um corpo para streaming.");
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
+                let buffer = '';
                 let fullResponse = '';
 
-                botMessageElement.innerHTML = ''; // Limpa o indicador de "digitando"
+                botMessageElement.innerHTML = '';
 
                 while (true) {
                     const { value, done } = await reader.read();
                     if (done) break;
 
-                    const chunk = decoder.decode(value, { stream: true });
-                    // Processar múltiplos eventos em um único chunk
-                    const lines = chunk.split('\n\n');
-                    for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            const jsonData = line.substring(6);
+                    buffer += decoder.decode(value, { stream: true });
+
+                    // Processa o buffer, procurando por mensagens completas (delimitadas por \n\n)
+                    let boundary = buffer.indexOf('\n\n');
+                    while (boundary !== -1) {
+                        const message = buffer.substring(0, boundary);
+                        buffer = buffer.substring(boundary + 2);
+
+                        if (message.startsWith('data: ')) {
+                            const jsonData = message.substring(6);
+                            if (jsonData.trim() === '[DONE]') {
+                                continue;
+                            }
                             try {
                                 const parsedData = JSON.parse(jsonData);
-                                if (parsedData.error) {
-                                    throw new Error(parsedData.error);
-                                }
+                                if (parsedData.error) throw new Error(parsedData.error);
+
                                 if (parsedData.answer) {
                                     fullResponse += parsedData.answer;
                                     botMessageElement.innerHTML = marked.parse(fullResponse);
                                 }
                             } catch (e) {
-                                // Ignora chunks que não são JSONs válidos, como o [DONE]
-                                // console.warn("Chunk ignorado por não ser um JSON válido:", jsonData);
+                                console.warn("Erro ao fazer parse do JSON, pode ser um objeto incompleto. Buffer:", jsonData);
                             }
                         }
+                        boundary = buffer.indexOf('\n\n');
                     }
                     chatMessages.scrollTop = chatMessages.scrollHeight;
                 }
 
-                // Renderização final para garantir que tudo está correto
                 botMessageElement.innerHTML = marked.parse(fullResponse);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
 
@@ -97,7 +99,6 @@ function initChatApp() {
     }
 }
 
-// Adiciona um pouco de CSS para o indicador de "digitando"
 const style = document.createElement('style');
 style.innerHTML = `
 .typing-indicator {
