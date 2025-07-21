@@ -1,9 +1,10 @@
 import os
 import webbrowser
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, Response, send_from_directory
 import requests
 import os
 import sys
+import json
 
 # Configuração do Flask
 app = Flask(__name__, static_folder='.', static_url_path='')
@@ -26,7 +27,7 @@ def chat():
     data = request.get_json()
     print(f"INFO: Requisição recebida: {data}", file=sys.stdout)
     message = data.get('message')
-    model = data.get('model', DEFAULT_MODEL) # Usa o modelo do request ou o padrão
+    model = data.get('model', DEFAULT_MODEL)
 
     if not message:
         print("ERRO: Nenhuma mensagem fornecida na requisição.", file=sys.stderr)
@@ -42,30 +43,35 @@ def chat():
         "messages": [
             {"role": "user", "content": message}
         ],
+        "stream": True,  # Habilita o streaming
         "do_sample": True,
-        "max_tokens": 150,
+        "max_tokens": 1024, # Aumenta o limite de tokens
         "temperature": 0.7,
         "top_p": 0.95
     }
 
-    try:
-        print(f"INFO: Enviando para Maritaca: {payload}", file=sys.stdout)
-        response = requests.post(API_URL, json=payload, headers=headers, timeout=30)
-        print(f"INFO: Resposta da Maritaca (status): {response.status_code}", file=sys.stdout)
-        print(f"INFO: Resposta da Maritaca (corpo): {response.text}", file=sys.stdout)
-        response.raise_for_status()
+    def generate():
+        try:
+            print(f"INFO: Enviando para Maritaca (stream): {payload}", file=sys.stdout)
+            response = requests.post(API_URL, json=payload, headers=headers, stream=True, timeout=60)
+            print(f"INFO: Resposta da Maritaca (status): {response.status_code}", file=sys.stdout)
+            response.raise_for_status()
 
-        full_response = response.json()
-        reply = full_response.get("answer", "Não foi possível obter uma resposta.")
+            for chunk in response.iter_content(chunk_size=None):
+                if chunk:
+                    # O prefixo "data: " é parte do protocolo Server-Sent Events (SSE)
+                    yield f"data: {chunk.decode('utf-8')}\n\n"
 
-        return jsonify({'reply': reply})
+        except requests.exceptions.RequestException as e:
+            print(f"ERRO: Erro ao chamar a API da Maritaca: {e}", file=sys.stderr)
+            error_message = json.dumps({"error": "Erro ao se comunicar com a IA"})
+            yield f"data: {error_message}\n\n"
+        except Exception as e:
+            print(f"ERRO: Ocorreu um erro inesperado: {e}", file=sys.stderr)
+            error_message = json.dumps({"error": "Ocorreu um erro inesperado no servidor"})
+            yield f"data: {error_message}\n\n"
 
-    except requests.exceptions.RequestException as e:
-        print(f"ERRO: Erro ao chamar a API da Maritaca: {e}", file=sys.stderr)
-        return jsonify({'error': 'Erro ao se comunicar com a IA'}), 500
-    except Exception as e:
-        print(f"ERRO: Ocorreu um erro inesperado: {e}", file=sys.stderr)
-        return jsonify({'error': 'Ocorreu um erro inesperado no servidor'}), 500
+    return Response(generate(), mimetype='text/event-stream')
 
 def open_browser():
     webbrowser.open_new("http://127.0.0.1:8000")
