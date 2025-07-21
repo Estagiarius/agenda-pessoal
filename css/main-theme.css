@@ -650,6 +650,20 @@ body {
     margin-bottom: 10px;
 }
 
+#recent-tasks-list .list-group-item {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+}
+
+#recent-tasks-list .list-group-item:first-child {
+    border-top: none;
+}
+
+#recent-tasks-list .list-group-item:last-child {
+    border-bottom: none;
+}
+
 .task-item {
     display: flex;
     justify-content: space-between;

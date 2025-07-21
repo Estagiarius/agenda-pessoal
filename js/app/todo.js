@@ -232,3 +232,41 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 }
+
+// Function to render recent tasks for the home view
+function renderRecentTasks(containerId, count) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error(`Container with id ${containerId} not found.`);
+        return;
+    }
+
+    if (window.todoService && typeof window.todoService.getTasks === 'function') {
+        const allTasks = window.todoService.getTasks();
+        const recentTasks = allTasks.sort((a, b) => b.id - a.id).slice(0, count);
+
+        container.innerHTML = ''; // Clear previous content
+
+        if (recentTasks.length === 0) {
+            container.innerHTML = '<p>Nenhuma tarefa recente.</p>';
+            return;
+        }
+
+        const list = document.createElement('ul');
+        list.className = 'list-group';
+
+        recentTasks.forEach(task => {
+            const listItem = document.createElement('li');
+            listItem.className = 'list-group-item';
+            listItem.textContent = task.text;
+            if (task.completed) {
+                listItem.classList.add('completed-task');
+            }
+            list.appendChild(listItem);
+        });
+
+        container.appendChild(list);
+    } else {
+        container.innerHTML = '<p>Serviço de tarefas não disponível.</p>';
+    }
+}

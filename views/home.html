@@ -23,8 +23,19 @@
             <!-- Upcoming Tasks -->
             <div class="dashboard-card">
                 <div id="upcoming-tasks-container">
-                    <h3>Tarefas Próximas</h3>
-                    <p><em>(Em breve: Suas tarefas a vencer aqui.)</em></p>
+                    <h3>Tarefas Recentes</h3>
+                    <div id="recent-tasks-list">
+                        <!-- As tarefas recentes serão renderizadas aqui -->
+                    </div>
+                    <script>
+                        // Garante que o DOM está pronto
+                        document.addEventListener('DOMContentLoaded', function() {
+                            // Verifica se a função existe antes de chamá-la
+                            if (typeof renderRecentTasks === 'function') {
+                                renderRecentTasks('recent-tasks-list', 5);
+                            }
+                        });
+                    </script>
                 </div>
             </div>
 
