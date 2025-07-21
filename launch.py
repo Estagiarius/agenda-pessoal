@@ -40,7 +40,7 @@ def chat():
                     {"role": "user", "content": message}
                 ],
                 stream=True,
-                max_tokens=16384,
+                max_tokens=11999,
                 temperature=0.5,
                 top_p=0.95
             )
