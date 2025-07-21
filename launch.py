@@ -59,16 +59,19 @@ def chat():
 
             for chunk in response.iter_content(chunk_size=None):
                 if chunk:
-                    # O prefixo "data: " é parte do protocolo Server-Sent Events (SSE)
                     yield f"data: {chunk.decode('utf-8')}\n\n"
 
+        except requests.exceptions.Timeout:
+            print("ERRO: Timeout ao conectar com a API da Maritaca.", file=sys.stderr)
+            error_message = json.dumps({"error": "O servidor de IA demorou muito para responder. Por favor, tente novamente mais tarde."})
+            yield f"data: {error_message}\n\n"
         except requests.exceptions.RequestException as e:
-            print(f"ERRO: Erro ao chamar a API da Maritaca: {e}", file=sys.stderr)
-            error_message = json.dumps({"error": "Erro ao se comunicar com a IA"})
+            print(f"ERRO: Erro na requisição para a API da Maritaca: {e}", file=sys.stderr)
+            error_message = json.dumps({"error": "Ocorreu um erro de comunicação com o servidor de IA."})
             yield f"data: {error_message}\n\n"
         except Exception as e:
-            print(f"ERRO: Ocorreu um erro inesperado: {e}", file=sys.stderr)
-            error_message = json.dumps({"error": "Ocorreu um erro inesperado no servidor"})
+            print(f"ERRO: Ocorreu um erro inesperado no servidor: {e}", file=sys.stderr)
+            error_message = json.dumps({"error": "Ocorreu um erro inesperado no servidor."})
             yield f"data: {error_message}\n\n"
 
     return Response(generate(), mimetype='text/event-stream')
