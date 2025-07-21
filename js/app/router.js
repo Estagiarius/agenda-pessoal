@@ -91,13 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (viewKey === '#/settings') {
             fetchView('views/settings.html', initSettingsViewLogic);
         } else if (viewKey === '#/tasks') {
-            fetchView('views/tasks.html', () => {
-                if (typeof initTodoApp === 'function') { // Assuming todo.js has an init function
-                    initTodoApp();
-                } else {
-                    console.warn('initTodoApp function not found. Tasks view might not be interactive.');
-                }
-            });
+            fetchView('views/tasks.html');
         } else if (viewKey === '#/questions') {
             fetchView('views/question_bank.html', () => {
                 if (typeof ui !== 'undefined' && typeof ui.showQuestionBank === 'function') {

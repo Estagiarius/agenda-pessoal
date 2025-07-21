@@ -139,44 +139,28 @@ function initTodoApp() {
     renderTasks();
 }
 
-// Basic CSS for completed tasks (can be moved to a CSS file)
-// This part should ideally be in a CSS file, but for the exercise, we'll keep it.
-// Ensure it's only added once.
-if (!document.getElementById('todo-styles')) {
-    const style = document.createElement('style');
-    style.id = 'todo-styles';
-style.textContent = `
-    .completed-task {
-        text-decoration: line-through;
-        color: #777;
+document.addEventListener('DOMContentLoaded', function() {
+    // This will run after the DOM is fully loaded, but we need to make sure
+    // the view is the tasks view.
+    if (window.location.hash === '#/tasks') {
+        // A small delay to ensure todoService has time to load.
+        // A more robust solution might involve custom events or promises.
+        setTimeout(() => {
+            if (typeof initTodoApp === 'function') {
+                initTodoApp();
+            }
+        }, 100);
     }
-    .task-checkbox {
-        margin-right: 10px; /* Spacing for checkbox */
+});
+
+// Also, re-check when hash changes
+window.addEventListener('hashchange', function() {
+    if (window.location.hash === '#/tasks') {
+        setTimeout(() => {
+            if (typeof initTodoApp === 'function') {
+                // The initTodoApp itself should be idempotent or handle re-initialization safely.
+                initTodoApp();
+            }
+        }, 100);
     }
-    .priority-badge {
-        margin-right: 8px;
-        padding: 0.3em 0.6em;
-        font-size: 0.75em;
-        color: white;
-        border-radius: 0.25rem;
-    }
-    .priority-high { background-color: #d9534f; } /* Red for High */
-    .priority-medium { background-color: #f0ad4e; } /* Orange for Medium */
-    .priority-low { background-color: #5cb85c; } /* Green for Low */
-    .task-text-priority-wrapper {
-        display: flex;
-        align-items: center;
-    }
-    /* Add some flex properties for better alignment if not using Bootstrap's d-flex */
-    .list-group-item { 
-        display: flex; 
-        align-items: center; 
-    }
-    .task-text {
-        flex-grow: 1; /* Allows text to take up available space */
-        margin-left: 5px; /* Space from checkbox */
-        margin-right: 5px; /* Space before delete button */
-    }
-`;
-document.head.appendChild(style);
-}
+});
