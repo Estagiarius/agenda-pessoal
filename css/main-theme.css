@@ -629,3 +629,38 @@ body {
     }
 
 }
+
+/* Dashboard styles */
+.dashboard-card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.quick-actions .btn {
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+#upcoming-tasks-container .list-group-item,
+#todays-overview .list-group-item {
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.task-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.task-overdue .task-due-date {
+    font-weight: bold;
+    color: #a94442; /* Bootstrap's text-danger color */
+}
+
+#todays-overview .badge {
+    background-color: #337ab7; /* Bootstrap's primary blue */
+}

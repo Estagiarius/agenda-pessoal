@@ -224,6 +224,14 @@ function showEventDetails(eventId) {
     }
 }
 
+// Function to display upcoming events and tasks
+function displayUpcomingEventsAndTasks() {
+    // Display upcoming events in "Resumo de Hoje"
+    displayUpcomingEvents();
+    // Display upcoming and overdue tasks in "Tarefas Próximas"
+    displayUpcomingTasks();
+}
+
 // Function to display upcoming events for today in the "Resumo de Hoje" section
 function displayUpcomingEvents() {
     const overviewContainer = document.getElementById('todays-overview');
@@ -233,103 +241,105 @@ function displayUpcomingEvents() {
     }
 
     if (!window.eventService || typeof window.eventService.getEvents !== 'function') {
-        overviewContainer.innerHTML = '<h2>Resumo de Hoje</h2><p>Serviço de eventos não disponível.</p>';
-        console.error('eventService not available for displaying upcoming events.');
+        overviewContainer.innerHTML = '<h3>Resumo de Hoje</h3><p>Serviço de eventos não disponível.</p>';
         return;
     }
 
     const allEvents = window.eventService.getEvents();
-    console.log('Resumo de Hoje - All Events:', JSON.stringify(allEvents, null, 2)); // Added log
-
-    if (!allEvents) { 
-        overviewContainer.innerHTML = '<h2>Resumo de Hoje</h2><p>Não foi possível carregar eventos.</p>';
-        return;
-    }
-    
     const today = moment().startOf('day');
-    const sevenDaysFromNow = moment().add(7, 'days').endOf('day'); // End of the 7th day from today
-    console.log('Resumo de Hoje - Start Date:', today.format('YYYY-MM-DD')); 
-    console.log('Resumo de Hoje - End Date:', sevenDaysFromNow.format('YYYY-MM-DD'));
+    const sevenDaysFromNow = moment().add(7, 'days').endOf('day');
 
-    const upcomingEvents = allEvents.filter((event, index) => {
+    const upcomingEvents = allEvents.filter(event => {
         const eventDate = moment(event.date, 'YYYY-MM-DD');
-        // Log for each event being checked against the date range
-        console.log(`Resumo de Hoje - Checking Event: Date='${event.date}', Parsed='${eventDate.format('YYYY-MM-DD')}', IsInDateRange=${eventDate.isBetween(today, sevenDaysFromNow, null, '[]')}, Title='${event.title}'`);
-        return eventDate.isBetween(today, sevenDaysFromNow, null, '[]'); // '[]' includes start and end dates
+        return eventDate.isBetween(today, sevenDaysFromNow, null, '[]');
     }).sort((a, b) => {
-        // First, sort by date
         const dateA = moment(a.date, 'YYYY-MM-DD');
         const dateB = moment(b.date, 'YYYY-MM-DD');
         if (dateA.isBefore(dateB)) return -1;
         if (dateA.isAfter(dateB)) return 1;
-
-        // If dates are the same, then sort by startTime
-        if (a.startTime && b.startTime) {
-            return a.startTime.localeCompare(b.startTime);
-        } else if (a.startTime) { // a has time, b doesn't
-            return -1; 
-        } else if (b.startTime) { // b has time, a doesn't
-            return 1;  
-        }
-        return 0; // Both are all-day events on the same date
+        if (a.startTime && b.startTime) return a.startTime.localeCompare(b.startTime);
+        return a.startTime ? -1 : 1;
     });
 
-    
-    console.log('Resumo de Hoje - Filtered Upcoming Events:', JSON.stringify(upcomingEvents, null, 2));
-
-    let contentHtml = '<h2>Resumo de Hoje</h2>';
+    let contentHtml = '<h3>Resumo de Hoje</h3>';
     if (upcomingEvents.length === 0) {
-        contentHtml += '<p>Nenhum evento programado para os próximos 7 dias.</p>'; // This line was already correct from the previous step.
+        contentHtml += '<p>Nenhum evento programado para os próximos 7 dias.</p>';
     } else {
         contentHtml += '<ul class="list-group">';
         upcomingEvents.forEach(event => {
-            const escapeHTML = str => str ? str.replace(/[&<>"']/g, match => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[match]) : '';
-
-            // Format date for display within the list item
             const eventDateFormatted = moment(event.date, 'YYYY-MM-DD').format('DD/MM');
             const title = escapeHTML(event.title);
             const startTime = escapeHTML(event.startTime);
-            const endTime = escapeHTML(event.endTime);
-            const description = escapeHTML(event.description);
-            // Assuming event.id exists and is unique for each event
-            const eventId = event.id || `event-${Date.now()}-${Math.random()}`; 
+            const eventId = escapeHTML(String(event.id));
 
             contentHtml += `
-                <li class="list-group-item" data-event-id="${escapeHTML(String(eventId))}">
+                <li class="list-group-item" data-event-id="${eventId}" style="cursor: pointer;">
                     <h5 class="list-group-item-heading">
-                        <span class="badge pull-right" style="background-color: #05676E; margin-left: 8px;">${eventDateFormatted}</span>
+                        <span class="badge pull-right">${eventDateFormatted}</span>
                         ${title}
                     </h5>
                     <p class="list-group-item-text mb-0">
                         ${startTime ? `Horário: ${startTime}` : 'Dia todo'}
-                        ${endTime ? ` - ${endTime}` : ''}
                     </p>
-                    ${description ? `<p class="list-group-item-text text-muted" style="font-size: 0.9em; margin-top: 5px;">${description}</p>` : ''}
                 </li>`;
         });
         contentHtml += '</ul>';
     }
-    
-    console.log('Resumo de Hoje - Generated HTML:', contentHtml); // Added log
     overviewContainer.innerHTML = contentHtml;
 
-    // Add event listener to the list of upcoming events for showing details
-    const upcomingEventsList = overviewContainer.querySelector('ul.list-group');
-    if (upcomingEventsList) {
-        upcomingEventsList.addEventListener('click', function(e) {
-            const listItem = e.target.closest('li.list-group-item[data-event-id]');
-            if (listItem) {
-                const eventId = listItem.dataset.eventId;
-                console.log('Clicked upcoming event item:', listItem);
-                console.log('Retrieved eventId for details:', eventId);
-                if (eventId) {
-                    showEventDetails(eventId);
-                } else {
-                    console.warn('Event ID not found on clicked item.');
-                }
-            }
-        });
+    overviewContainer.addEventListener('click', function(e) {
+        const listItem = e.target.closest('li.list-group-item[data-event-id]');
+        if (listItem) {
+            showEventDetails(listItem.dataset.eventId);
+        }
+    });
+}
+
+function displayUpcomingTasks() {
+    const tasksContainer = document.getElementById('upcoming-tasks-container');
+    if (!tasksContainer) {
+        console.error('Error: Upcoming tasks container not found.');
+        return;
     }
+
+    if (!window.todoService || typeof window.todoService.getTasks !== 'function') {
+        tasksContainer.innerHTML = '<h3>Tarefas Próximas</h3><p>Serviço de tarefas não disponível.</p>';
+        return;
+    }
+
+    const allTasks = window.todoService.getTasks();
+    const today = moment().startOf('day');
+
+    const upcomingAndOverdueTasks = allTasks.filter(task => {
+        if (task.completed) return false;
+        if (!task.dueDate) return false; // Only include tasks with a due date
+        const dueDate = moment(task.dueDate, 'YYYY-MM-DD');
+        return dueDate.isSameOrAfter(today) || dueDate.isBefore(today);
+    }).sort((a, b) => moment(a.dueDate, 'YYYY-MM-DD').diff(moment(b.dueDate, 'YYYY-MM-DD')));
+
+    let contentHtml = '<h3>Tarefas Próximas</h3>';
+    if (upcomingAndOverdueTasks.length === 0) {
+        contentHtml += '<p>Nenhuma tarefa próxima ou vencida.</p>';
+    } else {
+        contentHtml += '<ul class="list-group">';
+        upcomingAndOverdueTasks.forEach(task => {
+            const dueDate = moment(task.dueDate, 'YYYY-MM-DD');
+            const isOverdue = dueDate.isBefore(today);
+            const dueDateFormatted = dueDate.format('DD/MM/YYYY');
+            const text = escapeHTML(task.text);
+            const taskId = escapeHTML(String(task.id));
+
+            contentHtml += `
+                <li class="list-group-item task-item ${isOverdue ? 'task-overdue' : ''}" data-task-id="${taskId}">
+                    <span class="task-text">${text}</span>
+                    <span class="task-due-date ${isOverdue ? 'text-danger' : ''}">
+                        Vence em: ${dueDateFormatted}
+                    </span>
+                </li>`;
+        });
+        contentHtml += '</ul>';
+    }
+    tasksContainer.innerHTML = contentHtml;
 }
 
 
@@ -551,6 +561,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initial call to setup the calendar and upcoming events on page load
     if (typeof initCalendar === 'function') {
         initCalendar();
+        displayUpcomingEventsAndTasks();
     } else {
         console.error('initCalendar function not found on DOMContentLoaded.');
     }
