@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // However, with the new approach, most will use fetchView.
         // mainContentArea.innerHTML = ''; // Clearing it here might be too soon for ui.show... methods if they expect a container
 
-        let viewKey = hash;
+        let viewKey = hash.split('?')[0];
         if (hash === '#/' || hash === '' || !hash) {
             viewKey = '#/home'; // Default to home
         }
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
             fetchView('views/class_details.html', () => {
                 if (typeof initClassDetailsView === 'function') initClassDetailsView(classId);
             });
-        } else if (viewKey === '#/evaluations/new') {
+        } else if (viewKey.startsWith('#/evaluations/new')) {
             const params = new URLSearchParams(window.location.hash.split('?')[1]);
             const classId = params.get('classId');
             fetchView('views/evaluation_form.html', () => {
