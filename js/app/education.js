@@ -240,8 +240,6 @@
         `;
 
         const enrolledList = document.getElementById('enrolled-students-list');
-        const searchInput = document.getElementById('student-search-input');
-        const searchResults = document.getElementById('student-search-results');
 
         const renderEnrolledStudents = () => {
             enrolledList.innerHTML = '';
@@ -257,26 +255,33 @@
             });
         };
 
-        searchInput.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            searchResults.innerHTML = '';
-            if (searchTerm.length < 2) return;
+        const addStudentBtn = document.getElementById('add-student-to-class-btn');
+        addStudentBtn.addEventListener('click', () => {
+            const modal = $('#addStudentModal');
+            document.getElementById('add-student-in-class-form').reset();
+            document.getElementById('add-student-class-id').value = classId;
+            modal.modal('show');
+        });
 
-            const allStudents = window.educationService.getStudents();
-            const filteredStudents = allStudents.filter(s =>
-                s.name.toLowerCase().includes(searchTerm) ||
-                s.studentId.toLowerCase().includes(searchTerm)
-            );
+        const saveNewStudentBtn = document.getElementById('saveNewStudentBtn');
+        saveNewStudentBtn.addEventListener('click', () => {
+            const studentData = {
+                name: document.getElementById('add-student-name').value,
+                studentId: document.getElementById('add-student-sid').value,
+                birthDate: document.getElementById('add-student-birthdate').value,
+                contact: document.getElementById('add-student-contact').value
+            };
+            const targetClassId = document.getElementById('add-student-class-id').value;
 
-            filteredStudents.forEach(student => {
-                const item = `
-                    <div class="list-group-item">
-                        ${student.name} (${student.studentId})
-                        <button class="btn btn-xs btn-success pull-right" onclick="enrollStudentWrapper('${student.id}', '${classId}')">Matricular</button>
-                    </div>
-                `;
-                searchResults.innerHTML += item;
-            });
+            try {
+                window.educationService.addAndEnrollStudent(studentData, targetClassId);
+                $('#addStudentModal').modal('hide');
+                renderEnrolledStudents();
+                showToast('Aluno cadastrado e matriculado com sucesso!');
+            } catch (error) {
+                // Idealmente, mostrar o erro dentro do modal
+                alert(error.message);
+            }
         });
 
         renderEnrolledStudents();

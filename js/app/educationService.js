@@ -217,6 +217,12 @@
         return newStudent;
     };
 
+    window.educationService.addAndEnrollStudent = function(studentData, classId) {
+        const newStudent = this.addStudent(studentData);
+        this.enrollStudentInClass(newStudent.id, classId);
+        return newStudent;
+    };
+
     /**
      * Busca um aluno pelo ID.
      */

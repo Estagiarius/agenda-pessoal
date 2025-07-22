@@ -185,19 +185,6 @@ document.addEventListener('DOMContentLoaded', function() {
             fetchView('views/class_details.html', () => {
                 if (typeof initClassDetailsView === 'function') initClassDetailsView(classId);
             });
-        } else if (viewKey === '#/students') {
-            fetchView('views/students.html', () => {
-                if (typeof initStudentsView === 'function') initStudentsView();
-            });
-        } else if (viewKey === '#/students/new') {
-            fetchView('views/student_form.html', () => {
-                if (typeof initStudentFormView === 'function') initStudentFormView();
-            });
-        } else if (viewKey.startsWith('#/students/edit/')) {
-            const studentId = viewKey.split('/')[3];
-            fetchView('views/student_form.html', () => {
-                if (typeof initStudentFormView === 'function') initStudentFormView(studentId);
-            });
         } else if (viewKey === '#/evaluations/new') {
             const params = new URLSearchParams(window.location.hash.split('?')[1]);
             const classId = params.get('classId');
