@@ -49,14 +49,15 @@
     };
 
     window.deleteSubject = function(id) {
-        if (confirm('Tem certeza que deseja excluir esta disciplina?')) {
+        showConfirmationModal('Tem certeza que deseja excluir esta disciplina?', function() {
             try {
                 window.educationService.deleteSubject(id);
                 window.location.hash = '#/subjects'; // Recarrega a view
+                showToast('Disciplina excluída com sucesso!');
             } catch (error) {
-                alert(error.message);
+                showConfirmationModal(error.message, function() {});
             }
-        }
+        });
     };
 
     // --- Inicialização do Formulário de Disciplina ---
@@ -158,14 +159,15 @@
     };
 
     window.deleteClass = function(id) {
-        if (confirm('Tem certeza que deseja excluir esta turma?')) {
+        showConfirmationModal('Tem certeza que deseja excluir esta turma?', function() {
             try {
                 window.educationService.deleteClass(id);
                 window.location.hash = '#/classes'; // Recarrega a view
+                showToast('Turma excluída com sucesso!');
             } catch (error) {
-                alert(error.message);
+                showConfirmationModal(error.message, function() {});
             }
-        }
+        });
     };
 
     // --- Inicialização do Formulário de Turma ---
@@ -306,26 +308,29 @@
     }
 
     window.deleteEvaluationWrapper = function(evaluationId, classId) {
-        if (confirm('Tem certeza que deseja excluir esta avaliação e todas as suas notas?')) {
+        showConfirmationModal('Tem certeza que deseja excluir esta avaliação e todas as suas notas?', function() {
             window.educationService.deleteEvaluation(evaluationId);
             renderEvaluations(classId);
-        }
+            showToast('Avaliação excluída com sucesso!');
+        });
     };
 
     window.enrollStudentWrapper = function(studentId, classId) {
         try {
             window.educationService.enrollStudentInClass(studentId, classId);
             window.initClassDetailsView(classId); // Recarrega a view de detalhes
+            showToast('Aluno matriculado com sucesso!');
         } catch (error) {
-            alert(error.message);
+            showConfirmationModal(error.message, function() {});
         }
     };
 
     window.removeStudentFromClassWrapper = function(studentId, classId) {
-        if (confirm('Tem certeza que deseja remover este aluno da turma?')) {
+        showConfirmationModal('Tem certeza que deseja remover este aluno da turma?', function() {
             window.educationService.removeStudentFromClass(studentId, classId);
             window.initClassDetailsView(classId); // Recarrega a view de detalhes
-        }
+            showToast('Aluno removido da turma com sucesso!');
+        });
     };
 
     // --- Inicialização da View de Alunos ---
@@ -374,14 +379,15 @@
     };
 
     window.deleteStudent = function(id) {
-        if (confirm('Tem certeza que deseja excluir este aluno?')) {
+        showConfirmationModal('Tem certeza que deseja excluir este aluno?', function() {
             try {
                 window.educationService.deleteStudent(id);
                 window.location.hash = '#/students'; // Recarrega a view
+                showToast('Aluno excluído com sucesso!');
             } catch (error) {
-                alert(error.message);
+                showConfirmationModal(error.message, function() {});
             }
-        }
+        });
     };
 
     // --- Inicialização do Formulário de Aluno ---
@@ -562,13 +568,45 @@
         // Corpo da tabela
         tableBody.innerHTML = '';
         report.forEach(studentReport => {
+            const finalGrade = parseFloat(studentReport.finalGrade);
+            const gradeClass = finalGrade < 6.0 ? 'grade-low' : '';
             let rowHtml = `<tr><td>${studentReport.studentName}</td>`;
             evaluations.forEach(e => {
                 const grade = studentReport.grades[e.id];
                 rowHtml += `<td>${grade !== null ? grade : '-'}</td>`;
             });
-            rowHtml += `<td><strong>${studentReport.finalGrade}</strong></td></tr>`;
+            rowHtml += `<td class="${gradeClass}"><strong>${studentReport.finalGrade}</strong></td></tr>`;
             tableBody.innerHTML += rowHtml;
+        });
+
+        // Lógica de exportação para CSV
+        const exportBtn = document.getElementById('export-csv-btn');
+        exportBtn.addEventListener('click', () => {
+            let csvContent = "data:text/csv;charset=utf-8,";
+
+            // Cabeçalho do CSV
+            const headers = ["Aluno"].concat(evaluations.map(e => e.name), ["Média Final"]);
+            csvContent += headers.join(",") + "\r\n";
+
+            // Linhas do CSV
+            report.forEach(studentReport => {
+                const row = [studentReport.studentName];
+                evaluations.forEach(e => {
+                    const grade = studentReport.grades[e.id];
+                    row.push(grade !== null ? grade : '');
+                });
+                row.push(studentReport.finalGrade);
+                csvContent += row.join(",") + "\r\n";
+            });
+
+            // Cria e baixa o arquivo
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "boletim_turma.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         });
     };
 })();
