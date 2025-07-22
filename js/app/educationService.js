@@ -202,11 +202,6 @@
     window.educationService.addStudent = function(studentData) {
         const students = this.getStudents();
 
-        // RN06: O número de matrícula do aluno deve ser único
-        if (students.some(s => s.studentId === studentData.studentId)) {
-            throw new Error('Já existe um aluno com este número de matrícula.');
-        }
-
         const newStudent = {
             id: `std_${new Date().getTime()}`,
             ...studentData
@@ -218,6 +213,11 @@
     };
 
     window.educationService.addAndEnrollStudent = function(studentData, classId) {
+        const enrolledStudents = this.getStudentsByClass(classId);
+        if (enrolledStudents.some(s => s.callNumber === studentData.callNumber)) {
+            throw new Error('Já existe um aluno com este número de chamada nesta turma.');
+        }
+
         const newStudent = this.addStudent(studentData);
         this.enrollStudentInClass(newStudent.id, classId);
         return newStudent;

@@ -244,11 +244,21 @@
         const renderEnrolledStudents = () => {
             enrolledList.innerHTML = '';
             const enrolledStudents = window.educationService.getStudentsByClass(classId);
+            // Ordena por número de chamada
+            enrolledStudents.sort((a, b) => a.callNumber - b.callNumber);
+
             enrolledStudents.forEach(student => {
                 const item = `
                     <li class="list-group-item">
-                        ${student.name} (${student.studentId})
-                        <button class="btn btn-xs btn-danger pull-right" onclick="removeStudentFromClassWrapper('${student.id}', '${classId}')">Remover</button>
+                        <div class="row">
+                            <div class="col-xs-1">${student.callNumber}</div>
+                            <div class="col-xs-5">${student.name}</div>
+                            <div class="col-xs-3">${student.birthDate}</div>
+                            <div class="col-xs-2">${student.status}</div>
+                            <div class="col-xs-1">
+                                <button class="btn btn-xs btn-danger pull-right" onclick="removeStudentFromClassWrapper('${student.id}', '${classId}')">Remover</button>
+                            </div>
+                        </div>
                     </li>
                 `;
                 enrolledList.innerHTML += item;
@@ -266,10 +276,10 @@
         const saveNewStudentBtn = document.getElementById('saveNewStudentBtn');
         saveNewStudentBtn.addEventListener('click', () => {
             const studentData = {
+                callNumber: document.getElementById('add-student-call-number').value,
                 name: document.getElementById('add-student-name').value,
-                studentId: document.getElementById('add-student-sid').value,
                 birthDate: document.getElementById('add-student-birthdate').value,
-                contact: document.getElementById('add-student-contact').value
+                status: document.getElementById('add-student-status').value
             };
             const targetClassId = document.getElementById('add-student-class-id').value;
 
@@ -289,6 +299,37 @@
 
         const viewReportBtn = document.getElementById('view-class-report-btn');
         viewReportBtn.href = `#/class_report?classId=${classId}`;
+
+        const importCsvInput = document.getElementById('import-students-csv');
+        importCsvInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                Papa.parse(file, {
+                    header: true,
+                    complete: function(results) {
+                        let successCount = 0;
+                        let errorCount = 0;
+                        results.data.forEach(row => {
+                            try {
+                                const studentData = {
+                                    callNumber: row['Numero de Chamada'],
+                                    name: row['Nome do Aluno'],
+                                    birthDate: row['Data de Nascimento'],
+                                    status: row['Situacao']
+                                };
+                                window.educationService.addAndEnrollStudent(studentData, classId);
+                                successCount++;
+                            } catch (error) {
+                                errorCount++;
+                                console.error('Erro ao importar aluno:', error.message, row);
+                            }
+                        });
+                        renderEnrolledStudents();
+                        showToast(`${successCount} alunos importados com sucesso. ${errorCount > 0 ? errorCount + ' erros.' : ''}`);
+                    }
+                });
+            }
+        });
     };
 
     function renderEvaluations(classId) {
