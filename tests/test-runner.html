@@ -2,48 +2,20 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Question Bank Tests</title>
-    <link rel="stylesheet" href="../css/modified-bootstrap.css"> <!-- Optional: for styling results -->
-    <style>
-        body { padding: 20px; }
-        .test-results div { margin-bottom: 5px; padding: 5px; border: 1px solid #eee; }
-        .test-results .pass { background-color: #d4edda; color: #155724; }
-        .test-results .fail { background-color: #f8d7da; color: #721c24; }
-        ul { list-style-type: none; padding-left: 0; }
-        li.pass::before { content: '✅ '; }
-        li.fail::before { content: '❌ '; }
-    </style>
+    <title>Jasmine Test Runner</title>
+    <link rel="shortcut icon" type="image/png" href="lib/jasmine-3.5.0/jasmine_favicon.png">
+    <link rel="stylesheet" href="lib/jasmine-3.5.0/jasmine.css">
+
+    <script src="lib/jasmine-3.5.0/jasmine.js"></script>
+    <script src="lib/jasmine-3.5.0/jasmine-html.js"></script>
+    <script src="lib/jasmine-3.5.0/boot.js"></script>
 </head>
 <body>
-    <h1>Question Bank Test Suite</h1>
-    <div id="qunit-fixture"></div> <!-- Mock DOM area if needed by ui.js tests later -->
-    
-    <h2>Question Service Tests</h2>
-    <div id="test-results-questionService" class="test-results" data-testid="test-results-questionService"></div>
-
-    <h2>Event Service Tests</h2>
-    <div id="test-results-eventService" class="test-results" data-testid="test-results-eventService"></div>
-
-    <h2>Todo Service Tests</h2>
-    <div id="test-results-todoService" class="test-results" data-testid="test-results-todoService"></div>
-
-    <!-- Scripts for application logic (order is important) -->
-    <!-- Common models -->
+    <!-- App source files -->
     <script src="../js/app/models.js"></script>
+    <script src="../js/app/educationService.js"></script>
 
-    <!-- Question Service and its test -->
-    <script src="../js/app/questionService.js"></script>
-    <script src="questionService.test.js"></script>
-
-    <!-- Event Service and its test -->
-    <script src="../js/app/eventService.js"></script>
-    <script src="eventService.test.js"></script>
-
-    <!-- Todo Service and its test -->
-    <script src="../js/app/todoService.js"></script>
-    <script src="todoService.test.js"></script>
-
-    <!-- Other app scripts if needed for specific service tests, though ideally services are testable in isolation -->
-    <!-- <script src="../js/app/ui.js"></script> -->
+    <!-- Test Suites -->
+    <script src="educationService.test.js"></script>
 </body>
 </html>

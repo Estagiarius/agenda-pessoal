@@ -302,6 +302,9 @@
      * Adiciona uma nova avaliação.
      */
     window.educationService.addEvaluation = function(evaluationData) {
+        if (!evaluationData.name || !evaluationData.classId || isNaN(evaluationData.weight) || isNaN(evaluationData.maxGrade)) {
+            throw new Error("Dados da avaliação inválidos. Verifique os campos obrigatórios.");
+        }
         const evaluations = getData(evaluationsKey);
         const newEvaluation = {
             id: `eval_${new Date().getTime()}`,

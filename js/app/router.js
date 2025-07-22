@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
             fetchView('views/class_details.html', () => {
                 if (typeof initClassDetailsView === 'function') initClassDetailsView(classId);
             });
-        } else if (viewKey === '#/evaluations/new') {
+        } else if (viewKey.startsWith('#/evaluations/new')) {
             const params = new URLSearchParams(window.location.hash.split('?')[1]);
             const classId = params.get('classId');
             fetchView('views/evaluation_form.html', () => {

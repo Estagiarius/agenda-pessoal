@@ -548,9 +548,14 @@
                 classId: evaluationClassIdField.value,
                 name: evaluationNameField.value,
                 date: evaluationDateField.value,
-                weight: evaluationWeightField.value,
-                maxGrade: evaluationMaxGradeField.value
+                weight: parseFloat(evaluationWeightField.value),
+                maxGrade: parseFloat(evaluationMaxGradeField.value)
             };
+
+            if (!data.name || !data.classId) {
+                alert("Nome da avaliação e ID da turma são obrigatórios.");
+                return;
+            }
 
             try {
                 if (evaluationIdField.value) {
@@ -568,6 +573,12 @@
     // --- Inicialização da View de Lançamento de Notas ---
     window.initGradeEntryView = function(evaluationId) {
         const evaluation = window.educationService.getEvaluationById(evaluationId);
+        if (!evaluation) {
+            alert("Avaliação não encontrada!");
+            window.location.hash = '#/classes';
+            return;
+        }
+
         const students = window.educationService.getStudentsByClass(evaluation.classId);
         const title = document.getElementById('grade-entry-title');
         const tableBody = document.getElementById('grade-entry-table-body');
@@ -585,11 +596,11 @@
         }, {});
 
         tableBody.innerHTML = '';
-        students.forEach(student => {
+        students.sort((a, b) => a.callNumber - b.callNumber).forEach(student => {
             const grade = existingGrades[student.id] || '';
             const row = `
                 <tr>
-                    <td>${student.name}</td>
+                    <td>${student.callNumber} - ${student.name}</td>
                     <td>
                         <input type="number" class="form-control" data-student-id="${student.id}" value="${grade}" min="0" max="${evaluation.maxGrade}" step="0.1">
                     </td>
@@ -602,17 +613,31 @@
             e.preventDefault();
             const gradeInputs = tableBody.querySelectorAll('input');
             const newGrades = [];
+            let hasError = false;
+
             gradeInputs.forEach(input => {
-                if (input.value !== '') {
+                const gradeValue = input.value;
+                if (gradeValue !== '') {
+                    const grade = parseFloat(gradeValue);
+                    if (grade > evaluation.maxGrade) {
+                        alert(`A nota para o aluno não pode ser maior que ${evaluation.maxGrade}.`);
+                        input.focus();
+                        hasError = true;
+                    }
                     newGrades.push({
                         studentId: input.dataset.studentId,
-                        grade: parseFloat(input.value)
+                        grade: grade
                     });
                 }
             });
 
+            if (hasError) {
+                return;
+            }
+
             try {
                 window.educationService.saveGrades(evaluationId, newGrades);
+                showToast('Notas salvas com sucesso!');
                 window.location.hash = `#/classes/details/${evaluation.classId}`;
             } catch (error) {
                 alert(error.message);
