@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // However, with the new approach, most will use fetchView.
         // mainContentArea.innerHTML = ''; // Clearing it here might be too soon for ui.show... methods if they expect a container
 
-        let viewKey = hash;
+        let viewKey = hash.split('?')[0];
         if (hash === '#/' || hash === '' || !hash) {
             viewKey = '#/home'; // Default to home
         }
