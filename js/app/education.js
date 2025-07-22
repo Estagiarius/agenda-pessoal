@@ -308,10 +308,10 @@
                     header: true,
                     complete: function(results) {
                         const columnMapping = {
-                            callNumber: ['Numero de Chamada', 'Número de Chamada', 'Nº Chamada', 'callNumber'],
+                            callNumber: ['Numero de Chamada', 'Número de Chamada', 'Nº Chamada', 'Nº de chamada', 'callNumber'],
                             name: ['Nome do Aluno', 'Nome', 'name'],
                             birthDate: ['Data de Nascimento', 'Nascimento', 'birthDate'],
-                            status: ['Situacao', 'Situação', 'status']
+                            status: ['Situacao', 'Situação', 'Situação do Aluno', 'status']
                         };
 
                         const detectedHeaders = {};
