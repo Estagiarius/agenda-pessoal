@@ -1,0 +1,35 @@
+<div class="container-fluid" style="margin-top: 20px;">
+    <h2>Gestão de Turmas</h2>
+    <div class="row" style="margin-bottom: 15px;">
+        <div class="col-md-6">
+            <a href="#/classes/new" class="btn btn-primary">Adicionar Nova Turma</a>
+        </div>
+        <div class="col-md-6">
+            <select id="classFilterSubject" class="form-control">
+                <option value="">Filtrar por disciplina...</option>
+                <!-- Opções de disciplina serão inseridas aqui -->
+            </select>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nome da Turma</th>
+                    <th>Disciplina Associada</th>
+                    <th>Ano/Semestre</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="classes-table-body">
+                <!-- As linhas da tabela serão inseridas aqui via JavaScript -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Lógica para carregar e exibir as turmas será adicionada aqui
+});
+</script>

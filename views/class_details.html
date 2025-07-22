@@ -1,0 +1,45 @@
+<div class="container-fluid" style="margin-top: 20px;">
+    <h2 id="class-details-title">Detalhes da Turma</h2>
+    <div id="class-details-info" style="margin-bottom: 20px;">
+        <!-- Informações da turma serão carregadas aqui -->
+    </div>
+
+    <!-- Abas de Navegação -->
+    <ul class="nav nav-tabs" role="tablist">
+        <li role="presentation" class="active"><a href="#students" aria-controls="students" role="tab" data-toggle="tab">Alunos Matriculados</a></li>
+        <li role="presentation"><a href="#evaluations" aria-controls="evaluations" role="tab" data-toggle="tab">Avaliações da Turma</a></li>
+    </ul>
+
+    <!-- Conteúdo das Abas -->
+    <div class="tab-content">
+        <div role="tabpanel" class="tab-pane active" id="students" style="padding-top: 20px;">
+            <h4>Alunos Matriculados</h4>
+            <ul id="enrolled-students-list" class="list-group">
+                <!-- Lista de alunos matriculados será inserida aqui -->
+            </ul>
+            <hr>
+            <h4>Matricular Novo Aluno</h4>
+            <div class="form-inline">
+                <div class="form-group">
+                    <label for="student-search-input">Buscar Aluno</label>
+                    <input type="text" class="form-control" id="student-search-input" placeholder="Nome ou Matrícula...">
+                </div>
+                <div id="student-search-results" style="margin-top: 10px;"></div>
+            </div>
+        </div>
+        <div role="tabpanel" class="tab-pane" id="evaluations" style="padding-top: 20px;">
+            <h4>Avaliações da Turma</h4>
+            <a href="#/evaluations/new" class="btn btn-primary" style="margin-bottom: 15px;">Criar Nova Avaliação</a>
+            <div id="evaluations-list">
+                <!-- Lista de avaliações será inserida aqui -->
+            </div>
+            <a id="view-class-report-btn" href="#" class="btn btn-info" style="margin-top: 15px;">Ver Boletim da Turma</a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Lógica para carregar os detalhes da turma e inicializar as abas
+});
+</script>
