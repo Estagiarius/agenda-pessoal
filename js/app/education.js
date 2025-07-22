@@ -307,16 +307,40 @@
                 Papa.parse(file, {
                     header: true,
                     complete: function(results) {
+                        const columnMapping = {
+                            callNumber: ['Numero de Chamada', 'Número de Chamada', 'Nº Chamada', 'callNumber'],
+                            name: ['Nome do Aluno', 'Nome', 'name'],
+                            birthDate: ['Data de Nascimento', 'Nascimento', 'birthDate'],
+                            status: ['Situacao', 'Situação', 'status']
+                        };
+
+                        const detectedHeaders = {};
+                        const fileHeaders = results.meta.fields;
+
+                        for (const key in columnMapping) {
+                            detectedHeaders[key] = columnMapping[key].find(h => fileHeaders.includes(h));
+                        }
+
                         let successCount = 0;
                         let errorCount = 0;
+                        function parseFlexibleDate(dateString) {
+                            if (!dateString) return '';
+                            const formats = ['YYYY-MM-DD', 'DD/MM/YYYY', 'DD-MM-YYYY', 'MM/DD/YYYY'];
+                            const aMoment = moment(dateString, formats, true); // true for strict parsing
+                            return aMoment.isValid() ? aMoment.format('YYYY-MM-DD') : '';
+                        }
+
                         results.data.forEach(row => {
-                            if (row['Numero de Chamada'] && row['Nome do Aluno']) {
+                            const callNumber = row[detectedHeaders.callNumber];
+                            const name = row[detectedHeaders.name];
+
+                            if (callNumber && name) {
                                 try {
                                     const studentData = {
-                                        callNumber: row['Numero de Chamada'],
-                                        name: row['Nome do Aluno'],
-                                        birthDate: row['Data de Nascimento'] || '',
-                                        status: row['Situacao'] || 'Ativo'
+                                        callNumber: callNumber,
+                                        name: name,
+                                        birthDate: parseFlexibleDate(row[detectedHeaders.birthDate]),
+                                        status: row[detectedHeaders.status] || 'Ativo'
                                     };
                                     window.educationService.addAndEnrollStudent(studentData, classId);
                                     successCount++;
