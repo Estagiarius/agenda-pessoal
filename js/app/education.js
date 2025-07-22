@@ -310,18 +310,20 @@
                         let successCount = 0;
                         let errorCount = 0;
                         results.data.forEach(row => {
-                            try {
-                                const studentData = {
-                                    callNumber: row['Numero de Chamada'],
-                                    name: row['Nome do Aluno'],
-                                    birthDate: row['Data de Nascimento'],
-                                    status: row['Situacao']
-                                };
-                                window.educationService.addAndEnrollStudent(studentData, classId);
-                                successCount++;
-                            } catch (error) {
-                                errorCount++;
-                                console.error('Erro ao importar aluno:', error.message, row);
+                            if (row['Numero de Chamada'] && row['Nome do Aluno']) {
+                                try {
+                                    const studentData = {
+                                        callNumber: row['Numero de Chamada'],
+                                        name: row['Nome do Aluno'],
+                                        birthDate: row['Data de Nascimento'] || '',
+                                        status: row['Situacao'] || 'Ativo'
+                                    };
+                                    window.educationService.addAndEnrollStudent(studentData, classId);
+                                    successCount++;
+                                } catch (error) {
+                                    errorCount++;
+                                    console.error('Erro ao importar aluno:', error.message, row);
+                                }
                             }
                         });
                         renderEnrolledStudents();
