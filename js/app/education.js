@@ -297,6 +297,11 @@
         renderEnrolledStudents();
         renderEvaluations(classId);
 
+        const addEvaluationBtn = document.getElementById('add-evaluation-btn');
+        if (addEvaluationBtn) {
+            addEvaluationBtn.href = `#/evaluations/new?classId=${classId}`;
+        }
+
         const viewReportBtn = document.getElementById('view-class-report-btn');
         viewReportBtn.href = `#/class_report?classId=${classId}`;
 

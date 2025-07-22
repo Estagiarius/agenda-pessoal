@@ -188,9 +188,14 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (viewKey.startsWith('#/evaluations/new')) {
             const params = new URLSearchParams(window.location.hash.split('?')[1]);
             const classId = params.get('classId');
-            fetchView('views/evaluation_form.html', () => {
-                if (typeof initEvaluationFormView === 'function') initEvaluationFormView(null, classId);
-            });
+            if (classId) {
+                fetchView('views/evaluation_form.html', () => {
+                    if (typeof initEvaluationFormView === 'function') initEvaluationFormView(null, classId);
+                });
+            } else {
+                mainContentArea.innerHTML = '<h2>Erro: ID da Turma não encontrado</h2><p>Não foi possível criar uma nova avaliação pois o ID da turma não foi especificado.</p>';
+                mainContentArea.style.display = 'block';
+            }
         } else if (viewKey.startsWith('#/evaluations/edit/')) {
             const evaluationId = viewKey.split('/')[3];
             fetchView('views/evaluation_form.html', () => {
