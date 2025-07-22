@@ -3,6 +3,7 @@
 
 /* General Body Styles */
 body {
+    padding-top: 70px;
     background-color: #f8f9fa; /* Very light gray */
     color: #212529; /* Dark gray for text */
     font-family: 'Open Sans', sans-serif;
