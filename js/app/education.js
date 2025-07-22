@@ -539,6 +539,8 @@
                 evaluationWeightField.value = evaluation.weight;
                 evaluationMaxGradeField.value = evaluation.maxGrade;
                 cancelButton.href = `#/classes/details/${evaluation.classId}`;
+            } else {
+                window.location.hash = '#/classes';
             }
         } else {
             // Modo Criação
