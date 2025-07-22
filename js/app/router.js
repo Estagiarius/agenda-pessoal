@@ -154,6 +154,60 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error('A função initChatApp não está definida.');
                 }
             });
+        } else if (viewKey === '#/subjects') {
+            fetchView('views/subjects.html', () => {
+                if (typeof initSubjectsView === 'function') initSubjectsView();
+            });
+        } else if (viewKey === '#/subjects/new') {
+            fetchView('views/subject_form.html', () => {
+                if (typeof initSubjectFormView === 'function') initSubjectFormView();
+            });
+        } else if (viewKey.startsWith('#/subjects/edit/')) {
+            const subjectId = viewKey.split('/')[3];
+            fetchView('views/subject_form.html', () => {
+                if (typeof initSubjectFormView === 'function') initSubjectFormView(subjectId);
+            });
+        } else if (viewKey === '#/classes') {
+            fetchView('views/classes.html', () => {
+                if (typeof initClassesView === 'function') initClassesView();
+            });
+        } else if (viewKey === '#/classes/new') {
+            fetchView('views/class_form.html', () => {
+                if (typeof initClassFormView === 'function') initClassFormView();
+            });
+        } else if (viewKey.startsWith('#/classes/edit/')) {
+            const classId = viewKey.split('/')[3];
+            fetchView('views/class_form.html', () => {
+                if (typeof initClassFormView === 'function') initClassFormView(classId);
+            });
+        } else if (viewKey.startsWith('#/classes/details/')) {
+            const classId = viewKey.split('/')[3];
+            fetchView('views/class_details.html', () => {
+                if (typeof initClassDetailsView === 'function') initClassDetailsView(classId);
+            });
+        } else if (viewKey === '#/evaluations/new') {
+            const params = new URLSearchParams(window.location.hash.split('?')[1]);
+            const classId = params.get('classId');
+            fetchView('views/evaluation_form.html', () => {
+                if (typeof initEvaluationFormView === 'function') initEvaluationFormView(null, classId);
+            });
+        } else if (viewKey.startsWith('#/evaluations/edit/')) {
+            const evaluationId = viewKey.split('/')[3];
+            fetchView('views/evaluation_form.html', () => {
+                if (typeof initEvaluationFormView === 'function') initEvaluationFormView(evaluationId);
+            });
+        } else if (viewKey.startsWith('#/grades/entry')) {
+            const params = new URLSearchParams(window.location.hash.split('?')[1]);
+            const evaluationId = params.get('evaluationId');
+            fetchView('views/grade_entry.html', () => {
+                if (typeof initGradeEntryView === 'function') initGradeEntryView(evaluationId);
+            });
+        } else if (viewKey.startsWith('#/class_report')) {
+            const params = new URLSearchParams(window.location.hash.split('?')[1]);
+            const classId = params.get('classId');
+            fetchView('views/class_report.html', () => {
+                if (typeof initClassReportView === 'function') initClassReportView(classId);
+            });
         } else {
             mainContentArea.innerHTML = '<h2>404 - Página Não Encontrada</h2><p>A página que você solicitou não pôde ser encontrada.</p>';
             mainContentArea.style.display = 'block';

@@ -1,0 +1,31 @@
+<div class="container-fluid" style="margin-top: 20px;">
+    <h2>Gestão de Disciplinas</h2>
+    <div class="row" style="margin-bottom: 15px;">
+        <div class="col-md-6">
+            <a href="#/subjects/new" class="btn btn-primary">Adicionar Nova Disciplina</a>
+        </div>
+        <div class="col-md-6">
+            <input type="text" id="subjectSearchInput" class="form-control" placeholder="Buscar por nome ou código...">
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nome da Disciplina</th>
+                    <th>Código</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="subjects-table-body">
+                <!-- As linhas da tabela serão inseridas aqui via JavaScript -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Lógica para carregar e exibir as disciplinas será adicionada aqui
+});
+</script>

@@ -5,6 +5,44 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
+// --- Funções de Feedback Visual ---
+
+/**
+ * Exibe um toast de notificação.
+ * @param {string} message - A mensagem a ser exibida.
+ */
+window.showToast = function(message) {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+    toastMessage.textContent = message;
+    toast.className = "toast show";
+    setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+}
+
+/**
+ * Exibe um modal de confirmação.
+ * @param {string} message - A mensagem de confirmação.
+ * @param {function} callback - A função a ser executada se o usuário confirmar.
+ */
+window.showConfirmationModal = function(message, callback) {
+    const modal = $('#confirmationModal');
+    const modalBody = document.getElementById('confirmationModalBody');
+    const confirmBtn = document.getElementById('confirmActionBtn');
+
+    modalBody.textContent = message;
+
+    // Remove qualquer listener anterior para evitar múltiplas execuções
+    $(confirmBtn).off('click');
+
+    $(confirmBtn).on('click', function() {
+        callback();
+        modal.modal('hide');
+    });
+
+    modal.modal('show');
+}
+
+
 // --- Question Bank UI Logic ---
 const ui = (() => {
     let feedbackTimeout = null; // To manage clearing the feedback

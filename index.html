@@ -24,6 +24,7 @@
 	<script src="js/moment.js"></script>
 	<script src="js/datepickk.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 </head>
 
 <body>
@@ -52,6 +53,15 @@
                     <ul class="dropdown-menu">
                         <li><a href="#/questions">Banco de Perguntas</a></li>
                         <li><a href="#/quiz-config">Fazer um Quiz</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                        Gestão Acadêmica <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#/subjects">Disciplinas</a></li>
+                        <li><a href="#/classes">Turmas</a></li>
                     </ul>
                 </li>
             </ul>
@@ -105,6 +115,8 @@
         <script src="js/app/notificationService.js"></script>
         <script src="js/app/settingsService.js"></script>
         <script src="js/app/chat.js"></script>
+        <script src="js/app/educationService.js"></script>
+        <script src="js/app/education.js"></script>
 
     <!-- Event Input Modal -->
     <div class="modal fade" id="eventModal" tabindex="-1" role="dialog" aria-labelledby="eventModalLabel">
@@ -215,6 +227,70 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Generic Confirmation Modal -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" role="dialog" aria-labelledby="confirmationModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="confirmationModalLabel">Confirmação</h4>
+                </div>
+                <div class="modal-body" id="confirmationModalBody">
+                    <!-- Mensagem de confirmação -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="confirmActionBtn">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <div id="toast-message"></div>
+    </div>
+
+    <!-- Add Student Modal -->
+    <div class="modal fade" id="addStudentModal" tabindex="-1" role="dialog" aria-labelledby="addStudentModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="addStudentModalLabel">Adicionar Novo Aluno</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="add-student-in-class-form">
+                        <input type="hidden" id="add-student-class-id">
+                        <div class="form-group">
+                            <label for="add-student-call-number">Número de Chamada</label>
+                            <input type="number" class="form-control" id="add-student-call-number" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="add-student-name">Nome do Aluno</label>
+                            <input type="text" class="form-control" id="add-student-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="add-student-birthdate">Data de Nascimento</label>
+                            <input type="date" class="form-control" id="add-student-birthdate">
+                        </div>
+                        <div class="form-group">
+                            <label for="add-student-status">Situação</label>
+                            <select class="form-control" id="add-student-status">
+                                <option value="Ativo" selected>Ativo</option>
+                                <option value="Inativo">Inativo</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="saveNewStudentBtn">Salvar e Matricular</button>
+                </div>
+            </div>
+        </div>
     </div>
     </body>
     </html>

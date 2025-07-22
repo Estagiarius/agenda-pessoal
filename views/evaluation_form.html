@@ -1,0 +1,31 @@
+<div class="container-fluid" style="margin-top: 20px;">
+    <h2 id="evaluation-form-title">Criar Nova Avaliação</h2>
+    <form id="evaluation-form">
+        <input type="hidden" id="evaluation-id">
+        <input type="hidden" id="evaluation-class-id">
+        <div class="form-group">
+            <label for="evaluation-name">Nome da Avaliação</label>
+            <input type="text" class="form-control" id="evaluation-name" required>
+        </div>
+        <div class="form-group">
+            <label for="evaluation-date">Data</label>
+            <input type="date" class="form-control" id="evaluation-date">
+        </div>
+        <div class="form-group">
+            <label for="evaluation-weight">Peso</label>
+            <input type="number" class="form-control" id="evaluation-weight" required min="0" step="0.1">
+        </div>
+        <div class="form-group">
+            <label for="evaluation-max-grade">Nota Máxima</label>
+            <input type="number" class="form-control" id="evaluation-max-grade" value="10" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+        <a href="#" id="cancel-evaluation-form" class="btn btn-default">Cancelar</a>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Lógica para preencher o formulário em modo de edição e para salvar os dados
+});
+</script>
