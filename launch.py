@@ -8,14 +8,17 @@ import json
 app = Flask(__name__, static_folder='.', static_url_path='')
 
 # Configuração do Cliente OpenAI para a API da Maritaca
-try:
-    client = OpenAI(
-        api_key=os.environ.get("MARITACA_API_KEY"),
-        base_url="https://chat.maritaca.ai/api",
-    )
-except Exception as e:
-    print(f"ERRO CRÍTICO: Falha ao inicializar o cliente da API: {e}", file=sys.stderr)
-    sys.exit(1)
+client = None
+if "MARITACA_API_KEY" in os.environ:
+    try:
+        client = OpenAI(
+            api_key=os.environ["MARITACA_API_KEY"],
+            base_url="https://chat.maritaca.ai/api",
+        )
+    except Exception as e:
+        print(f"AVISO: Falha ao inicializar o cliente da API da Maritaca: {e}", file=sys.stderr)
+else:
+    print("AVISO: A chave da API da Maritaca (MARITACA_API_KEY) não foi definida. A funcionalidade de chat estará desativada.", file=sys.stderr)
 
 DEFAULT_MODEL = "sabia-3.1"
 
@@ -25,6 +28,10 @@ def serve_index():
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
+    if not client:
+        error_message = json.dumps({"error": "A funcionalidade de chat não está configurada no servidor."})
+        return Response(f"data: {error_message}\n\n", status=503, mimetype='text/event-stream')
+
     data = request.get_json()
     message = data.get('message')
     model = data.get('model', DEFAULT_MODEL)

@@ -87,6 +87,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     console.error('A função initCalendar não está definida.');
                 }
+                if (typeof initRecentTasks === 'function') {
+                    initRecentTasks();
+                }
             });
         } else if (viewKey === '#/settings') {
             fetchView('views/settings.html', initSettingsViewLogic);

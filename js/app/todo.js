@@ -95,6 +95,11 @@ function initTodoApp() {
             return;
         }
 
+        if (!window.todoService) {
+            alert('Serviço de tarefas indisponível.');
+            return;
+        }
+
         window.todoService.addTask({ text, dueDate, priority });
         taskInput.value = '';
         taskDueDateInput.value = '';
@@ -139,3 +144,44 @@ function initTodoApp() {
     renderTasks();
 }
 
+function initRecentTasks() {
+    const upcomingTasksList = document.getElementById('upcoming-tasks-list');
+
+    if (!upcomingTasksList) {
+        return;
+    }
+
+    if (!window.todoService) {
+        console.error('todoService is not available for recent tasks.');
+        upcomingTasksList.innerHTML = '<li class="list-group-item text-muted">Serviço de tarefas indisponível.</li>';
+        return;
+    }
+
+    const tasks = window.todoService.getOpenTasks();
+
+    tasks.sort((a, b) => {
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return new Date(a.dueDate) - new Date(b.dueDate);
+    });
+
+    const recentTasks = tasks.slice(0, 5);
+
+    upcomingTasksList.innerHTML = '';
+
+    if (recentTasks.length === 0) {
+        upcomingTasksList.innerHTML = '<li class="list-group-item text-muted">Nenhuma tarefa futura.</li>';
+        return;
+    }
+
+    recentTasks.forEach(task => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item';
+        const dueDateFormatted = task.dueDate ? moment(task.dueDate).format('DD/MM/YYYY') : 'Sem data';
+        li.innerHTML = `
+            <span class="task-text">${task.text}</span>
+            <span class="due-date pull-right">${dueDateFormatted}</span>
+        `;
+        upcomingTasksList.appendChild(li);
+    });
+}
