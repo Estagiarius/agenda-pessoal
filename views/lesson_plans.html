@@ -1,0 +1,33 @@
+<div class="container">
+    <h2>Meus Planos de Aula</h2>
+    <div class="row">
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="class-filter">Filtrar por Turma:</label>
+                <select id="class-filter" class="form-control">
+                    <option value="all">Todas as Turmas</option>
+                    <!-- Options will be populated by JS -->
+                </select>
+            </div>
+            <a href="#/lesson-plans/new" class="btn btn-primary btn-block">Criar Novo Plano de Aula</a>
+        </div>
+        <div class="col-md-9">
+            <div id="lesson-plan-calendar"></div>
+        </div>
+    </div>
+    <hr>
+    <h3>Todos os Planos de Aula</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Título</th>
+                <th>Disciplina(s) Associada(s)</th>
+                <th>Data de Criação</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="lesson-plans-list">
+            <!-- Lesson plans will be listed here -->
+        </tbody>
+    </table>
+</div>

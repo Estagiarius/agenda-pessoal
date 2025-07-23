@@ -1,0 +1,65 @@
+<div class="container">
+    <h2 id="lesson-plan-form-title">Criar Novo Plano de Aula</h2>
+    <form id="lesson-plan-form">
+        <input type="hidden" id="lesson-plan-id">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="form-group">
+                    <label for="lesson-plan-title">Título do Plano de Aula</label>
+                    <input type="text" class="form-control" id="lesson-plan-title" placeholder="Ex: Introdução à Genética Mendeliana" required>
+                </div>
+                <div class="form-group">
+                    <label for="lesson-plan-classes">Turma(s) Associada(s)</label>
+                    <select id="lesson-plan-classes" class="form-control" multiple required>
+                        <!-- Options will be populated by JS -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="lesson-plan-date">Data da Aula</label>
+                    <input type="date" class="form-control" id="lesson-plan-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="lesson-plan-objectives">Objetivos da Aula</label>
+                    <textarea class="form-control" id="lesson-plan-objectives" rows="5"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="lesson-plan-methodology">Metodologia/Atividades</label>
+                    <textarea class="form-control" id="lesson-plan-methodology" rows="5"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="lesson-plan-resources">Recursos Necessários</label>
+                    <input type="text" class="form-control" id="lesson-plan-resources" placeholder="Ex: Projetor, lousa, cópias do exercício X">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Materiais de Apoio</h3>
+                    </div>
+                    <div class="panel-body">
+                        <ul id="lesson-plan-materials" class="list-group">
+                            <!-- Attached materials will be listed here -->
+                        </ul>
+                        <button type="button" class="btn btn-primary" id="attach-material-btn">Anexar Material</button>
+                    </div>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Avaliações Vinculadas</h3>
+                    </div>
+                    <div class="panel-body">
+                        <ul id="lesson-plan-evaluations" class="list-group">
+                            <!-- Linked evaluations will be listed here -->
+                        </ul>
+                        <button type="button" class="btn btn-primary" id="link-evaluation-btn">Vincular Avaliação</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <button type="button" class="btn btn-secondary" id="save-and-duplicate-btn">Salvar e Duplicar</button>
+            <a href="#/lesson-plans" class="btn btn-default">Cancelar</a>
+        </div>
+    </form>
+</div>
