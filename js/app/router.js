@@ -208,6 +208,19 @@ document.addEventListener('DOMContentLoaded', function() {
             fetchView('views/class_report.html', () => {
                 if (typeof initClassReportView === 'function') initClassReportView(classId);
             });
+        } else if (viewKey === '#/lesson-plans') {
+            fetchView('views/lesson_plans.html', () => {
+                if (typeof initLessonPlansView === 'function') initLessonPlansView();
+            });
+        } else if (viewKey === '#/lesson-plans/new') {
+            fetchView('views/lesson_plan_form.html', () => {
+                if (typeof initLessonPlanFormView === 'function') initLessonPlanFormView();
+            });
+        } else if (viewKey.startsWith('#/lesson-plans/edit/')) {
+            const lessonPlanId = viewKey.split('/')[3];
+            fetchView('views/lesson_plan_form.html', () => {
+                if (typeof initLessonPlanFormView === 'function') initLessonPlanFormView(lessonPlanId);
+            });
         } else {
             mainContentArea.innerHTML = '<h2>404 - Página Não Encontrada</h2><p>A página que você solicitou não pôde ser encontrada.</p>';
             mainContentArea.style.display = 'block';
