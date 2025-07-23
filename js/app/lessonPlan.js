@@ -332,7 +332,11 @@
             if (evaluation) {
                 const item = `
                     <li class="list-group-item">
-                        <a href="#/evaluations/edit/${evaluation.id}">${evaluation.name}</a>
+                        ${evaluation.name}
+                        <div class="pull-right">
+                            <a href="#/grades/entry?evaluationId=${evaluation.id}" class="btn btn-xs btn-success">Lançar Notas</a>
+                            <a href="#/evaluations/edit/${evaluation.id}" class="btn btn-xs btn-info">Editar</a>
+                        </div>
                     </li>
                 `;
                 evaluationsContainer.innerHTML += item;
