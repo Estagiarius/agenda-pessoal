@@ -315,9 +315,12 @@
         return newEvaluation;
     };
 
-    window.educationService.getEvaluationsByClass = function(classId) {
+    window.educationService.getEvaluationsByClass = function(classIds) {
         const evaluations = getData(evaluationsKey);
-        return evaluations.filter(e => e.classId === classId);
+        if (Array.isArray(classIds)) {
+            return evaluations.filter(e => classIds.includes(e.classId));
+        }
+        return evaluations.filter(e => e.classId === classIds);
     };
 
     window.educationService.getEvaluationById = function(id) {
