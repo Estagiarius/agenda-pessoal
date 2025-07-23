@@ -12,7 +12,8 @@
                 const item = `
                     <li class="list-group-item">
                         ${material.title}
-                        <span class="text-muted pull-right">${material.type}</span>
+                        <a href="${material.url}" target="_blank" class="btn btn-xs btn-primary pull-right">Visualizar</a>
+                        <span class="text-muted pull-right" style="margin-right: 10px;">${material.type}</span>
                     </li>
                 `;
                 existingMaterialsList.innerHTML += item;
