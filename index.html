@@ -104,6 +104,7 @@
         <script src="js/app/education.js"></script>
         <script src="js/app/lessonPlanService.js"></script>
         <script src="js/app/lessonPlan.js"></script>
+        <script src="js/app/materialService.js"></script>
 
     <!-- Event Input Modal -->
     <div class="modal fade" id="eventModal" tabindex="-1" role="dialog" aria-labelledby="eventModalLabel">
@@ -275,6 +276,53 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary" id="saveNewStudentBtn">Salvar e Matricular</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attach Material Modal -->
+    <div class="modal fade" id="attachMaterialModal" tabindex="-1" role="dialog" aria-labelledby="attachMaterialModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="attachMaterialModalLabel">Anexar Material</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <input type="text" class="form-control" id="material-search-input" placeholder="Buscar por título, tag ou tipo de arquivo...">
+                        </div>
+                    </form>
+                    <ul id="materials-list" class="list-group">
+                        <!-- Materials will be listed here -->
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="attach-selected-materials-btn">Anexar Selecionados</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link Evaluation Modal -->
+    <div class="modal fade" id="linkEvaluationModal" tabindex="-1" role="dialog" aria-labelledby="linkEvaluationModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="linkEvaluationModalLabel">Vincular Avaliação</h4>
+                </div>
+                <div class="modal-body">
+                    <ul id="evaluations-list" class="list-group">
+                        <!-- Evaluations will be listed here -->
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="link-selected-evaluations-btn">Vincular Selecionadas</button>
                 </div>
             </div>
         </div>

@@ -31,6 +31,13 @@
         return this.getLessonPlans().find(lp => lp.id === id);
     };
 
+    window.lessonPlanService.getLessonPlansByClass = function(classId) {
+        if (!classId) {
+            return this.getLessonPlans();
+        }
+        return this.getLessonPlans().filter(lp => lp.classIds.includes(classId));
+    };
+
     window.lessonPlanService.addLessonPlan = function(lessonPlanData) {
         const lessonPlans = this.getLessonPlans();
         const newLessonPlan = {
