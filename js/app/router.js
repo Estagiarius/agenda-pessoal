@@ -221,6 +221,11 @@ document.addEventListener('DOMContentLoaded', function() {
             fetchView('views/lesson_plan_form.html', () => {
                 if (typeof initLessonPlanFormView === 'function') initLessonPlanFormView(lessonPlanId);
             });
+        } else if (viewKey.startsWith('#/lesson-plans/details/')) {
+            const lessonPlanId = viewKey.split('/')[3];
+            fetchView('views/lesson_plan_details.html', () => {
+                if (typeof initLessonPlanDetailsView === 'function') initLessonPlanDetailsView(lessonPlanId);
+            });
         } else if (viewKey === '#/materials') {
             fetchView('views/materials.html', () => {
                 if (typeof initMaterialsView === 'function') initMaterialsView();

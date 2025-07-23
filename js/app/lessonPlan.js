@@ -24,19 +24,25 @@
                 const classNames = plan.classIds.map(classId => classes.find(c => c.id === classId)?.name || 'Turma não encontrada').join(', ');
                 const subjectNames = [...new Set(plan.classIds.map(classId => classes.find(c => c.id === classId)?.subjectId).map(subjectId => subjectMap[subjectId]))].join(', ');
                 const row = `
-                    <tr>
+                    <tr style="cursor: pointer;" onclick="window.location.hash='#/lesson-plans/details/${plan.id}'">
                         <td>${plan.title}</td>
                         <td>${subjectNames}</td>
                         <td>${new Date(plan.createdAt).toLocaleDateString()}</td>
                         <td>
+                            <a href="#/lesson-plans/details/${plan.id}" class="btn btn-xs btn-primary">Ver Detalhes</a>
                             <a href="#/lesson-plans/edit/${plan.id}" class="btn btn-xs btn-info">Editar</a>
-                            <button class="btn btn-xs btn-danger" onclick="deleteLessonPlan('${plan.id}')">Excluir</button>
+                            <button class="btn btn-xs btn-danger" onclick="deleteLessonPlanWrapper(event, '${plan.id}')">Excluir</button>
                         </td>
                     </tr>
                 `;
                 listBody.innerHTML += row;
             });
         };
+
+        window.deleteLessonPlanWrapper = function(event, id) {
+            event.stopPropagation();
+            deleteLessonPlan(id);
+        }
 
         renderList(lessonPlans);
 
@@ -285,5 +291,52 @@
             linkedEvaluations = linkedEvaluations.filter(id => id !== evaluationId);
             renderLinkedEvaluations();
         }
+    };
+
+    window.initLessonPlanDetailsView = function(lessonPlanId) {
+        const lessonPlan = window.lessonPlanService.getLessonPlanById(lessonPlanId);
+        if (!lessonPlan) {
+            // Handle case where lesson plan is not found
+            return;
+        }
+
+        document.getElementById('lesson-plan-details-title').textContent = lessonPlan.title;
+        document.getElementById('lesson-plan-details-date').textContent = new Date(lessonPlan.date).toLocaleDateString();
+
+        const classes = window.educationService.getClasses();
+        const classNames = lessonPlan.classIds.map(classId => classes.find(c => c.id === classId)?.name || 'Turma não encontrada').join(', ');
+        document.getElementById('lesson-plan-details-classes').textContent = classNames;
+
+        document.getElementById('lesson-plan-details-objectives').innerHTML = marked.parse(lessonPlan.objectives || '');
+        document.getElementById('lesson-plan-details-methodology').innerHTML = marked.parse(lessonPlan.methodology || '');
+        document.getElementById('lesson-plan-details-resources').textContent = lessonPlan.resources;
+
+        const materialsContainer = document.getElementById('lesson-plan-details-materials');
+        materialsContainer.innerHTML = '';
+        lessonPlan.materials.forEach(materialId => {
+            const material = window.materialService.getMaterials().find(m => m.id === materialId);
+            if (material) {
+                const item = `
+                    <li class="list-group-item">
+                        <a href="${material.url}" target="_blank">${material.title}</a>
+                    </li>
+                `;
+                materialsContainer.innerHTML += item;
+            }
+        });
+
+        const evaluationsContainer = document.getElementById('lesson-plan-details-evaluations');
+        evaluationsContainer.innerHTML = '';
+        lessonPlan.evaluations.forEach(evaluationId => {
+            const evaluation = window.educationService.getEvaluationById(evaluationId);
+            if (evaluation) {
+                const item = `
+                    <li class="list-group-item">
+                        <a href="#/evaluations/edit/${evaluation.id}">${evaluation.name}</a>
+                    </li>
+                `;
+                evaluationsContainer.innerHTML += item;
+            }
+        });
     };
 })();
