@@ -5,7 +5,13 @@ import sys
 import json
 
 # Configuração do Flask
+UPLOAD_FOLDER = 'uploads'
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
 app = Flask(__name__, static_folder='.', static_url_path='')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 
 # Configuração do Cliente OpenAI para a API da Maritaca
 client = None
@@ -25,6 +31,38 @@ DEFAULT_MODEL = "sabia-3.1"
 @app.route('/')
 def serve_index():
     return send_from_directory('.', 'index.html')
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return 'No file part', 400
+    file = request.files['file']
+    if file.filename == '':
+        return 'No selected file', 400
+    if file:
+        filename = file.filename
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+        # Save metadata
+        materials_path = os.path.join(app.config['UPLOAD_FOLDER'], 'materials.json')
+        materials = []
+        if os.path.exists(materials_path):
+            with open(materials_path, 'r') as f:
+                materials = json.load(f)
+
+        new_material = {
+            'id': f'mat_{len(materials) + 1}',
+            'title': request.form.get('title', filename),
+            'type': filename.split('.')[-1],
+            'tags': [tag.strip() for tag in request.form.get('tags', '').split(',')],
+            'url': os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        }
+        materials.append(new_material)
+
+        with open(materials_path, 'w') as f:
+            json.dump(materials, f, indent=4)
+
+        return 'File uploaded successfully', 200
 
 @app.route('/api/chat', methods=['POST'])
 def chat():

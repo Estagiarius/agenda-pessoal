@@ -221,6 +221,10 @@ document.addEventListener('DOMContentLoaded', function() {
             fetchView('views/lesson_plan_form.html', () => {
                 if (typeof initLessonPlanFormView === 'function') initLessonPlanFormView(lessonPlanId);
             });
+        } else if (viewKey === '#/materials') {
+            fetchView('views/materials.html', () => {
+                if (typeof initMaterialsView === 'function') initMaterialsView();
+            });
         } else {
             mainContentArea.innerHTML = '<h2>404 - Página Não Encontrada</h2><p>A página que você solicitou não pôde ser encontrada.</p>';
             mainContentArea.style.display = 'block';
