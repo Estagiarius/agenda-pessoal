@@ -603,7 +603,7 @@ function escapeHTML(str) {
 }
 
 // Function to render all events on the "Agenda Completa" page
-function renderAllEventsPage() {
+function renderAllEventsPage(selectionMode = false) {
     const container = document.getElementById('all-events-container');
     if (!container) {
         console.error('Error: Container #all-events-container not found for Agenda Completa.');
@@ -650,10 +650,12 @@ function renderAllEventsPage() {
         const eventId = escapeHTML(String(event.id || `event-${Date.now()}-${Math.random()}`));
 
 
+        const checkboxHtml = selectionMode ? `<input type="checkbox" class="event-checkbox" data-event-id="${eventId}" style="margin-right: 10px;">` : '';
+
         contentHtml += `
             <div class="panel panel-default event-item" style="margin-bottom: 15px;">
                 <div class="panel-heading">
-                    <h3 class="panel-title">${escapeHTML(event.title)} - ${escapeHTML(displayDate)}</h3>
+                    <h3 class="panel-title">${checkboxHtml}${escapeHTML(event.title)} - ${escapeHTML(displayDate)}</h3>
                 </div>
                 <div class="panel-body">
                     <p><strong>Horário:</strong> ${timeInfo}</p> 
@@ -737,6 +739,48 @@ function initAllEventsView() {
     if (importIcsFileInput) {
         importIcsFileInput.addEventListener('change', handleIcsFileImport);
     }
+
+    const selectMultipleBtn = document.getElementById('select-multiple-btn');
+    const cancelSelectionBtn = document.getElementById('cancel-selection-btn');
+    const defaultActions = document.getElementById('default-actions');
+    const bulkActions = document.getElementById('bulk-actions');
+
+    let selectionMode = false;
+
+    function toggleSelectionMode(enable) {
+        selectionMode = enable;
+        defaultActions.style.display = enable ? 'none' : 'block';
+        bulkActions.style.display = enable ? 'block' : 'none';
+        renderAllEventsPage(selectionMode);
+    }
+
+    selectMultipleBtn.addEventListener('click', () => toggleSelectionMode(true));
+    cancelSelectionBtn.addEventListener('click', () => toggleSelectionMode(false));
+
+    const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+    deleteSelectedBtn.addEventListener('click', () => {
+        const selectedEventIds = [];
+        const checkboxes = document.querySelectorAll('.event-checkbox:checked');
+        checkboxes.forEach(checkbox => {
+            selectedEventIds.push(checkbox.dataset.eventId);
+        });
+
+        if (selectedEventIds.length === 0) {
+            showToast('Nenhum evento selecionado.', 'info');
+            return;
+        }
+
+        showConfirmationModal(`Tem certeza que deseja excluir os ${selectedEventIds.length} eventos selecionados?`, function() {
+            let deletedCount = 0;
+            selectedEventIds.forEach(eventId => {
+                if (window.eventService.deleteEvent(eventId)) {
+                    deletedCount++;
+                }
+            });
+            showToast(`${deletedCount} eventos excluídos com sucesso!`);
+            toggleSelectionMode(false);
+        });
+    });
 }
 
 function handleIcsFileImport(event) {
