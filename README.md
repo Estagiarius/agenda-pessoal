@@ -1,61 +1,51 @@
-# agenda-pessoal
-Uma agenda pessoal, construida para você.
+# Agenda Pessoal
 
-## Launching the Application
+Uma aplicação web de agenda pessoal e acadêmica que roda 100% no navegador, sem necessidade de backend.
 
-To easily open the application in your default web browser, you can use the `launch.py` script.
-This script automates the process of finding and opening the `index.html` file.
+## Visão Geral
 
-**How to run the script:**
-1. Open your terminal or command prompt.
-2. Navigate to the root directory of this project.
-3. Execute the script using one of the following commands:
-   ```bash
-   python launch.py
-   ```
-   or, if you have Python 3 installed as `python3`:
-   ```bash
-   python3 launch.py
-   ```
-This will open `index.html` in your browser.
+Este projeto é uma Single Page Application (SPA) para gerenciamento de tarefas, eventos e atividades acadêmicas. Todos os dados são armazenados localmente no navegador do usuário, utilizando `localStorage`.
 
-## Features
+## Principais Funcionalidades
 
-### Personal Journal & Calendar
-(Assuming any existing content for these features should be preserved above this new section)
+- **Agenda e Calendário:** Gerenciamento de eventos e tarefas.
+- **Recursos Didáticos:** Crie um banco de questões e gere quizzes para testar seus conhecimentos.
+- **Gestão Acadêmica:** Organize disciplinas, turmas, alunos e notas, com a funcionalidade de gerar boletins.
 
-### Intelligent Question Bank
-The application now includes an Intelligent Question Bank feature. This allows users to:
-*   **Create Questions**: Add new questions with text, subject, difficulty level, multiple-choice options (optional), and an answer.
-*   **Store Questions**: Questions are stored within the application (currently in-browser memory).
-*   **Categorize Questions**: Each question is categorized by subject and difficulty.
-*   **Filter Questions**: Users can filter the displayed questions by subject and/or difficulty.
+## Começando
 
-**How to Access the Question Bank:**
-1.  Open `index.html` in your browser.
-2.  Click on the "Question Bank" link in the navigation bar.
+### Para Executar a Aplicação
 
-**Testing:**
-Unit tests for the question management logic can be run by opening `tests/test-runner.html` in a browser.
+Use o script `launch.py` para abrir o `index.html` no seu navegador padrão:
 
-#### Taking Quizzes
-The application now allows you to test your knowledge by taking quizzes generated from the questions stored in the Question Bank.
+```bash
+python launch.py
+```
 
-**How to Take a Quiz:**
-1.  Navigate to the "Take a Quiz" section using the link in the navigation bar.
-2.  **Configure Your Quiz:**
-    *   Specify the desired number of questions.
-    *   Optionally, filter questions by a specific subject.
-    *   Optionally, filter questions by difficulty level (Easy, Medium, Hard).
-3.  Click "Start Quiz."
-4.  **Answering Questions:**
-    *   The quiz will present one question at a time.
-    *   For multiple-choice questions, select your answer using the radio buttons.
-    *   Navigate using "Next Question" and "Previous Question" buttons.
-5.  **Submitting and Viewing Results:**
-    *   Click "Submit Quiz" on the last question or when you're ready.
-    *   Your score (total correct and percentage) will be displayed.
-    *   A detailed review allows you to see each question, your answer, and the correct answer, highlighting correct/incorrect responses.
-6.  From the results page, you can choose to "Take Another Quiz" (which resets the current quiz state and takes you to the configuration screen) or go "Back to Question Bank."
+### Para Executar os Testes
 
-**Note:** Quizzes are currently generated from the questions available in the in-browser session. Adding questions to the Question Bank will make them available for future quizzes.
+Abra o arquivo `tests/test-runner.html` em um navegador para rodar os testes unitários.
+
+## Estrutura do Projeto
+
+```
+/
+├── css/              # Estilos
+├── docs/             # Documentação detalhada
+├── fonts/            # Fontes
+├── js/
+│   ├── app/          # Módulos da aplicação (lógica principal)
+│   └── lib/          # Bibliotecas de terceiros
+├── tests/            # Testes unitários
+├── views/            # Templates HTML das seções
+├── index.html        # Ponto de entrada da aplicação
+└── launch.py         # Script para iniciar a aplicação
+```
+
+## Como Contribuir
+
+1.  **Faça um Fork:** Crie um fork do projeto.
+2.  **Crie uma Branch:** Crie uma branch para a sua funcionalidade (`git checkout -b feature/nova-feature`).
+3.  **Faça o Commit:** Faça o commit das suas alterações (`git commit -m 'feat: Adiciona nova feature'`).
+4.  **Faça o Push:** Envie para a sua branch (`git push origin feature/nova-feature`).
+5.  **Abra um Pull Request:** Abra um pull request para o repositório original.
