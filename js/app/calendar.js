@@ -629,23 +629,36 @@ function escapeHTML(str) {
     })[match]);
 }
 
+function filterAndRenderAllEvents() {
+    let events = window.eventService.getEvents();
+    const selectionMode = document.getElementById('bulk-actions').style.display === 'block';
+
+    if (document.getElementById('filter-by-month-checkbox').checked) {
+        const selectedMonth = parseInt(document.getElementById('month-filter').value, 10);
+        events = events.filter(event => moment(event.date).month() === selectedMonth);
+    }
+
+    if (document.getElementById('filter-by-year-checkbox').checked) {
+        const selectedYear = parseInt(document.getElementById('year-filter').value, 10);
+        events = events.filter(event => moment(event.date).year() === selectedYear);
+    }
+
+    renderAllEventsPage(events, selectionMode);
+}
+
 // Function to render all events on the "Agenda Completa" page
-function renderAllEventsPage(selectionMode = false) {
+function renderAllEventsPage(eventsToRender, selectionMode = false) {
     const container = document.getElementById('all-events-container');
     if (!container) {
         console.error('Error: Container #all-events-container not found for Agenda Completa.');
         return;
     }
 
-    if (!window.eventService || typeof window.eventService.getEvents !== 'function') {
-        container.innerHTML = '<p>Serviço de eventos não disponível.</p>';
-        console.error('eventService not available for rendering all events.');
-        return;
+    if (!eventsToRender) {
+        eventsToRender = window.eventService.getEvents();
     }
 
-    const allEvents = window.eventService.getEvents();
-
-    if (!allEvents || allEvents.length === 0) {
+    if (!eventsToRender || eventsToRender.length === 0) {
         container.innerHTML = '<p>Nenhum evento cadastrado no sistema.</p>';
         return;
     }
@@ -760,12 +773,46 @@ function deleteEventFromAllEventsView(eventId) {
 // Initialization function for the "Agenda Completa" view, called by the router
 function initAllEventsView() {
     console.log('Initializing All Events View...');
-    renderAllEventsPage();
 
     const importIcsFileInput = document.getElementById('import-ics-file');
     if (importIcsFileInput) {
         importIcsFileInput.addEventListener('change', handleIcsFileImport);
     }
+
+    const filterByMonthCheckbox = document.getElementById('filter-by-month-checkbox');
+    const monthFilter = document.getElementById('month-filter');
+    const filterByYearCheckbox = document.getElementById('filter-by-year-checkbox');
+    const yearFilter = document.getElementById('year-filter');
+
+    function setupFilters() {
+        // Populate year filter
+        const events = window.eventService.getEvents();
+        const years = [...new Set(events.map(event => moment(event.date).year()))];
+        yearFilter.innerHTML = '';
+        years.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearFilter.appendChild(option);
+        });
+
+        filterByMonthCheckbox.addEventListener('change', () => {
+            monthFilter.disabled = !filterByMonthCheckbox.checked;
+            filterAndRenderAllEvents();
+        });
+
+        monthFilter.addEventListener('change', filterAndRenderAllEvents);
+
+        filterByYearCheckbox.addEventListener('change', () => {
+            yearFilter.disabled = !filterByYearCheckbox.checked;
+            filterAndRenderAllEvents();
+        });
+
+        yearFilter.addEventListener('change', filterAndRenderAllEvents);
+    }
+
+    setupFilters();
+    filterAndRenderAllEvents();
 
     const selectMultipleBtn = document.getElementById('select-multiple-btn');
     const cancelSelectionBtn = document.getElementById('cancel-selection-btn');
@@ -778,7 +825,7 @@ function initAllEventsView() {
         selectionMode = enable;
         defaultActions.style.display = enable ? 'none' : 'block';
         bulkActions.style.display = enable ? 'block' : 'none';
-        renderAllEventsPage(selectionMode);
+        filterAndRenderAllEvents();
     }
 
     selectMultipleBtn.addEventListener('click', () => toggleSelectionMode(true));
