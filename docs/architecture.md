@@ -9,7 +9,7 @@ Este documento descreve a arquitetura da aplicação **Agenda Pessoal**, um sist
 A aplicação segue o padrão de **Single Page Application (SPA)**, onde a interface é carregada uma única vez e as atualizações de conteúdo são feitas dinamicamente. A arquitetura é dividida em três camadas principais:
 
 - **Camada de Apresentação (Frontend):** Responsável pela interface do usuário, construída com HTML5, CSS3 e JavaScript. Utiliza o framework Bootstrap para garantir um design responsivo.
-- **Camada de Serviços (Services):** Composta por módulos JavaScript que encapsulam a lógica de negócios. Além dos serviços existentes (`todoService.js`, `eventService.js`), foi adicionado o `educationService.js`, que gerencia toda a lógica de disciplinas, turmas, alunos e avaliações.
+- **Camada de Serviços (Services):** Composta por módulos JavaScript que encapsulam a lógica de negócios. Além dos serviços existentes `(`todoService.js`, `eventService.js`)`, foi adicionado o `educationService.js`, que gerencia toda a lógica de disciplinas, turmas, alunos e avaliações.
 - **Camada de Dados (Storage):** Os dados continuam a ser armazenados localmente no `localStorage`, agora incluindo novas chaves para os dados acadêmicos (ex: `subjects`, `classes`, `students`).
 
 ### 3. Tecnologias Utilizadas
@@ -26,8 +26,8 @@ A aplicação segue o padrão de **Single Page Application (SPA)**, onde a inter
 graph TD
     subgraph "Navegador do Cliente"
         A[Interface do Usuário HTML/CSS] --> B{Lógica da Aplicação JavaScript}
-        B --> C[Serviços (todoService, eventService, educationService, etc.)]
-        C --> D[LocalStorage (Armazenamento de Dados)]
+        B --> C[Serviços todoService, eventService, educationService, etc.]
+        C --> D[LocalStorage - Armazenamento de Dados]
     end
 
     style A fill:#f9f,stroke:#333,stroke-width:2px
