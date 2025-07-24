@@ -809,15 +809,19 @@ function handleIcsFileImport(event) {
 
             vevents.forEach(vevent => {
                 const event = new ICAL.Event(vevent);
-                const eventObject = {
-                    title: event.summary,
-                    date: event.startDate.toJSDate().toISOString().slice(0, 10),
-                    startTime: event.startDate.toJSDate().toTimeString().slice(0, 5),
-                    endTime: event.endDate.toJSDate().toTimeString().slice(0, 5),
-                    description: event.description,
-                    category: 'Imported'
-                };
-                window.eventService.addEvent(eventObject);
+                if (event.isRecurring()) {
+                    expandRecurrence(event);
+                } else {
+                    const eventObject = {
+                        title: event.summary,
+                        date: event.startDate.toJSDate().toISOString().slice(0, 10),
+                        startTime: event.startDate.toJSDate().toTimeString().slice(0, 5),
+                        endTime: event.endDate.toJSDate().toTimeString().slice(0, 5),
+                        description: event.description,
+                        category: 'Imported'
+                    };
+                    window.eventService.addEvent(eventObject);
+                }
             });
 
             renderAllEventsPage();
@@ -828,4 +832,24 @@ function handleIcsFileImport(event) {
         }
     };
     reader.readAsText(file);
+}
+
+function expandRecurrence(event) {
+    const iterator = event.iterator();
+    let next;
+    const recurrenceId = 'rec-' + new Date().getTime() + '-' + Math.random().toString(36).substr(2, 9);
+
+    while ((next = iterator.next())) {
+        const occurrence = event.getOccurrenceDetails(next);
+        const eventObject = {
+            title: occurrence.item.summary,
+            date: occurrence.startDate.toJSDate().toISOString().slice(0, 10),
+            startTime: occurrence.startDate.toJSDate().toTimeString().slice(0, 5),
+            endTime: occurrence.endDate.toJSDate().toTimeString().slice(0, 5),
+            description: occurrence.item.description,
+            category: 'Imported',
+            recurrenceId: recurrenceId
+        };
+        window.eventService.addEvent(eventObject);
+    }
 }
