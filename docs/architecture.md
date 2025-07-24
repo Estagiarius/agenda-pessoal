@@ -25,7 +25,7 @@ A aplicação segue o padrão de **Single Page Application (SPA)**, onde a inter
 ```mermaid
 graph TD
     subgraph "Navegador do Cliente"
-        A[Interface do Usuário HTML/CSS] --> B{Lógica da Aplicação (JavaScript)}
+        A[Interface do Usuário HTML/CSS] --> B{Lógica da Aplicação JavaScript}
         B --> C[Serviços (todoService, eventService, educationService, etc.)]
         C --> D[LocalStorage (Armazenamento de Dados)]
     end
