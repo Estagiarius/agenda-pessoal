@@ -143,6 +143,33 @@ function initCalendar() {
     // window.currentCalendarInstance = calendar; 
 
     displayUpcomingEvents(); // Call to display today's events in the overview
+
+    const categoryFilterDropdownMenu = document.getElementById('categoryFilterDropdownMenu');
+    const selectedCategoryLabel = document.getElementById('selectedCategoryLabel');
+
+    if (categoryFilterDropdownMenu && selectedCategoryLabel) {
+        // Set initial label based on currentFilterCategory
+        const initialCategoryLink = Array.from(categoryFilterDropdownMenu.querySelectorAll('a')).find(a => a.dataset.value === currentFilterCategory);
+        if (initialCategoryLink) {
+          selectedCategoryLabel.textContent = initialCategoryLink.textContent;
+        }
+
+        categoryFilterDropdownMenu.addEventListener('click', function(event) {
+            if (event.target.tagName === 'A' && event.target.dataset.value) {
+                event.preventDefault();
+                const selectedValue = event.target.dataset.value;
+                const selectedText = event.target.textContent;
+
+                currentFilterCategory = selectedValue;
+                selectedCategoryLabel.textContent = selectedText;
+
+                const calendarDiv = document.querySelector('#calendar');
+                calendarDiv.innerHTML = '';
+                calendarDiv.classList.remove('datepickk-initialized');
+                initCalendar();
+            }
+        });
+    }
 }
 
 function showEventDetails(eventId) {
