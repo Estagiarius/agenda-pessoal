@@ -453,10 +453,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            const recurrenceFrequency = document.getElementById('eventRecurrenceFrequency').value;
+            const recurrenceEndDate = document.getElementById('eventRecurrenceEndDate').value;
+
             const eventObject = {
                 title: title, date: date, startTime: startTime, endTime: endTime,
                 description: description, category: category,
-                reminders: [...currentModalReminders] // Add configured reminders
+                reminders: [...currentModalReminders], // Add configured reminders
+                recurrenceFrequency: recurrenceFrequency,
+                recurrenceEndDate: recurrenceEndDate
             };
 
             if (window.eventService && typeof window.eventService.addEvent === 'function') {
@@ -565,6 +570,19 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.error('initCalendar function not found on DOMContentLoaded.');
     }
+
+    const recurrenceFrequencySelect = document.getElementById('eventRecurrenceFrequency');
+    const recurrenceEndDateGroup = document.getElementById('recurrence-end-date-group');
+
+    if (recurrenceFrequencySelect) {
+        recurrenceFrequencySelect.addEventListener('change', function() {
+            if (this.value === 'none') {
+                recurrenceEndDateGroup.style.display = 'none';
+            } else {
+                recurrenceEndDateGroup.style.display = 'block';
+            }
+        });
+    }
 });
 
 // Helper function to escape HTML content
@@ -669,4 +687,46 @@ function renderAllEventsPage() {
 function initAllEventsView() {
     console.log('Initializing All Events View...');
     renderAllEventsPage();
+
+    const importIcsFileInput = document.getElementById('import-ics-file');
+    if (importIcsFileInput) {
+        importIcsFileInput.addEventListener('change', handleIcsFileImport);
+    }
+}
+
+function handleIcsFileImport(event) {
+    const file = event.target.files[0];
+    if (!file) {
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const content = e.target.result;
+        try {
+            const jcalData = ICAL.parse(content);
+            const vcalendar = new ICAL.Component(jcalData);
+            const vevents = vcalendar.getAllSubcomponents('vevent');
+
+            vevents.forEach(vevent => {
+                const event = new ICAL.Event(vevent);
+                const eventObject = {
+                    title: event.summary,
+                    date: event.startDate.toJSDate().toISOString().slice(0, 10),
+                    startTime: event.startDate.toJSDate().toTimeString().slice(0, 5),
+                    endTime: event.endDate.toJSDate().toTimeString().slice(0, 5),
+                    description: event.description,
+                    category: 'Imported'
+                };
+                window.eventService.addEvent(eventObject);
+            });
+
+            renderAllEventsPage();
+            showToast('Agenda importada com sucesso!');
+        } catch (error) {
+            console.error('Error parsing .ics file:', error);
+            showToast('Erro ao importar o arquivo .ics.', 'error');
+        }
+    };
+    reader.readAsText(file);
 }
