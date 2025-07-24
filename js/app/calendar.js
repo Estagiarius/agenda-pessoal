@@ -682,7 +682,7 @@ function renderAllEventsPage(eventsToRender, selectionMode = false) {
     });
 
     let contentHtml = '';
-    allEvents.forEach(event => {
+    eventsToRender.forEach(event => {
         const displayDate = moment(event.date, 'YYYY-MM-DD').format('DD/MM/YYYY');
         let timeInfo = event.startTime ? `${escapeHTML(event.startTime)} - ${escapeHTML(event.endTime || 'sem hora de término')}` : 'Dia todo';
         
