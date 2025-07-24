@@ -1,6 +1,16 @@
 <div class="container" style="margin-top: 20px;">
     <div class="page-header">
         <h1>Agenda Completa</h1>
+        <div id="default-actions">
+            <label for="import-ics-file" class="btn btn-primary">Importar Agenda (.ics)</label>
+            <input type="file" id="import-ics-file" style="display: none;" accept=".ics">
+            <button id="select-multiple-btn" class="btn btn-default">Selecionar Múltiplos</button>
+            <button id="delete-all-btn" class="btn btn-danger">Apagar Todos os Eventos</button>
+        </div>
+        <div id="bulk-actions" style="display: none;">
+            <button id="delete-selected-btn" class="btn btn-danger">Excluir Selecionados</button>
+            <button id="cancel-selection-btn" class="btn btn-default">Cancelar Seleção</button>
+        </div>
     </div>
     <div id="all-events-container" class="event-list-container">
         <!-- Events will be dynamically loaded here by JavaScript -->

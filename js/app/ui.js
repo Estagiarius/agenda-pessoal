@@ -24,12 +24,31 @@ window.showToast = function(message) {
  * @param {string} message - A mensagem de confirmação.
  * @param {function} callback - A função a ser executada se o usuário confirmar.
  */
-window.showConfirmationModal = function(message, callback) {
+window.showConfirmationModal = function(message, callback, options = {}) {
     const modal = $('#confirmationModal');
     const modalBody = document.getElementById('confirmationModalBody');
     const confirmBtn = document.getElementById('confirmActionBtn');
+    const confirmationInputGroup = document.getElementById('confirmation-input-group');
+    const confirmationInput = document.getElementById('confirmation-input');
 
-    modalBody.textContent = message;
+    modalBody.innerHTML = message; // Use innerHTML to allow for HTML in the message
+
+    if (options.requireInput) {
+        confirmationInputGroup.style.display = 'block';
+        confirmationInput.value = '';
+        confirmBtn.disabled = true;
+
+        confirmationInput.onkeyup = function() {
+            if (confirmationInput.value === options.requireInput) {
+                confirmBtn.disabled = false;
+            } else {
+                confirmBtn.disabled = true;
+            }
+        };
+    } else {
+        confirmationInputGroup.style.display = 'none';
+        confirmBtn.disabled = false;
+    }
 
     // Remove qualquer listener anterior para evitar múltiplas execuções
     $(confirmBtn).off('click');

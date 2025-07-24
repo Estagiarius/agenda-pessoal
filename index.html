@@ -25,6 +25,7 @@
 	<script src="js/datepickk.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/ical.js/1.4.0/ical.min.js"></script>
 </head>
 
 <body>
@@ -152,6 +153,20 @@
                   <option>Other</option>
                 </select>
               </div>
+              <!-- Recurrence Section -->
+              <div class="form-group">
+                  <label>Repetir</label>
+                  <select class="form-control" id="eventRecurrenceFrequency">
+                      <option value="none" selected>Não se repete</option>
+                      <option value="daily">Diariamente</option>
+                      <option value="weekly">Semanalmente</option>
+                      <option value="monthly">Mensalmente</option>
+                  </select>
+              </div>
+              <div class="form-group" id="recurrence-end-date-group" style="display: none;">
+                  <label for="eventRecurrenceEndDate">Repetir até</label>
+                  <input type="date" class="form-control" id="eventRecurrenceEndDate">
+              </div>
               <!-- Reminders Section -->
               <div class="form-group">
                 <h5 style="margin-top: 15px; margin-bottom: 5px;">Lembretes</h5>
@@ -229,6 +244,9 @@
                 </div>
                 <div class="modal-body" id="confirmationModalBody">
                     <!-- Mensagem de confirmação -->
+                </div>
+                <div class="form-group" id="confirmation-input-group" style="display: none; margin: 0 15px;">
+                    <input type="text" class="form-control" id="confirmation-input" placeholder="Digite para confirmar">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
@@ -326,6 +344,27 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary" id="link-selected-evaluations-btn">Vincular Selecionadas</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recurrent Event Deletion Modal -->
+    <div class="modal fade" id="recurrentEventDeletionModal" tabindex="-1" role="dialog" aria-labelledby="recurrentEventDeletionModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="recurrentEventDeletionModalLabel">Excluir Evento Recorrente</h4>
+                </div>
+                <div class="modal-body">
+                    <p>Este é um evento recorrente. O que você gostaria de excluir?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="delete-this-event-btn">Apenas este evento</button>
+                    <button type="button" class="btn btn-danger" id="delete-future-events-btn">Este e os futuros eventos</button>
+                    <button type="button" class="btn btn-danger" id="delete-all-events-btn">Todos os eventos</button>
                 </div>
             </div>
         </div>

@@ -453,10 +453,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            const recurrenceFrequency = document.getElementById('eventRecurrenceFrequency').value;
+            const recurrenceEndDate = document.getElementById('eventRecurrenceEndDate').value;
+
             const eventObject = {
                 title: title, date: date, startTime: startTime, endTime: endTime,
                 description: description, category: category,
-                reminders: [...currentModalReminders] // Add configured reminders
+                reminders: [...currentModalReminders], // Add configured reminders
+                recurrenceFrequency: recurrenceFrequency,
+                recurrenceEndDate: recurrenceEndDate
             };
 
             if (window.eventService && typeof window.eventService.addEvent === 'function') {
@@ -565,6 +570,19 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.error('initCalendar function not found on DOMContentLoaded.');
     }
+
+    const recurrenceFrequencySelect = document.getElementById('eventRecurrenceFrequency');
+    const recurrenceEndDateGroup = document.getElementById('recurrence-end-date-group');
+
+    if (recurrenceFrequencySelect) {
+        recurrenceFrequencySelect.addEventListener('change', function() {
+            if (this.value === 'none') {
+                recurrenceEndDateGroup.style.display = 'none';
+            } else {
+                recurrenceEndDateGroup.style.display = 'block';
+            }
+        });
+    }
 });
 
 // Helper function to escape HTML content
@@ -585,7 +603,7 @@ function escapeHTML(str) {
 }
 
 // Function to render all events on the "Agenda Completa" page
-function renderAllEventsPage() {
+function renderAllEventsPage(selectionMode = false) {
     const container = document.getElementById('all-events-container');
     if (!container) {
         console.error('Error: Container #all-events-container not found for Agenda Completa.');
@@ -632,10 +650,12 @@ function renderAllEventsPage() {
         const eventId = escapeHTML(String(event.id || `event-${Date.now()}-${Math.random()}`));
 
 
+        const checkboxHtml = selectionMode ? `<input type="checkbox" class="event-checkbox" data-event-id="${eventId}" style="margin-right: 10px;">` : '';
+
         contentHtml += `
             <div class="panel panel-default event-item" style="margin-bottom: 15px;">
                 <div class="panel-heading">
-                    <h3 class="panel-title">${escapeHTML(event.title)} - ${escapeHTML(displayDate)}</h3>
+                    <h3 class="panel-title">${checkboxHtml}${escapeHTML(event.title)} - ${escapeHTML(displayDate)}</h3>
                 </div>
                 <div class="panel-body">
                     <p><strong>Horário:</strong> ${timeInfo}</p> 
@@ -643,7 +663,9 @@ function renderAllEventsPage() {
                     <p><strong>Descrição:</strong> ${escapeHTML(event.description || 'Nenhuma descrição.')}</p>
                 </div>
                 <div class="panel-footer">
-                    <button class="btn btn-info btn-sm view-event-details-btn" data-event-id="${eventId}">Ver Detalhes Completos</button>
+                    <button class="btn btn-info btn-sm view-event-details-btn" data-event-id="${eventId}">Ver Detalhes</button>
+                    <button class="btn btn-warning btn-sm edit-event-btn" data-event-id="${eventId}">Editar</button>
+                    <button class="btn btn-danger btn-sm delete-event-btn" data-event-id="${eventId}" data-recurrence-id="${event.recurrenceId || ''}">Excluir</button>
                 </div>
             </div>
         `;
@@ -653,14 +675,57 @@ function renderAllEventsPage() {
 
     // Attach event listener to the container for handling clicks on "Ver Detalhes Completos" buttons
     container.addEventListener('click', function(e) {
-        if (e.target && e.target.classList.contains('view-event-details-btn')) {
-            const eventId = e.target.dataset.eventId;
+        const target = e.target;
+        if (target && target.classList.contains('view-event-details-btn')) {
+            const eventId = target.dataset.eventId;
             if (eventId && typeof showEventDetails === 'function') {
-                console.log(`All Events Page: Clicked 'Ver Detalhes Completos' for event ID: ${eventId}`);
                 showEventDetails(eventId);
-            } else {
-                console.error('Could not show event details. Event ID or showEventDetails function missing.', { eventId: eventId, hasShowEventDetails: typeof showEventDetails === 'function' });
             }
+        } else if (target && target.classList.contains('edit-event-btn')) {
+            const eventId = target.dataset.eventId;
+            // Placeholder for edit functionality
+            alert(`A funcionalidade de edição para o evento ${eventId} ainda não foi implementada.`);
+        } else if (target && target.classList.contains('delete-event-btn')) {
+            const eventId = target.dataset.eventId;
+            const recurrenceId = target.dataset.recurrenceId;
+            if (recurrenceId) {
+                showRecurrentEventDeletionModal(eventId, recurrenceId);
+            } else {
+                deleteEventFromAllEventsView(eventId);
+            }
+        }
+    });
+}
+
+function showRecurrentEventDeletionModal(eventId, recurrenceId) {
+    $('#recurrentEventDeletionModal').modal('show');
+
+    document.getElementById('delete-this-event-btn').onclick = function() {
+        window.eventService.deleteRecurrentEvent(eventId, recurrenceId, 'this');
+        renderAllEventsPage();
+        $('#recurrentEventDeletionModal').modal('hide');
+    };
+
+    document.getElementById('delete-future-events-btn').onclick = function() {
+        window.eventService.deleteRecurrentEvent(eventId, recurrenceId, 'future');
+        renderAllEventsPage();
+        $('#recurrentEventDeletionModal').modal('hide');
+    };
+
+    document.getElementById('delete-all-events-btn').onclick = function() {
+        window.eventService.deleteRecurrentEvent(eventId, recurrenceId, 'all');
+        renderAllEventsPage();
+        $('#recurrentEventDeletionModal').modal('hide');
+    };
+}
+
+function deleteEventFromAllEventsView(eventId) {
+    showConfirmationModal('Tem certeza que deseja excluir este evento?', function() {
+        if (window.eventService.deleteEvent(eventId)) {
+            renderAllEventsPage();
+            showToast('Evento excluído com sucesso!');
+        } else {
+            showToast('Erro ao excluir o evento.', 'error');
         }
     });
 }
@@ -669,4 +734,98 @@ function renderAllEventsPage() {
 function initAllEventsView() {
     console.log('Initializing All Events View...');
     renderAllEventsPage();
+
+    const importIcsFileInput = document.getElementById('import-ics-file');
+    if (importIcsFileInput) {
+        importIcsFileInput.addEventListener('change', handleIcsFileImport);
+    }
+
+    const selectMultipleBtn = document.getElementById('select-multiple-btn');
+    const cancelSelectionBtn = document.getElementById('cancel-selection-btn');
+    const defaultActions = document.getElementById('default-actions');
+    const bulkActions = document.getElementById('bulk-actions');
+
+    let selectionMode = false;
+
+    function toggleSelectionMode(enable) {
+        selectionMode = enable;
+        defaultActions.style.display = enable ? 'none' : 'block';
+        bulkActions.style.display = enable ? 'block' : 'none';
+        renderAllEventsPage(selectionMode);
+    }
+
+    selectMultipleBtn.addEventListener('click', () => toggleSelectionMode(true));
+    cancelSelectionBtn.addEventListener('click', () => toggleSelectionMode(false));
+
+    const deleteAllBtn = document.getElementById('delete-all-btn');
+    deleteAllBtn.addEventListener('click', () => {
+        const message = '<strong>Atenção!</strong> Tem certeza que deseja apagar <strong>TODOS</strong> os eventos da sua agenda? Esta ação não pode ser desfeita. Para confirmar, digite "APAGAR" no campo abaixo.';
+        showConfirmationModal(message, function() {
+            window.eventService.deleteAllEvents();
+            renderAllEventsPage();
+            showToast('Todos os eventos foram excluídos com sucesso!');
+        }, { requireInput: 'APAGAR' });
+    });
+
+    const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+    deleteSelectedBtn.addEventListener('click', () => {
+        const selectedEventIds = [];
+        const checkboxes = document.querySelectorAll('.event-checkbox:checked');
+        checkboxes.forEach(checkbox => {
+            selectedEventIds.push(checkbox.dataset.eventId);
+        });
+
+        if (selectedEventIds.length === 0) {
+            showToast('Nenhum evento selecionado.', 'info');
+            return;
+        }
+
+        showConfirmationModal(`Tem certeza que deseja excluir os ${selectedEventIds.length} eventos selecionados?`, function() {
+            let deletedCount = 0;
+            selectedEventIds.forEach(eventId => {
+                if (window.eventService.deleteEvent(eventId)) {
+                    deletedCount++;
+                }
+            });
+            showToast(`${deletedCount} eventos excluídos com sucesso!`);
+            toggleSelectionMode(false);
+        });
+    });
+}
+
+function handleIcsFileImport(event) {
+    const file = event.target.files[0];
+    if (!file) {
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const content = e.target.result;
+        try {
+            const jcalData = ICAL.parse(content);
+            const vcalendar = new ICAL.Component(jcalData);
+            const vevents = vcalendar.getAllSubcomponents('vevent');
+
+            vevents.forEach(vevent => {
+                const event = new ICAL.Event(vevent);
+                const eventObject = {
+                    title: event.summary,
+                    date: event.startDate.toJSDate().toISOString().slice(0, 10),
+                    startTime: event.startDate.toJSDate().toTimeString().slice(0, 5),
+                    endTime: event.endDate.toJSDate().toTimeString().slice(0, 5),
+                    description: event.description,
+                    category: 'Imported'
+                };
+                window.eventService.addEvent(eventObject);
+            });
+
+            renderAllEventsPage();
+            showToast('Agenda importada com sucesso!');
+        } catch (error) {
+            console.error('Error parsing .ics file:', error);
+            showToast('Erro ao importar o arquivo .ics.', 'error');
+        }
+    };
+    reader.readAsText(file);
 }

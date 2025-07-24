@@ -240,10 +240,16 @@
         `;
 
         const enrolledList = document.getElementById('enrolled-students-list');
+        const hideInactiveCheckbox = document.getElementById('hide-inactive-students-checkbox');
 
         const renderEnrolledStudents = () => {
             enrolledList.innerHTML = '';
-            const enrolledStudents = window.educationService.getStudentsByClass(classId);
+            let enrolledStudents = window.educationService.getStudentsByClass(classId);
+
+            if (hideInactiveCheckbox.checked) {
+                enrolledStudents = enrolledStudents.filter(student => student.status === 'Ativo');
+            }
+
             // Ordena por número de chamada
             enrolledStudents.sort((a, b) => a.callNumber - b.callNumber);
 
@@ -293,6 +299,8 @@
                 alert(error.message);
             }
         });
+
+        hideInactiveCheckbox.addEventListener('change', renderEnrolledStudents);
 
         renderEnrolledStudents();
         renderEvaluations(classId);
@@ -584,9 +592,9 @@
             return;
         }
 
-        const students = window.educationService.getStudentsByClass(evaluation.classId);
         const title = document.getElementById('grade-entry-title');
         const tableBody = document.getElementById('grade-entry-table-body');
+        const hideInactiveCheckbox = document.getElementById('hide-inactive-students-checkbox');
         const form = document.getElementById('grade-entry-form');
         const evaluationIdField = document.getElementById('grade-entry-evaluation-id');
         const cancelButton = document.getElementById('cancel-grade-entry');
@@ -600,19 +608,30 @@
             return map;
         }, {});
 
-        tableBody.innerHTML = '';
-        students.sort((a, b) => a.callNumber - b.callNumber).forEach(student => {
-            const grade = existingGrades[student.id] || '';
-            const row = `
-                <tr>
-                    <td>${student.callNumber} - ${student.name}</td>
-                    <td>
-                        <input type="number" class="form-control" data-student-id="${student.id}" value="${grade}" min="0" max="${evaluation.maxGrade}" step="0.1">
-                    </td>
-                </tr>
-            `;
-            tableBody.innerHTML += row;
-        });
+        function renderGradeEntryTable() {
+            tableBody.innerHTML = '';
+            let students = window.educationService.getStudentsByClass(evaluation.classId);
+
+            if (hideInactiveCheckbox.checked) {
+                students = students.filter(student => student.status === 'Ativo');
+            }
+
+            students.sort((a, b) => a.callNumber - b.callNumber).forEach(student => {
+                const grade = existingGrades[student.id] || '';
+                const row = `
+                    <tr>
+                        <td>${student.callNumber} - ${student.name}</td>
+                        <td>
+                            <input type="number" class="form-control" data-student-id="${student.id}" value="${grade}" min="0" max="${evaluation.maxGrade}" step="0.1">
+                        </td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        hideInactiveCheckbox.addEventListener('change', renderGradeEntryTable);
+        renderGradeEntryTable();
 
         form.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -652,34 +671,48 @@
 
     // --- Inicialização da View de Boletim da Turma ---
     window.initClassReportView = function(classId) {
-        const { report, evaluations } = window.educationService.calculateClassReport(classId);
         const tableHead = document.getElementById('class-report-table-head');
         const tableBody = document.getElementById('class-report-table-body');
+        const hideInactiveCheckbox = document.getElementById('hide-inactive-students-checkbox');
         const backButton = document.getElementById('back-to-class-details');
 
         backButton.href = `#/classes/details/${classId}`;
 
-        // Cabeçalho da tabela
-        let headerHtml = '<tr><th>Aluno</th>';
-        evaluations.forEach(e => {
-            headerHtml += `<th>${e.name}</th>`;
-        });
-        headerHtml += '<th>Média Final</th></tr>';
-        tableHead.innerHTML = headerHtml;
+        function renderClassReport() {
+            let { report, evaluations } = window.educationService.calculateClassReport(classId);
 
-        // Corpo da tabela
-        tableBody.innerHTML = '';
-        report.forEach(studentReport => {
-            const finalGrade = parseFloat(studentReport.finalGrade);
-            const gradeClass = finalGrade < 6.0 ? 'grade-low' : '';
-            let rowHtml = `<tr><td>${studentReport.studentName}</td>`;
+            if (hideInactiveCheckbox.checked) {
+                const activeStudentIds = window.educationService.getStudentsByClass(classId)
+                    .filter(s => s.status === 'Ativo')
+                    .map(s => s.id);
+                report = report.filter(r => activeStudentIds.includes(r.studentId));
+            }
+
+            // Cabeçalho da tabela
+            let headerHtml = '<tr><th>Aluno</th>';
             evaluations.forEach(e => {
-                const grade = studentReport.grades[e.id];
-                rowHtml += `<td>${grade !== null ? grade : '-'}</td>`;
+                headerHtml += `<th>${e.name}</th>`;
             });
-            rowHtml += `<td class="${gradeClass}"><strong>${studentReport.finalGrade}</strong></td></tr>`;
-            tableBody.innerHTML += rowHtml;
-        });
+            headerHtml += '<th>Média Final</th></tr>';
+            tableHead.innerHTML = headerHtml;
+
+            // Corpo da tabela
+            tableBody.innerHTML = '';
+            report.forEach(studentReport => {
+                const finalGrade = parseFloat(studentReport.finalGrade);
+                const gradeClass = finalGrade < 6.0 ? 'grade-low' : '';
+                let rowHtml = `<tr><td>${studentReport.studentName}</td>`;
+                evaluations.forEach(e => {
+                    const grade = studentReport.grades[e.id];
+                    rowHtml += `<td>${grade !== null ? grade : '-'}</td>`;
+                });
+                rowHtml += `<td class="${gradeClass}"><strong>${studentReport.finalGrade}</strong></td></tr>`;
+                tableBody.innerHTML += rowHtml;
+            });
+        }
+
+        hideInactiveCheckbox.addEventListener('change', renderClassReport);
+        renderClassReport();
 
         // Lógica de exportação para CSV
         const exportBtn = document.getElementById('export-csv-btn');

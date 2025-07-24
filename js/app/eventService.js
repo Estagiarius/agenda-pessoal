@@ -57,25 +57,48 @@
             console.error('Event object must have at least a title and a date.');
             return null;
         }
-        const newEvent = {
-            id: nextEventId++, // Assign new ID and then increment nextEventId
-            title: eventObject.title,
-            date: eventObject.date,
-            startTime: eventObject.startTime || '',
-            endTime: eventObject.endTime || '',
-            description: eventObject.description || '',
-            category: eventObject.category || 'General', // Add category, default to 'General'
-            reminders: eventObject.reminders || [] // Initialize reminders, expect array from calendar.js
-        };
-        events.push(newEvent);
 
-        console.log('eventService: Evento adicionado/atualizado:', JSON.stringify(newEvent));
-        // console.log('Event added:', newEvent); // Original log, can be kept or removed
-        // console.log('All events:', events); // Original log, can be kept or removed
-        saveEvents(); // Only call saveEvents
-        // console.log('Event added:', newEvent); // You can uncomment these for debugging
-        // console.log('All events:', events);
-        return newEvent;
+        const { recurrenceFrequency, recurrenceEndDate, ...baseEvent } = eventObject;
+
+        if (recurrenceFrequency && recurrenceFrequency !== 'none' && recurrenceEndDate) {
+            const recurrenceId = 'rec-' + new Date().getTime();
+            let currentDate = moment(baseEvent.date);
+            const endDate = moment(recurrenceEndDate);
+
+            while (currentDate.isSameOrBefore(endDate)) {
+                const newEvent = {
+                    ...baseEvent,
+                    id: nextEventId++,
+                    date: currentDate.format('YYYY-MM-DD'),
+                    recurrenceId: recurrenceId,
+                    reminders: baseEvent.reminders || []
+                };
+                events.push(newEvent);
+
+                switch (recurrenceFrequency) {
+                    case 'daily':
+                        currentDate.add(1, 'days');
+                        break;
+                    case 'weekly':
+                        currentDate.add(1, 'weeks');
+                        break;
+                    case 'monthly':
+                        currentDate.add(1, 'months');
+                        break;
+                }
+            }
+        } else {
+            const newEvent = {
+                id: nextEventId++,
+                ...baseEvent,
+                reminders: baseEvent.reminders || []
+            };
+            events.push(newEvent);
+        }
+
+        console.log('eventService: Evento adicionado/atualizado:', JSON.stringify(eventObject));
+        saveEvents();
+        return eventObject;
     }
 
     function getEvents() {
@@ -140,6 +163,33 @@
         return true;
     }
 
+    function deleteRecurrentEvent(eventId, recurrenceId, deleteType) {
+        const eventToDelete = getEventById(eventId);
+        if (!eventToDelete) {
+            return false;
+        }
+
+        let eventsToDelete = [];
+        if (deleteType === 'this') {
+            eventsToDelete.push(eventToDelete);
+        } else {
+            const allRecurrentEvents = events.filter(e => e.recurrenceId === recurrenceId);
+            if (deleteType === 'future') {
+                eventsToDelete = allRecurrentEvents.filter(e => moment(e.date).isSameOrAfter(moment(eventToDelete.date)));
+            } else if (deleteType === 'all') {
+                eventsToDelete = allRecurrentEvents;
+            }
+        }
+
+        eventsToDelete.forEach(e => deleteEvent(e.id));
+        return true;
+    }
+
+    function deleteAllEvents() {
+        events = [];
+        saveEvents();
+    }
+
     // Expose 
     window.eventService = {
         addEvent: addEvent,
@@ -147,7 +197,9 @@
         getEventsForDate: getEventsForDate,
         getEventById: getEventById,
         updateEvent: updateEvent,
-        deleteEvent: deleteEvent // Expose deleteEvent
+        deleteEvent: deleteEvent, // Expose deleteEvent
+        deleteRecurrentEvent: deleteRecurrentEvent,
+        deleteAllEvents: deleteAllEvents
     };
 
 })(window);
