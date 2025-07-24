@@ -163,6 +163,28 @@
         return true;
     }
 
+    function deleteRecurrentEvent(eventId, recurrenceId, deleteType) {
+        const eventToDelete = getEventById(eventId);
+        if (!eventToDelete) {
+            return false;
+        }
+
+        let eventsToDelete = [];
+        if (deleteType === 'this') {
+            eventsToDelete.push(eventToDelete);
+        } else {
+            const allRecurrentEvents = events.filter(e => e.recurrenceId === recurrenceId);
+            if (deleteType === 'future') {
+                eventsToDelete = allRecurrentEvents.filter(e => moment(e.date).isSameOrAfter(moment(eventToDelete.date)));
+            } else if (deleteType === 'all') {
+                eventsToDelete = allRecurrentEvents;
+            }
+        }
+
+        eventsToDelete.forEach(e => deleteEvent(e.id));
+        return true;
+    }
+
     // Expose 
     window.eventService = {
         addEvent: addEvent,
@@ -170,7 +192,8 @@
         getEventsForDate: getEventsForDate,
         getEventById: getEventById,
         updateEvent: updateEvent,
-        deleteEvent: deleteEvent // Expose deleteEvent
+        deleteEvent: deleteEvent, // Expose deleteEvent
+        deleteRecurrentEvent: deleteRecurrentEvent
     };
 
 })(window);

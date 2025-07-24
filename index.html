@@ -345,5 +345,26 @@
             </div>
         </div>
     </div>
+
+    <!-- Recurrent Event Deletion Modal -->
+    <div class="modal fade" id="recurrentEventDeletionModal" tabindex="-1" role="dialog" aria-labelledby="recurrentEventDeletionModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="recurrentEventDeletionModalLabel">Excluir Evento Recorrente</h4>
+                </div>
+                <div class="modal-body">
+                    <p>Este é um evento recorrente. O que você gostaria de excluir?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="delete-this-event-btn">Apenas este evento</button>
+                    <button type="button" class="btn btn-danger" id="delete-future-events-btn">Este e os futuros eventos</button>
+                    <button type="button" class="btn btn-danger" id="delete-all-events-btn">Todos os eventos</button>
+                </div>
+            </div>
+        </div>
+    </div>
     </body>
     </html>

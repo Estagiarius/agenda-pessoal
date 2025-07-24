@@ -661,7 +661,9 @@ function renderAllEventsPage() {
                     <p><strong>Descrição:</strong> ${escapeHTML(event.description || 'Nenhuma descrição.')}</p>
                 </div>
                 <div class="panel-footer">
-                    <button class="btn btn-info btn-sm view-event-details-btn" data-event-id="${eventId}">Ver Detalhes Completos</button>
+                    <button class="btn btn-info btn-sm view-event-details-btn" data-event-id="${eventId}">Ver Detalhes</button>
+                    <button class="btn btn-warning btn-sm edit-event-btn" data-event-id="${eventId}">Editar</button>
+                    <button class="btn btn-danger btn-sm delete-event-btn" data-event-id="${eventId}" data-recurrence-id="${event.recurrenceId || ''}">Excluir</button>
                 </div>
             </div>
         `;
@@ -671,14 +673,57 @@ function renderAllEventsPage() {
 
     // Attach event listener to the container for handling clicks on "Ver Detalhes Completos" buttons
     container.addEventListener('click', function(e) {
-        if (e.target && e.target.classList.contains('view-event-details-btn')) {
-            const eventId = e.target.dataset.eventId;
+        const target = e.target;
+        if (target && target.classList.contains('view-event-details-btn')) {
+            const eventId = target.dataset.eventId;
             if (eventId && typeof showEventDetails === 'function') {
-                console.log(`All Events Page: Clicked 'Ver Detalhes Completos' for event ID: ${eventId}`);
                 showEventDetails(eventId);
-            } else {
-                console.error('Could not show event details. Event ID or showEventDetails function missing.', { eventId: eventId, hasShowEventDetails: typeof showEventDetails === 'function' });
             }
+        } else if (target && target.classList.contains('edit-event-btn')) {
+            const eventId = target.dataset.eventId;
+            // Placeholder for edit functionality
+            alert(`A funcionalidade de edição para o evento ${eventId} ainda não foi implementada.`);
+        } else if (target && target.classList.contains('delete-event-btn')) {
+            const eventId = target.dataset.eventId;
+            const recurrenceId = target.dataset.recurrenceId;
+            if (recurrenceId) {
+                showRecurrentEventDeletionModal(eventId, recurrenceId);
+            } else {
+                deleteEventFromAllEventsView(eventId);
+            }
+        }
+    });
+}
+
+function showRecurrentEventDeletionModal(eventId, recurrenceId) {
+    $('#recurrentEventDeletionModal').modal('show');
+
+    document.getElementById('delete-this-event-btn').onclick = function() {
+        window.eventService.deleteRecurrentEvent(eventId, recurrenceId, 'this');
+        renderAllEventsPage();
+        $('#recurrentEventDeletionModal').modal('hide');
+    };
+
+    document.getElementById('delete-future-events-btn').onclick = function() {
+        window.eventService.deleteRecurrentEvent(eventId, recurrenceId, 'future');
+        renderAllEventsPage();
+        $('#recurrentEventDeletionModal').modal('hide');
+    };
+
+    document.getElementById('delete-all-events-btn').onclick = function() {
+        window.eventService.deleteRecurrentEvent(eventId, recurrenceId, 'all');
+        renderAllEventsPage();
+        $('#recurrentEventDeletionModal').modal('hide');
+    };
+}
+
+function deleteEventFromAllEventsView(eventId) {
+    showConfirmationModal('Tem certeza que deseja excluir este evento?', function() {
+        if (window.eventService.deleteEvent(eventId)) {
+            renderAllEventsPage();
+            showToast('Evento excluído com sucesso!');
+        } else {
+            showToast('Erro ao excluir o evento.', 'error');
         }
     });
 }
