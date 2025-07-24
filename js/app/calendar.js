@@ -664,7 +664,7 @@ function renderAllEventsPage(eventsToRender, selectionMode = false) {
     }
 
     // Sort events: primarily by date (ascending), secondarily by start time (ascending)
-    allEvents.sort((a, b) => {
+    eventsToRender.sort((a, b) => {
         const dateA = moment(a.date, 'YYYY-MM-DD');
         const dateB = moment(b.date, 'YYYY-MM-DD');
         if (dateA.isBefore(dateB)) return -1;
