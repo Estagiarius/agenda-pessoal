@@ -143,6 +143,33 @@ function initCalendar() {
     // window.currentCalendarInstance = calendar; 
 
     displayUpcomingEvents(); // Call to display today's events in the overview
+
+    const categoryFilterDropdownMenu = document.getElementById('categoryFilterDropdownMenu');
+    const selectedCategoryLabel = document.getElementById('selectedCategoryLabel');
+
+    if (categoryFilterDropdownMenu && selectedCategoryLabel) {
+        // Set initial label based on currentFilterCategory
+        const initialCategoryLink = Array.from(categoryFilterDropdownMenu.querySelectorAll('a')).find(a => a.dataset.value === currentFilterCategory);
+        if (initialCategoryLink) {
+          selectedCategoryLabel.textContent = initialCategoryLink.textContent;
+        }
+
+        categoryFilterDropdownMenu.addEventListener('click', function(event) {
+            if (event.target.tagName === 'A' && event.target.dataset.value) {
+                event.preventDefault();
+                const selectedValue = event.target.dataset.value;
+                const selectedText = event.target.textContent;
+
+                currentFilterCategory = selectedValue;
+                selectedCategoryLabel.textContent = selectedText;
+
+                const calendarDiv = document.querySelector('#calendar');
+                calendarDiv.innerHTML = '';
+                calendarDiv.classList.remove('datepickk-initialized');
+                initCalendar();
+            }
+        });
+    }
 }
 
 function showEventDetails(eventId) {
@@ -602,29 +629,42 @@ function escapeHTML(str) {
     })[match]);
 }
 
+function filterAndRenderAllEvents() {
+    let events = window.eventService.getEvents();
+    const selectionMode = document.getElementById('bulk-actions').style.display === 'block';
+
+    if (document.getElementById('filter-by-month-checkbox').checked) {
+        const selectedMonth = parseInt(document.getElementById('month-filter').value, 10);
+        events = events.filter(event => moment(event.date).month() === selectedMonth);
+    }
+
+    if (document.getElementById('filter-by-year-checkbox').checked) {
+        const selectedYear = parseInt(document.getElementById('year-filter').value, 10);
+        events = events.filter(event => moment(event.date).year() === selectedYear);
+    }
+
+    renderAllEventsPage(events, selectionMode);
+}
+
 // Function to render all events on the "Agenda Completa" page
-function renderAllEventsPage(selectionMode = false) {
+function renderAllEventsPage(eventsToRender, selectionMode = false) {
     const container = document.getElementById('all-events-container');
     if (!container) {
         console.error('Error: Container #all-events-container not found for Agenda Completa.');
         return;
     }
 
-    if (!window.eventService || typeof window.eventService.getEvents !== 'function') {
-        container.innerHTML = '<p>Serviço de eventos não disponível.</p>';
-        console.error('eventService not available for rendering all events.');
-        return;
+    if (!eventsToRender) {
+        eventsToRender = window.eventService.getEvents();
     }
 
-    const allEvents = window.eventService.getEvents();
-
-    if (!allEvents || allEvents.length === 0) {
+    if (!eventsToRender || eventsToRender.length === 0) {
         container.innerHTML = '<p>Nenhum evento cadastrado no sistema.</p>';
         return;
     }
 
     // Sort events: primarily by date (ascending), secondarily by start time (ascending)
-    allEvents.sort((a, b) => {
+    eventsToRender.sort((a, b) => {
         const dateA = moment(a.date, 'YYYY-MM-DD');
         const dateB = moment(b.date, 'YYYY-MM-DD');
         if (dateA.isBefore(dateB)) return -1;
@@ -642,7 +682,7 @@ function renderAllEventsPage(selectionMode = false) {
     });
 
     let contentHtml = '';
-    allEvents.forEach(event => {
+    eventsToRender.forEach(event => {
         const displayDate = moment(event.date, 'YYYY-MM-DD').format('DD/MM/YYYY');
         let timeInfo = event.startTime ? `${escapeHTML(event.startTime)} - ${escapeHTML(event.endTime || 'sem hora de término')}` : 'Dia todo';
         
@@ -733,12 +773,46 @@ function deleteEventFromAllEventsView(eventId) {
 // Initialization function for the "Agenda Completa" view, called by the router
 function initAllEventsView() {
     console.log('Initializing All Events View...');
-    renderAllEventsPage();
 
     const importIcsFileInput = document.getElementById('import-ics-file');
     if (importIcsFileInput) {
         importIcsFileInput.addEventListener('change', handleIcsFileImport);
     }
+
+    const filterByMonthCheckbox = document.getElementById('filter-by-month-checkbox');
+    const monthFilter = document.getElementById('month-filter');
+    const filterByYearCheckbox = document.getElementById('filter-by-year-checkbox');
+    const yearFilter = document.getElementById('year-filter');
+
+    function setupFilters() {
+        // Populate year filter
+        const events = window.eventService.getEvents();
+        const years = [...new Set(events.map(event => moment(event.date).year()))];
+        yearFilter.innerHTML = '';
+        years.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearFilter.appendChild(option);
+        });
+
+        filterByMonthCheckbox.addEventListener('change', () => {
+            monthFilter.disabled = !filterByMonthCheckbox.checked;
+            filterAndRenderAllEvents();
+        });
+
+        monthFilter.addEventListener('change', filterAndRenderAllEvents);
+
+        filterByYearCheckbox.addEventListener('change', () => {
+            yearFilter.disabled = !filterByYearCheckbox.checked;
+            filterAndRenderAllEvents();
+        });
+
+        yearFilter.addEventListener('change', filterAndRenderAllEvents);
+    }
+
+    setupFilters();
+    filterAndRenderAllEvents();
 
     const selectMultipleBtn = document.getElementById('select-multiple-btn');
     const cancelSelectionBtn = document.getElementById('cancel-selection-btn');
@@ -751,7 +825,7 @@ function initAllEventsView() {
         selectionMode = enable;
         defaultActions.style.display = enable ? 'none' : 'block';
         bulkActions.style.display = enable ? 'block' : 'none';
-        renderAllEventsPage(selectionMode);
+        filterAndRenderAllEvents();
     }
 
     selectMultipleBtn.addEventListener('click', () => toggleSelectionMode(true));
@@ -809,15 +883,19 @@ function handleIcsFileImport(event) {
 
             vevents.forEach(vevent => {
                 const event = new ICAL.Event(vevent);
-                const eventObject = {
-                    title: event.summary,
-                    date: event.startDate.toJSDate().toISOString().slice(0, 10),
-                    startTime: event.startDate.toJSDate().toTimeString().slice(0, 5),
-                    endTime: event.endDate.toJSDate().toTimeString().slice(0, 5),
-                    description: event.description,
-                    category: 'Imported'
-                };
-                window.eventService.addEvent(eventObject);
+                if (event.isRecurring()) {
+                    expandRecurrence(event);
+                } else {
+                    const eventObject = {
+                        title: event.summary,
+                        date: event.startDate.toJSDate().toISOString().slice(0, 10),
+                        startTime: event.startDate.toJSDate().toTimeString().slice(0, 5),
+                        endTime: event.endDate.toJSDate().toTimeString().slice(0, 5),
+                        description: event.description,
+                        category: 'Imported'
+                    };
+                    window.eventService.addEvent(eventObject);
+                }
             });
 
             renderAllEventsPage();
@@ -828,4 +906,24 @@ function handleIcsFileImport(event) {
         }
     };
     reader.readAsText(file);
+}
+
+function expandRecurrence(event) {
+    const iterator = event.iterator();
+    let next;
+    const recurrenceId = 'rec-' + new Date().getTime() + '-' + Math.random().toString(36).substr(2, 9);
+
+    while ((next = iterator.next())) {
+        const occurrence = event.getOccurrenceDetails(next);
+        const eventObject = {
+            title: occurrence.item.summary,
+            date: occurrence.startDate.toJSDate().toISOString().slice(0, 10),
+            startTime: occurrence.startDate.toJSDate().toTimeString().slice(0, 5),
+            endTime: occurrence.endDate.toJSDate().toTimeString().slice(0, 5),
+            description: occurrence.item.description,
+            category: 'Imported',
+            recurrenceId: recurrenceId
+        };
+        window.eventService.addEvent(eventObject);
+    }
 }

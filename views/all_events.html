@@ -12,6 +12,39 @@
             <button id="cancel-selection-btn" class="btn btn-default">Cancelar Seleção</button>
         </div>
     </div>
+    <div class="row" style="margin-bottom: 20px;">
+        <div class="col-md-4">
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" id="filter-by-month-checkbox"> Filtrar por Mês
+                </label>
+            </div>
+            <select id="month-filter" class="form-control" disabled>
+                <option value="0">Janeiro</option>
+                <option value="1">Fevereiro</option>
+                <option value="2">Março</option>
+                <option value="3">Abril</option>
+                <option value="4">Maio</option>
+                <option value="5">Junho</option>
+                <option value="6">Julho</option>
+                <option value="7">Agosto</option>
+                <option value="8">Setembro</option>
+                <option value="9">Outubro</option>
+                <option value="10">Novembro</option>
+                <option value="11">Dezembro</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" id="filter-by-year-checkbox"> Filtrar por Ano
+                </label>
+            </div>
+            <select id="year-filter" class="form-control" disabled>
+                <!-- Anos serão preenchidos dinamicamente -->
+            </select>
+        </div>
+    </div>
     <div id="all-events-container" class="event-list-container">
         <!-- Events will be dynamically loaded here by JavaScript -->
         <p>Carregando eventos...</p>
