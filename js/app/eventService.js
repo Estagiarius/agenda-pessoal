@@ -185,6 +185,11 @@
         return true;
     }
 
+    function deleteAllEvents() {
+        events = [];
+        saveEvents();
+    }
+
     // Expose 
     window.eventService = {
         addEvent: addEvent,
@@ -193,7 +198,8 @@
         getEventById: getEventById,
         updateEvent: updateEvent,
         deleteEvent: deleteEvent, // Expose deleteEvent
-        deleteRecurrentEvent: deleteRecurrentEvent
+        deleteRecurrentEvent: deleteRecurrentEvent,
+        deleteAllEvents: deleteAllEvents
     };
 
 })(window);

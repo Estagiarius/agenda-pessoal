@@ -757,6 +757,16 @@ function initAllEventsView() {
     selectMultipleBtn.addEventListener('click', () => toggleSelectionMode(true));
     cancelSelectionBtn.addEventListener('click', () => toggleSelectionMode(false));
 
+    const deleteAllBtn = document.getElementById('delete-all-btn');
+    deleteAllBtn.addEventListener('click', () => {
+        const message = '<strong>Atenção!</strong> Tem certeza que deseja apagar <strong>TODOS</strong> os eventos da sua agenda? Esta ação não pode ser desfeita. Para confirmar, digite "APAGAR" no campo abaixo.';
+        showConfirmationModal(message, function() {
+            window.eventService.deleteAllEvents();
+            renderAllEventsPage();
+            showToast('Todos os eventos foram excluídos com sucesso!');
+        }, { requireInput: 'APAGAR' });
+    });
+
     const deleteSelectedBtn = document.getElementById('delete-selected-btn');
     deleteSelectedBtn.addEventListener('click', () => {
         const selectedEventIds = [];
