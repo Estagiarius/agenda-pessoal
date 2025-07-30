@@ -815,7 +815,7 @@ body {
         color: #f1ac0b !important; /* Light text color for better contrast */
     }
 
-    subjects-table-body {
+    #subjects-table-body {
         background-color: #343a40; /* Darker background for subjects table */
         color: #e0e0e0; /* Light text for subjects */
     }
