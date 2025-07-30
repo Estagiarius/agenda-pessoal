@@ -43,37 +43,16 @@
   cursor: pointer;
 }
 
-body {
-  padding: 20px;
-}
-
-*, *:before, *:after {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  outline: 0;
-/*  -moz-box-sizing: border-box;
-  -webkit-box-sizing: border-box;
-  box-sizing: border-box;*/
-}
-
 table {
   font-family: 'Open Sans', Helvetica;
-  color: #461a1a;
 }
-table tr:nth-child(2n) {
-  background: #eff0f1;
-}
-table tr:nth-child(2n+3) {
-  background: #fff;
-}
+
 table th, table td {
   padding: 1em;
   width: 10em;
 }
 
 .days, .time{
-  background: #34495e;
   text-transform: uppercase;
   font-size: 0.6em;
   text-align: center;
@@ -85,15 +64,9 @@ table th, table td {
 
 /*Title attribute*/
 .title{
-  background: #34495e;
   text-transform: uppercase;
   font-size: 2.0em;
   text-align: center;
-}
-
-/*Navbar*/
-.navbar-deafult{
-  background: #1a1110;
 }
 
 /* Add this attribute to the element that needs a tooltip */

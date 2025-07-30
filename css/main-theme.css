@@ -167,7 +167,7 @@ h2 {
 /* Further overrides for modified-bootstrap.css if necessary */
 /* For example, to ensure body background is not #e74c3c */
 body {
-    background-color: #f8f9fa !important; /* Use !important if strictly necessary to override, but prefer specificity */
+    background-color: #f8f9fa; /* Use !important if strictly necessary to override, but prefer specificity */
 }
 
 /* Custom spacing for Today's Overview event items */
@@ -254,7 +254,7 @@ body {
 
 @media (prefers-color-scheme: dark) {
     body {
-        background-color: #212529 !important; /* Dark gray, using !important to override existing !important */
+        background-color: #212529; /* Dark gray, using !important to override existing !important */
         color: #e0e0e0; /* Light gray text */
     }
 
@@ -279,12 +279,12 @@ body {
     }
 
     .navbar-default .navbar-nav > li > a {
-        color: #13dc1a; /* Light gray for nav links */
+        color: #80bdff; /* Light blue for nav links */
     }
 
     .navbar-default .navbar-nav > li > a:hover,
     .navbar-default .navbar-nav > li > a:focus {
-        color: #09e2c9; /* White/very light gray on hover/focus */
+        color: #ffffff; /* White on hover/focus */
         background-color: #495057; /* Slightly lighter dark shade for hover background */
     }
 
@@ -617,7 +617,7 @@ body {
 
     /* Flat Timetable specific adjustments */
     .flat-timetable table {
-        color: #e0e0e0; /* Light text for timetable */
+        color: #e0e0e0; /* Light text for dark theme */
     }
     .flat-timetable table tr:nth-child(2n) {
         background: #2c3034; /* Darker alternating row */
@@ -630,6 +630,30 @@ body {
         color: #ffffff;
     }
 
+    /* Chat-specific styles */
+    #chat-view .panel-body {
+        background-color: #2c3034; /* Darker background for chat messages */
+        color: #f1ac0b; /* Light text color for better contrast */
+    }
+
+    .message.user {
+        background-color: #056162; /* A dark teal for user messages */
+        color: #e0e0e0;
+    }
+
+    .message.bot {
+        background-color: #495057; /* A mid-dark grey for bot messages */
+        color: #e0e0e0;
+    }
+
+    .message strong {
+        color: #f0f0f0;
+    }
+
+    .dashboard-card {
+        background-color: #343a40;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
 }
 
 /* Dashboard styles */
@@ -757,6 +781,39 @@ body {
 @-webkit-keyframes fadeout {
     from {bottom: 30px; opacity: 1;}
     to {bottom: 0; opacity: 0;}
+}
+
+/* Chat-specific styles */
+#chat-view .panel-body {
+    background-color: #f5f5f5; /* A light grey for the chat background */
+    color: #333;
+}
+
+.message.user {
+    background-color: #dcf8c6; /* A light green, good for user messages */
+}
+
+.message.bot {
+    background-color: #ffffff; /* White for bot messages */
+}
+
+.message strong {
+    color: #555;
+}
+
+/* Timetable-specific styles */
+.flat-timetable table {
+    color: #333; /* Dark text for light theme */
+}
+.flat-timetable table tr:nth-child(2n) {
+    background: #f8f9fa; /* Very light gray for alternating rows */
+}
+.flat-timetable table tr:nth-child(2n+3) {
+    background: #ffffff; /* White for other rows */
+}
+.flat-timetable .days, .flat-timetable .time, .flat-timetable .title {
+    background: #6c757d; /* Using secondary color for headers */
+    color: #ffffff;
 }
 
 .grade-low {
