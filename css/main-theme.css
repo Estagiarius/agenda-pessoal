@@ -796,7 +796,7 @@ body {
 }
 
 .message.user {
-    background-color: #dcf8c6; /* A light green, good for user messages */
+    background-color: #3b5527; /* A dark green for user messages */
 }
 
 .message.bot {
