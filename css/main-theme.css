@@ -9,6 +9,24 @@ body {
     font-family: 'Open Sans', sans-serif;
 }
 
+/* Chat-specific styles */
+#chat-view .panel-body {
+    background-color: #f5f5f5; /* A light grey for the chat background */
+    color: #333;
+}
+
+.message.user {
+    background-color: #3b5527; /* A dark green for user messages */
+}
+
+.message.bot {
+    background-color: #ffffff; /* White for bot messages */
+}
+
+.message strong {
+    color: #555;
+}
+
 /* Headings */
 h1, h2, h3, h4, h5, h6 {
     font-weight: 300; /* Lighter font weight */
@@ -789,23 +807,7 @@ body {
     to {bottom: 0; opacity: 0;}
 }
 
-/* Chat-specific styles */
-#chat-view .panel-body {
-    background-color: #f5f5f5; /* A light grey for the chat background */
-    color: #333;
-}
 
-.message.user {
-    background-color: #3b5527; /* A dark green for user messages */
-}
-
-.message.bot {
-    background-color: #ffffff; /* White for bot messages */
-}
-
-.message strong {
-    color: #555;
-}
 
 /* Timetable-specific styles */
 .flat-timetable table {
