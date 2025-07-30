@@ -6767,18 +6767,6 @@ button.close {
     border-top: 1px dashed #eee; /* Separator line */
 }
 
-/* Sticky Filter Controls */
-#filter-questions-section {
-    position: -webkit-sticky; /* For Safari */
-    position: sticky;
-    top: 60px; /* Adjust this value based on the actual height of the fixed navbar. Assuming 50px navbar + 10px spacing. */
-    background-color: #ffffff; /* White background to prevent content overlap */
-    padding-top: 15px;
-    padding-bottom: 10px;
-    z-index: 1000; /* Ensure it's above most other content but below the main navbar (Bootstrap fixed navbar z-index is typically 1030) */
-    border-bottom: 1px solid #ccc; /* Add a subtle border to distinguish the sticky bar */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Optional: add a slight shadow for better separation */
-}
 
 /* Add some top margin to the questions list section to prevent initial overlap 
    when the filter section is not yet sticky but takes up space due to padding.
