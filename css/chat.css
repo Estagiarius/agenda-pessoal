@@ -1,8 +1,3 @@
-#chat-view .panel-body {
-    background-color: #495057; /* Darker background for chat messages */
-    color: #f1ac0b; /* Light text color for better contrast */
-}
-
 .message {
     margin-bottom: 15px;
     padding: 10px;
@@ -10,13 +5,11 @@
 }
 
 .message.user {
-    background-color: #dcf8c6;
     align-self: flex-end;
     text-align: right;
 }
 
 .message.bot {
-    background-color: #fff;
     align-self: flex-start;
     text-align: left;
 }
@@ -29,7 +22,6 @@
     display: block;
     margin-bottom: 5px;
     font-size: 0.9em;
-    color: #555;
 }
 
 /* Garante que as listas renderizadas por Markdown fiquem dentro da caixa de mensagem */
