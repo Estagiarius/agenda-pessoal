@@ -25,11 +25,6 @@ if "MARITACA_API_KEY" in os.environ:
         print(f"AVISO: Falha ao inicializar o cliente da API da Maritaca: {e}", file=sys.stderr)
 else:
     print("AVISO: A chave da API da Maritaca (MARITACA_API_KEY) não foi definida. A funcionalidade de chat estará desativada.", file=sys.stderr)
-    print ("Chave auxiliar para testes ligada")
-    client = OpenAI(
-            api_key=os.environ["67e08ad30b29100f6a970af4_3e32b6ce0a4290bc"],
-            base_url="https://chat.maritaca.ai/api",
-        )
 
 DEFAULT_MODEL = "sabia-3.1"
 
