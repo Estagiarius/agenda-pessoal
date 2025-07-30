@@ -152,12 +152,17 @@ h2 {
     border-color: #f5c6cb;
 }
 
-/* Override for specific elements if needed */
-/* Example: Sticky filter section from modified-bootstrap.css */
-#filter-questions-section.sticky {
-    background-color: #f8f9fa; /* Light theme background */
-    border-bottom: 1px solid #dee2e6; /* Light border */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Subtle shadow */
+/* Sticky Filter Controls */
+#filter-questions-section {
+    position: -webkit-sticky; /* For Safari */
+    position: sticky;
+    top: 60px; /* Adjust this value based on the actual height of the fixed navbar. Assuming 50px navbar + 10px spacing. */
+    background-color: #ffffff; /* White background to prevent content overlap */
+    padding-top: 15px;
+    padding-bottom: 10px;
+    z-index: 1000; /* Ensure it's above most other content but below the main navbar (Bootstrap fixed navbar z-index is typically 1030) */
+    border-bottom: 1px solid #ccc; /* Add a subtle border to distinguish the sticky bar */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Optional: add a slight shadow for better separation */
 }
 
 /* Ensure Open Sans is available, typically via a @import or <link> in HTML */
@@ -493,9 +498,10 @@ body {
     }
     
     /* Specific Overrides for sticky filter if needed */
-    #filter-questions-section.sticky {
+    #filter-questions-section {
         background-color: #2c3034; /* Dark background for sticky filter */
-        border-bottom-color: #454d55;
+        border-bottom: 1px solid #454d55;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.4);
     }
 
     /* Dropdown menus */
