@@ -1,5 +1,6 @@
 #chat-view .panel-body {
-    background-color: #f5f5f5;
+    background-color: #495057; /* Darker background for chat messages */
+    color: #f1ac0b; /* Light text color for better contrast */
 }
 
 .message {

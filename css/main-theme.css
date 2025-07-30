@@ -270,7 +270,7 @@ body {
     }
 
     .navbar-default .navbar-brand {
-        color: #f8f9fa; /* White/very light gray for brand */
+        color: #d5941b; /* White/very light gray for brand */
     }
 
     .navbar-default .navbar-brand:hover,
@@ -279,12 +279,12 @@ body {
     }
 
     .navbar-default .navbar-nav > li > a {
-        color: #ced4da; /* Light gray for nav links */
+        color: #13dc1a; /* Light gray for nav links */
     }
 
     .navbar-default .navbar-nav > li > a:hover,
     .navbar-default .navbar-nav > li > a:focus {
-        color: #f8f9fa; /* White/very light gray on hover/focus */
+        color: #09e2c9; /* White/very light gray on hover/focus */
         background-color: #495057; /* Slightly lighter dark shade for hover background */
     }
 
@@ -425,7 +425,8 @@ body {
     }
     
     .panel-default > .panel-body {
-        color: #e0e0e0; /* Ensure panel body text is light */
+        color: #f1ac0b; /* Ensure panel body text is light */
+        background-color: #495057; /* Darker background for panel body */
     }
     
     .panel-footer {
