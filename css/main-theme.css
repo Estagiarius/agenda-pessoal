@@ -637,9 +637,9 @@ body {
     }
 
     /* Chat-specific styles */
-    #chat-view .panel-body {
-        background-color: #2c3034; /* Darker background for chat messages */
-        color: #f1ac0b; /* Light text color for better contrast */
+    #chat-view .panel.panel-default .panel-body {
+        background-color: #2c3034 !important; /* Darker background for chat messages */
+        color: #f1ac0b !important; /* Light text color for better contrast */
     }
 
     .message.user {
