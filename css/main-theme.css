@@ -815,9 +815,19 @@ body {
         color: #f1ac0b !important; /* Light text color for better contrast */
     }
 
-    #subjects-table-body {
+    #subjects-table-body tr td{
         background-color: #343a40; /* Darker background for subjects table */
         color: #e0e0e0; /* Light text for subjects */
+    }
+
+    #classes-table-body tr td{
+        background-color: #343a40; /* Darker background for subjects table */
+        color: #e0e0e0; /* Light text for subjects */
+    }
+
+    #lesson-plans-list  tr td{
+        background-color: #343a40; /* Darker background for lesson plans */
+        color: #e0e0e0; /* Light text for lesson plans */
     }
 
     .message.user {
