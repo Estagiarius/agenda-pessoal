@@ -2,140 +2,113 @@
 (function(window) {
     'use strict';
 
-    const TASKS_STORAGE_KEY = 'TASKS_STORAGE_KEY'; // Renamed key
-    let tasks = []; // Renamed array
-    let nextId = 1; // Renamed ID generator
+    let tasks = [];
 
-    function _loadTasks() { // Renamed and made "private"
-        const storedTasks = localStorage.getItem(TASKS_STORAGE_KEY);
-        if (storedTasks) {
-            try {
-                const parsedTasks = JSON.parse(storedTasks);
-                if (Array.isArray(parsedTasks)) {
-                    tasks = parsedTasks.map(task => {
-                        // Migration: Ensure 'completed' field exists, converting from 'status' if necessary
-                        if (typeof task.completed === 'undefined') {
-                            task.completed = task.status === 'Completed'; // Assuming 'Completed' status means true
-                        }
-                        delete task.status; // Remove old 'status' field
-
-                        // Add default priority for tasks loaded from storage that don't have it
-                        if (typeof task.priority === 'undefined') {
-                            task.priority = 'Medium'; // Default priority
-                        }
-                        return task;
-                    });
-
-                    if (tasks.length > 0) {
-                        let maxId = 0;
-                        tasks.forEach(task => {
-                            if (task.id && typeof task.id === 'number') {
-                                if (task.id > maxId) {
-                                    maxId = task.id;
-                                }
-                            } else {
-                                task.id = nextId++; // Assign new ID if missing or invalid
-                            }
-                        });
-                        nextId = Math.max(1, maxId + 1);
-                    } else {
-                        // tasks array is empty after parsing or was initially empty
-                        nextId = 1;
-                    }
-                } else {
-                     // storedTasks was not an array
-                     tasks = [];
-                     nextId = 1;
-                }
-            } catch (e) {
-                console.error('Error parsing stored tasks:', e);
-                tasks = [];
-                nextId = 1;
+    async function loadTasks() {
+        try {
+            const response = await fetch('/api/tasks');
+            if (!response.ok) {
+                throw new Error('Failed to fetch tasks from server.');
             }
-        } else {
-            // No tasks in storage
+            tasks = await response.json();
+            return tasks;
+        } catch (error) {
+            console.error('Error loading tasks:', error);
             tasks = [];
-            nextId = 1;
+            return [];
         }
     }
-    _loadTasks(); // Load tasks when the service initializes
 
-    function _saveTasks() { // Renamed and made "private"
-        localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
-    }
-
-    function addTask(taskData) { // Renamed
+    async function addTask(taskData) {
         if (!taskData || !taskData.text) {
             console.error('Task must have text.');
             return null;
         }
-        const newTask = {
-            id: nextId++,
-            text: taskData.text,
-            completed: false, // Default to not completed
-            priority: taskData.priority || 'Medium',
-            dueDate: taskData.dueDate || null
-        };
-        tasks.push(newTask);
-        _saveTasks();
-        return {...newTask}; // Return a copy
-    }
-
-    function getTasks() { // Renamed
-        return tasks.map(task => ({...task})); // Return a copy of all tasks
-    }
-
-    function updateTask(id, updatedData) {
-        const taskId = parseInt(id);
-        const taskIndex = tasks.findIndex(t => t.id === taskId);
-        if (taskIndex !== -1) {
-            // Merge existing task with updatedData, but ensure 'id' and 'completed' status are handled carefully
-            const originalTask = tasks[taskIndex];
-            tasks[taskIndex] = {
-                ...originalTask,
-                ...updatedData,
-                id: taskId // Ensure original ID is preserved
-            };
-            _saveTasks();
-            return {...tasks[taskIndex]}; // Return a copy
+        try {
+            const response = await fetch('/api/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(taskData)
+            });
+            if (!response.ok) {
+                throw new Error('Failed to add task.');
+            }
+            const newTask = await response.json();
+            tasks.push(newTask);
+            return newTask;
+        } catch (error) {
+            console.error('Error adding task:', error);
+            return null;
         }
-        console.error('Task not found for update:', id);
-        return null;
     }
 
-    function toggleTaskCompleted(id) {
-        const taskId = parseInt(id);
-        const task = tasks.find(t => t.id === taskId);
+    function getTasks() {
+        return [...tasks];
+    }
+
+    async function updateTask(id, updatedData) {
+        try {
+            const response = await fetch(`/api/tasks/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedData)
+            });
+            if (!response.ok) {
+                throw new Error('Failed to update task.');
+            }
+            const updatedTask = await response.json();
+            const taskIndex = tasks.findIndex(t => t.id === id);
+            if (taskIndex !== -1) {
+                tasks[taskIndex] = updatedTask;
+            }
+            return updatedTask;
+        } catch (error) {
+            console.error('Error updating task:', error);
+            return null;
+        }
+    }
+
+    async function toggleTaskCompleted(id) {
+        const task = tasks.find(t => t.id === id);
         if (task) {
-            task.completed = !task.completed;
-            _saveTasks();
-            return {...task}; // Return a copy
+            return await updateTask(id, { completed: !task.completed });
         }
         console.error('Task not found for toggle:', id);
         return null;
     }
 
-    function deleteTask(id) { // Renamed
-        const taskId = parseInt(id);
-        const index = tasks.findIndex(t => t.id === taskId);
-        if (index > -1) {
-            const deletedTaskArray = tasks.splice(index, 1);
-            _saveTasks();
-            return deletedTaskArray[0]; // Return the deleted task (which is a copy already due to splice)
+    async function deleteTask(id) {
+        try {
+            const response = await fetch(`/api/tasks/${id}`, {
+                method: 'DELETE'
+            });
+            if (!response.ok) {
+                throw new Error('Failed to delete task.');
+            }
+            const index = tasks.findIndex(t => t.id === id);
+            if (index > -1) {
+                tasks.splice(index, 1);
+            }
+            return true;
+        } catch (error) {
+            console.error('Error deleting task:', error);
+            return false;
         }
-        console.error('Task not found for deletion:', id);
-        return null;
     }
 
     function getOpenTasks() {
-        return tasks.filter(task => !task.completed).map(task => ({...task}));
+        return tasks.filter(task => !task.completed);
     }
 
     function getCompletedTasks() {
-        return tasks.filter(task => task.completed).map(task => ({...task}));
+        return tasks.filter(task => task.completed);
     }
 
+    // Initial load of tasks when the service is initialized.
+    loadTasks();
+
     window.todoService = {
+        loadTasks: loadTasks, // Expose loadTasks to be called from UI if needed
         addTask: addTask,
         getTasks: getTasks,
         updateTask: updateTask,

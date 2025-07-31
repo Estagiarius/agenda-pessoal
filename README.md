@@ -1,15 +1,15 @@
 # Agenda Pessoal
 
-Uma aplicação web de agenda pessoal e acadêmica com backend em Python, pronta para implantação na AWS.
+Uma aplicação web de agenda pessoal e acadêmica com backend em Python, utilizando PostgreSQL para persistência de dados e Amazon S3 para armazenamento de arquivos. A aplicação está pronta para implantação na AWS.
 
 ## Visão Geral
 
-Este projeto é uma Single Page Application (SPA) para gerenciamento de tarefas, eventos e atividades acadêmicas, com um backend em Flask (Python) que oferece uma API para upload de arquivos e um serviço de chat com IA.
+Este projeto é uma Single Page Application (SPA) para gerenciamento de tarefas, eventos e planos de aula, com um backend em Flask (Python) que oferece uma API para persistir dados e um serviço de chat com IA.
 
 ## Principais Funcionalidades
 
-- **Agenda e Calendário:** Gerenciamento de eventos e tarefas.
-- **Recursos Didáticos:** Crie um banco de questões e gere quizzes.
+- **Gerenciamento de Tarefas:** Crie, atualize e exclua tarefas com persistência no banco de dados.
+- **Planos de Aula:** Elabore e gerencie planos de aula.
 - **Upload de Materiais:** Faça upload de arquivos que são armazenados de forma segura no Amazon S3.
 - **Chat com IA:** Converse com uma IA para obter ajuda e informações.
 
@@ -19,6 +19,7 @@ Este projeto é uma Single Page Application (SPA) para gerenciamento de tarefas,
 
 - Python 3.6+
 - Pip (gerenciador de pacotes do Python)
+- Um banco de dados PostgreSQL
 
 ### Para Executar a Aplicação Localmente
 
@@ -34,46 +35,41 @@ Este projeto é uma Single Page Application (SPA) para gerenciamento de tarefas,
     ```
 
 3.  **Configure as variáveis de ambiente:**
-    A aplicação requer algumas variáveis de ambiente para funcionar. Você pode criar um arquivo `.env` e usar uma biblioteca como `python-dotenv` para carregá-las, ou defini-las diretamente no seu shell:
+    A aplicação requer variáveis de ambiente para se conectar aos serviços de nuvem e ao banco de dados.
     ```bash
+    # Para o Chat
     export MARITACA_API_KEY='sua_chave_aqui'
+
+    # Para o Amazon S3
     export S3_BUCKET_NAME='seu_bucket_aqui'
     export AWS_ACCESS_KEY_ID='sua_chave_de_acesso_aqui'
     export AWS_SECRET_ACCESS_KEY='sua_chave_secreta_aqui'
+
+    # Para o Banco de Dados PostgreSQL
+    export DB_USERNAME='seu_usuario_aqui'
+    export DB_PASSWORD='sua_senha_aqui'
+    export DB_HOST='localhost' # ou o host do seu banco de dados
+    export DB_PORT='5432'
+    export DB_NAME='seu_banco_de_dados_aqui'
     ```
 
-4.  **Execute o servidor:**
+4.  **Inicialize o Banco de Dados:**
+    Antes de executar a aplicação pela primeira vez, crie as tabelas no banco de dados.
+    ```bash
+    # Certifique-se de que o Flask pode encontrar a aplicação
+    export FLASK_APP=application.py
+
+    flask init-db
+    ```
+
+5.  **Execute o servidor:**
     ```bash
     python application.py
     ```
     A aplicação estará disponível em `http://127.0.0.1:8000`.
 
-### Para Executar os Testes de Frontend
-
-Abra o arquivo `tests/test-runner.html` em um navegador para rodar os testes unitários do frontend.
-
 ## Implantação na AWS
 
-A aplicação está configurada para ser implantada no **AWS Elastic Beanstalk**. Os seguintes arquivos foram adicionados para facilitar a implantação:
-- `Procfile`: Define o comando para o servidor web.
-- `.ebextensions/`: Contém configurações específicas da plataforma.
-- `requirements.txt`: Lista as dependências do Python.
+A aplicação está configurada para ser implantada no **AWS Elastic Beanstalk** com um banco de dados **Amazon RDS (PostgreSQL)**.
 
-Para implantar, configure as variáveis de ambiente mencionadas acima no painel de configuração do seu ambiente Elastic Beanstalk.
-
-## Estrutura do Projeto
-
-```
-/
-├── .ebextensions/    # Configurações do Elastic Beanstalk
-├── css/              # Estilos
-├── js/
-│   ├── app/          # Módulos da aplicação (lógica principal)
-│   └── lib/          # Bibliotecas de terceiros
-├── tests/            # Testes unitários do frontend
-├── views/            # Templates HTML das seções
-├── application.py    # Servidor Flask
-├── requirements.txt  # Dependências do Python
-├── Procfile          # Comando de inicialização
-└── index.html        # Ponto de entrada da aplicação
-```
+Para implantar, configure todas as variáveis de ambiente mencionadas acima no painel de configuração do seu ambiente Elastic Beanstalk. Você também precisará configurar o seu ambiente para executar as migrações do banco de dados (por exemplo, usando `container_commands` no `.ebextensions`).

@@ -5,6 +5,7 @@ import sys
 import json
 import boto3
 from botocore.exceptions import NoCredentialsError
+from datetime import datetime
 
 # Configuração do Flask
 application = Flask(__name__, static_folder='.', static_url_path='')
@@ -19,6 +20,61 @@ if S3_BUCKET_NAME:
         print("AVISO: Credenciais da AWS não encontradas. O upload para o S3 está desativado.", file=sys.stderr)
 else:
     print("AVISO: O nome do bucket S3 (S3_BUCKET_NAME) não foi definido. O upload para o S3 está desativado.", file=sys.stderr)
+
+# Configuração do Banco de Dados
+db_user = os.environ.get('DB_USERNAME')
+db_password = os.environ.get('DB_PASSWORD')
+db_host = os.environ.get('DB_HOST')
+db_port = os.environ.get('DB_PORT', '5432')
+db_name = os.environ.get('DB_NAME')
+db_uri = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+
+application.config['SQLALCHEMY_DATABASE_URI'] = db_uri
+application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+from flask_sqlalchemy import SQLAlchemy
+db = SQLAlchemy(application)
+
+# Modelos do Banco de Dados
+class Task(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String(255), nullable=False)
+    completed = db.Column(db.Boolean, default=False, nullable=False)
+    priority = db.Column(db.String(50), default='Medium', nullable=False)
+    due_date = db.Column(db.Date, nullable=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'text': self.text,
+            'completed': self.completed,
+            'priority': self.priority,
+            'dueDate': self.due_date.isoformat() if self.due_date else None
+        }
+
+class LessonPlan(db.Model):
+    id = db.Column(db.String(50), primary_key=True)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    title = db.Column(db.String(255), nullable=False)
+    class_ids = db.Column(db.JSON, nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    topic = db.Column(db.String(255), nullable=False)
+    objectives = db.Column(db.Text, nullable=True)
+    activities = db.Column(db.Text, nullable=True)
+    assessment = db.Column(db.Text, nullable=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'createdAt': self.created_at.isoformat(),
+            'title': self.title,
+            'classIds': self.class_ids,
+            'date': self.date.isoformat(),
+            'topic': self.topic,
+            'objectives': self.objectives,
+            'activities': self.activities,
+            'assessment': self.assessment
+        }
 
 # Configuração do Cliente OpenAI para a API da Maritaca
 client = None
@@ -110,6 +166,86 @@ def get_materials():
         print(f"ERRO: Falha ao buscar materiais do S3: {e}", file=sys.stderr)
         return 'Falha ao buscar materiais', 500
 
+# API Endpoints para Tarefas (Tasks)
+@application.route('/api/tasks', methods=['GET'])
+def get_tasks():
+    tasks = Task.query.all()
+    return json.dumps([task.to_dict() for task in tasks])
+
+@application.route('/api/tasks', methods=['POST'])
+def add_task():
+    data = request.get_json()
+    new_task = Task(
+        text=data['text'],
+        priority=data.get('priority', 'Medium'),
+        due_date=datetime.strptime(data['dueDate'], '%Y-%m-%d').date() if data.get('dueDate') else None
+    )
+    db.session.add(new_task)
+    db.session.commit()
+    return json.dumps(new_task.to_dict()), 201
+
+@application.route('/api/tasks/<int:task_id>', methods=['PUT'])
+def update_task(task_id):
+    task = Task.query.get_or_404(task_id)
+    data = request.get_json()
+    task.text = data.get('text', task.text)
+    task.completed = data.get('completed', task.completed)
+    task.priority = data.get('priority', task.priority)
+    task.due_date = datetime.strptime(data['dueDate'], '%Y-%m-%d').date() if data.get('dueDate') else task.due_date
+    db.session.commit()
+    return json.dumps(task.to_dict())
+
+@application.route('/api/tasks/<int:task_id>', methods=['DELETE'])
+def delete_task(task_id):
+    task = Task.query.get_or_404(task_id)
+    db.session.delete(task)
+    db.session.commit()
+    return '', 204
+
+# API Endpoints para Planos de Aula (Lesson Plans)
+@application.route('/api/lesson-plans', methods=['GET'])
+def get_lesson_plans():
+    plans = LessonPlan.query.all()
+    return json.dumps([plan.to_dict() for plan in plans])
+
+@application.route('/api/lesson-plans', methods=['POST'])
+def add_lesson_plan():
+    data = request.get_json()
+    new_plan = LessonPlan(
+        id=data['id'],
+        title=data['title'],
+        class_ids=data['classIds'],
+        date=datetime.strptime(data['date'], '%Y-%m-%d').date(),
+        topic=data['topic'],
+        objectives=data.get('objectives'),
+        activities=data.get('activities'),
+        assessment=data.get('assessment')
+    )
+    db.session.add(new_plan)
+    db.session.commit()
+    return json.dumps(new_plan.to_dict()), 201
+
+@application.route('/api/lesson-plans/<string:plan_id>', methods=['PUT'])
+def update_lesson_plan(plan_id):
+    plan = LessonPlan.query.get_or_404(plan_id)
+    data = request.get_json()
+    plan.title = data.get('title', plan.title)
+    plan.class_ids = data.get('classIds', plan.class_ids)
+    plan.date = datetime.strptime(data['date'], '%Y-%m-%d').date() if data.get('date') else plan.date
+    plan.topic = data.get('topic', plan.topic)
+    plan.objectives = data.get('objectives', plan.objectives)
+    plan.activities = data.get('activities', plan.activities)
+    plan.assessment = data.get('assessment', plan.assessment)
+    db.session.commit()
+    return json.dumps(plan.to_dict())
+
+@application.route('/api/lesson-plans/<string:plan_id>', methods=['DELETE'])
+def delete_lesson_plan(plan_id):
+    plan = LessonPlan.query.get_or_404(plan_id)
+    db.session.delete(plan)
+    db.session.commit()
+    return '', 204
+
 @application.route('/api/chat', methods=['POST'])
 def chat():
     if not client:
@@ -146,3 +282,9 @@ def chat():
             yield f"data: {error_message}\n\n"
 
     return Response(generate(), mimetype='text/event-stream')
+
+@application.cli.command('init-db')
+def init_db_command():
+    """Cria as tabelas do banco de dados."""
+    db.create_all()
+    print('Banco de dados inicializado.')

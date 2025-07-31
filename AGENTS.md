@@ -4,67 +4,66 @@ Este documento fornece um guia para os agentes de IA sobre como entender e traba
 
 ## Visão Geral do Projeto
 
-Este projeto é uma aplicação web de agenda pessoal com um backend em Python (Flask). A aplicação foi preparada para ser implantada na AWS.
+Este projeto é uma aplicação web de agenda pessoal com um backend em Python (Flask). A aplicação utiliza um banco de dados PostgreSQL (preparado para Amazon RDS) para persistência de dados e o Amazon S3 para armazenamento de arquivos.
 
 A aplicação inclui as seguintes funcionalidades:
 
-*   **Agenda/Calendário:** Para gerenciar eventos e tarefas (frontend).
-*   **Banco de Questões e Quizzes:** Funcionalidades de frontend para aprendizado.
+*   **Agenda/Calendário e Planos de Aula:** Gerenciamento de tarefas e planos de aula com persistência no banco de dados.
 *   **Upload de Materiais:** Os usuários podem fazer upload de arquivos, que são armazenados no Amazon S3.
 *   **Chat com IA:** Uma interface de chat que se conecta à API da Maritaca.
 
 ## Estrutura do Código
 
-O código está organizado da seguinte forma:
-
-*   `application.py`: O servidor backend Flask.
-*   `requirements.txt`: Dependências do Python.
+*   `application.py`: O servidor backend Flask, contendo a lógica da API e os modelos de banco de dados (SQLAlchemy).
+*   `requirements.txt`: Dependências do Python, incluindo Flask, SQLAlchemy, boto3, etc.
 *   `Procfile`: Comando para iniciar o servidor web Gunicorn.
 *   `.ebextensions/`: Arquivos de configuração do AWS Elastic Beanstalk.
-*   `.gitignore`: Arquivos e diretórios ignorados pelo Git.
 *   `index.html`: O ponto de entrada principal da aplicação.
-*   `css/`: Arquivos de estilo (CSS).
-*   `js/`: Lógica do frontend (JavaScript).
-*   `views/`: Templates HTML para as diferentes seções.
-*   `tests/`: Testes unitários para o frontend.
+*   `js/app/`: Contém os serviços de frontend que interagem com a API do backend.
 
 ## Como Executar a Aplicação
 
-Para executar a aplicação localmente, você precisará ter o Python e as dependências instaladas:
-
-```bash
-# Instalar dependências
-pip install -r requirements.txt
-
-# Executar o servidor Flask (para desenvolvimento)
-# Nota: Para produção, use o comando do Procfile.
-python application.py
-```
+1.  **Instalar dependências:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+2.  **Configurar Variáveis de Ambiente:** (veja a seção abaixo)
+3.  **Inicializar o Banco de Dados:**
+    Na primeira vez, crie as tabelas no banco de dados.
+    ```bash
+    flask init-db
+    ```
+4.  **Executar o Servidor:**
+    ```bash
+    python application.py
+    ```
 
 ## Configuração do Ambiente
 
-A aplicação requer as seguintes variáveis de ambiente para funcionar corretamente:
+A aplicação requer as seguintes variáveis de ambiente:
 
-*   `MARITACA_API_KEY`: A chave de API para o serviço de chat da Maritaca.
-*   `S3_BUCKET_NAME`: O nome do bucket Amazon S3 para armazenamento de arquivos.
-*   `AWS_ACCESS_KEY_ID`: Chave de acesso da AWS.
-*   `AWS_SECRET_ACCESS_KEY`: Chave de acesso secreta da AWS.
-*   `AWS_REGION`: A região da AWS onde o bucket S3 está localizado (opcional, mas recomendado).
-
-## Fluxo de Trabalho de Desenvolvimento
-
-1.  **Modificar o código:** Faça as alterações no backend (Python/Flask) ou no frontend (HTML/CSS/JS).
-2.  **Testar as alterações:**
-    *   Para o backend, considere adicionar testes unitários (atualmente não há nenhum).
-    *   Para o frontend, execute os testes em `tests/test-runner.html`.
-3.  **Implantação:** A aplicação está configurada para implantação no AWS Elastic Beanstalk. O deploy é feito através do CLI da AWS ou do console.
+*   **API da Maritaca:**
+    *   `MARITACA_API_KEY`: Chave de API para o serviço de chat.
+*   **Amazon S3:**
+    *   `S3_BUCKET_NAME`: Nome do bucket S3.
+    *   `AWS_ACCESS_KEY_ID`: Chave de acesso da AWS.
+    *   `AWS_SECRET_ACCESS_KEY`: Chave de acesso secreta da AWS.
+*   **Banco de Dados (PostgreSQL/RDS):**
+    *   `DB_USERNAME`: Nome de usuário do banco de dados.
+    *   `DB_PASSWORD`: Senha do banco de dados.
+    *   `DB_HOST`: Host do banco de dados.
+    *   `DB_PORT`: Porta do banco de dados (padrão: 5432).
+    *   `DB_NAME`: Nome do banco de dados.
 
 ## Pontos Importantes
 
 *   **Persistência de Dados:**
-    *   Dados da aplicação (tarefas, eventos) são armazenados no `localStorage` do navegador.
-    *   Arquivos enviados por upload são armazenados no Amazon S3. Os metadados desses arquivos (`materials.json`) também são armazenados no S3.
-*   **Roteamento:** O roteamento principal é feito no lado do cliente (`js/app/router.js`). O backend Flask serve a página principal e fornece endpoints de API (`/upload`, `/api/materials`, `/api/chat`).
-*   **Dependências:**
-    *   As dependências do Python são gerenciadas pelo `pip` e listadas em `requirements.txt`.
-    *   As dependências do frontend estão no repositório.
+    *   **Banco de Dados:** Tarefas e Planos de Aula são armazenados em um banco de dados PostgreSQL.
+    *   **Amazon S3:** Arquivos enviados por upload e seus metadados (`materials.json`) são armazenados no S3.
+*   **API Endpoints:**
+    *   `/api/tasks`: CRUD para tarefas.
+    *   `/api/lesson-plans`: CRUD para planos de aula.
+    *   `/api/materials`: Lista os metadados dos materiais do S3.
+    *   `/upload`: Endpoint para fazer upload de novos materiais para o S3.
+    *   `/api/chat`: Endpoint para o serviço de chat.
+*   **Frontend:** O frontend (em `js/app/`) foi refatorado para usar a API do backend em vez do `localStorage`.

@@ -3,75 +3,126 @@
 
     window.lessonPlanService = {};
 
-    const lessonPlansKey = 'lessonPlans';
+    let lessonPlans = [];
 
-    function getData(key) {
+    async function loadLessonPlans() {
         try {
-            const data = localStorage.getItem(key);
-            return data ? JSON.parse(data) : [];
-        } catch (e) {
-            console.error(`Error reading data from ${key} from localStorage`, e);
+            const response = await fetch('/api/lesson-plans');
+            if (!response.ok) {
+                throw new Error('Failed to fetch lesson plans from server.');
+            }
+            lessonPlans = await response.json();
+            return lessonPlans;
+        } catch (error) {
+            console.error('Error loading lesson plans:', error);
+            lessonPlans = [];
             return [];
         }
     }
 
-    function saveData(key, data) {
+    function getLessonPlans() {
+        return [...lessonPlans];
+    }
+
+    function getLessonPlanById(id) {
+        return lessonPlans.find(lp => lp.id === id);
+    }
+
+    function getLessonPlansByClass(classId) {
+        if (!classId) {
+            return getLessonPlans();
+        }
+        return lessonPlans.filter(lp => lp.classIds.includes(classId));
+    }
+
+    async function addLessonPlan(lessonPlanData) {
         try {
-            localStorage.setItem(key, JSON.stringify(data));
-        } catch (e) {
-            console.error(`Error saving data to ${key} in localStorage`, e);
+            const newLessonPlan = {
+                id: `lp_${new Date().getTime()}`,
+                ...lessonPlanData
+            };
+
+            const response = await fetch('/api/lesson-plans', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newLessonPlan)
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to add lesson plan.');
+            }
+            const addedPlan = await response.json();
+            lessonPlans.push(addedPlan);
+            return addedPlan;
+        } catch (error) {
+            console.error('Error adding lesson plan:', error);
+            return null;
         }
     }
 
-    window.lessonPlanService.getLessonPlans = function() {
-        return getData(lessonPlansKey);
-    };
+    async function updateLessonPlan(id, updatedData) {
+        try {
+            const response = await fetch(`/api/lesson-plans/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedData)
+            });
 
-    window.lessonPlanService.getLessonPlanById = function(id) {
-        return this.getLessonPlans().find(lp => lp.id === id);
-    };
-
-    window.lessonPlanService.getLessonPlansByClass = function(classId) {
-        if (!classId) {
-            return this.getLessonPlans();
+            if (!response.ok) {
+                throw new Error('Failed to update lesson plan.');
+            }
+            const updatedPlan = await response.json();
+            const index = lessonPlans.findIndex(lp => lp.id === id);
+            if (index !== -1) {
+                lessonPlans[index] = updatedPlan;
+            }
+            return updatedPlan;
+        } catch (error) {
+            console.error('Error updating lesson plan:', error);
+            return null;
         }
-        return this.getLessonPlans().filter(lp => lp.classIds.includes(classId));
-    };
+    }
 
-    window.lessonPlanService.addLessonPlan = function(lessonPlanData) {
-        const lessonPlans = this.getLessonPlans();
-        const newLessonPlan = {
-            id: `lp_${new Date().getTime()}`,
-            createdAt: new Date().toISOString(),
-            ...lessonPlanData
-        };
-        lessonPlans.push(newLessonPlan);
-        saveData(lessonPlansKey, lessonPlans);
-        return newLessonPlan;
-    };
+    async function deleteLessonPlan(id) {
+        try {
+            const response = await fetch(`/api/lesson-plans/${id}`, {
+                method: 'DELETE'
+            });
 
-    window.lessonPlanService.updateLessonPlan = function(id, updatedData) {
-        let lessonPlans = this.getLessonPlans();
-        const index = lessonPlans.findIndex(lp => lp.id === id);
-        if (index !== -1) {
-            lessonPlans[index] = { ...lessonPlans[index], ...updatedData };
-            saveData(lessonPlansKey, lessonPlans);
+            if (!response.ok) {
+                throw new Error('Failed to delete lesson plan.');
+            }
+            const index = lessonPlans.findIndex(lp => lp.id === id);
+            if (index !== -1) {
+                lessonPlans.splice(index, 1);
+            }
+            return true;
+        } catch (error) {
+            console.error('Error deleting lesson plan:', error);
+            return false;
         }
-    };
+    }
 
-    window.lessonPlanService.deleteLessonPlan = function(id) {
-        let lessonPlans = this.getLessonPlans();
-        lessonPlans = lessonPlans.filter(lp => lp.id !== id);
-        saveData(lessonPlansKey, lessonPlans);
-    };
-
-    window.lessonPlanService.duplicateLessonPlan = function(id) {
-        const originalLessonPlan = this.getLessonPlanById(id);
+    async function duplicateLessonPlan(id) {
+        const originalLessonPlan = getLessonPlanById(id);
         if (originalLessonPlan) {
-            const duplicatedLessonPlan = { ...originalLessonPlan };
-            delete duplicatedLessonPlan.id;
-            delete duplicatedLessonPlan.createdAt;
-            return this.addLessonPlan(duplicatedLessonPlan);
+            const { id: oldId, createdAt, ...duplicatedData } = originalLessonPlan;
+            return await addLessonPlan(duplicatedData);
         }
+        return null;
+    }
+
+    // Initial load
+    loadLessonPlans();
+
+    window.lessonPlanService = {
+        loadLessonPlans,
+        getLessonPlans,
+        getLessonPlanById,
+        getLessonPlansByClass,
+        addLessonPlan,
+        updateLessonPlan,
+        deleteLessonPlan,
+        duplicateLessonPlan
     };
 })();
