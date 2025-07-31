@@ -33,7 +33,10 @@ application.config['SQLALCHEMY_DATABASE_URI'] = db_uri
 application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+
 db = SQLAlchemy(application)
+migrate = Migrate(application, db)
 
 # Modelos do Banco de Dados
 class Task(db.Model):
@@ -75,6 +78,67 @@ class LessonPlan(db.Model):
             'activities': self.activities,
             'assessment': self.assessment
         }
+
+# --- Education Models ---
+
+enrollment_table = db.Table('enrollment',
+    db.Column('student_id', db.String(50), db.ForeignKey('student.id'), primary_key=True),
+    db.Column('class_id', db.String(50), db.ForeignKey('class.id'), primary_key=True)
+)
+
+class Subject(db.Model):
+    id = db.Column(db.String(50), primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    code = db.Column(db.String(20), unique=True, nullable=True)
+    description = db.Column(db.Text, nullable=True)
+    classes = db.relationship('Class', backref='subject', lazy=True)
+
+    def to_dict(self):
+        return {'id': self.id, 'name': self.name, 'code': self.code, 'description': self.description}
+
+class Class(db.Model):
+    id = db.Column(db.String(50), primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    subject_id = db.Column(db.String(50), db.ForeignKey('subject.id'), nullable=False)
+    year_semester = db.Column(db.String(50), nullable=False)
+    teacher = db.Column(db.String(100), nullable=True)
+    students = db.relationship('Student', secondary=enrollment_table, lazy='subquery',
+                               backref=db.backref('classes', lazy=True))
+    evaluations = db.relationship('Evaluation', backref='class', lazy=True)
+
+    def to_dict(self):
+        return {'id': self.id, 'name': self.name, 'subjectId': self.subject_id,
+                'yearSemester': self.year_semester, 'teacher': self.teacher}
+
+class Student(db.Model):
+    id = db.Column(db.String(50), primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    call_number = db.Column(db.String(20), nullable=True) # Unique per class, handled in logic
+    grades = db.relationship('Grade', backref='student', lazy=True)
+
+    def to_dict(self):
+        return {'id': self.id, 'name': self.name, 'callNumber': self.call_number}
+
+class Evaluation(db.Model):
+    id = db.Column(db.String(50), primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    class_id = db.Column(db.String(50), db.ForeignKey('class.id'), nullable=False)
+    weight = db.Column(db.Float, nullable=False)
+    max_grade = db.Column(db.Float, nullable=False)
+    grades = db.relationship('Grade', backref='evaluation', lazy=True)
+
+    def to_dict(self):
+        return {'id': self.id, 'name': self.name, 'classId': self.class_id,
+                'weight': self.weight, 'maxGrade': self.max_grade}
+
+class Grade(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    evaluation_id = db.Column(db.String(50), db.ForeignKey('evaluation.id'), nullable=False)
+    student_id = db.Column(db.String(50), db.ForeignKey('student.id'), nullable=False)
+    grade = db.Column(db.Float, nullable=False)
+
+    def to_dict(self):
+        return {'id': self.id, 'evaluationId': self.evaluation_id, 'studentId': self.student_id, 'grade': self.grade}
 
 # Configuração do Cliente OpenAI para a API da Maritaca
 client = None
@@ -245,6 +309,185 @@ def delete_lesson_plan(plan_id):
     db.session.delete(plan)
     db.session.commit()
     return '', 204
+
+# --- Education API Endpoints ---
+
+# Subjects
+@application.route('/api/subjects', methods=['GET'])
+def get_subjects():
+    return json.dumps([s.to_dict() for s in Subject.query.all()])
+
+@application.route('/api/subjects', methods=['POST'])
+def add_subject():
+    data = request.get_json()
+    # RN04: Unique name/code check
+    if Subject.query.filter((Subject.name == data['name']) | (Subject.code == data['code'])).first():
+        return 'Já existe uma disciplina com este nome ou código.', 400
+    new_subject = Subject(id=f"subj_{datetime.now().timestamp()}", **data)
+    db.session.add(new_subject)
+    db.session.commit()
+    return json.dumps(new_subject.to_dict()), 201
+
+@application.route('/api/subjects/<string:subject_id>', methods=['PUT'])
+def update_subject(subject_id):
+    subject = Subject.query.get_or_404(subject_id)
+    data = request.get_json()
+    subject.name = data.get('name', subject.name)
+    subject.code = data.get('code', subject.code)
+    subject.description = data.get('description', subject.description)
+    db.session.commit()
+    return json.dumps(subject.to_dict())
+
+@application.route('/api/subjects/<string:subject_id>', methods=['DELETE'])
+def delete_subject(subject_id):
+    # RN03: Check for associated classes
+    if Class.query.filter_by(subject_id=subject_id).first():
+        return 'Não é possível excluir a disciplina, pois existem turmas associadas a ela.', 400
+    subject = Subject.query.get_or_404(subject_id)
+    db.session.delete(subject)
+    db.session.commit()
+    return '', 204
+
+# Classes
+@application.route('/api/classes', methods=['GET'])
+def get_classes():
+    return json.dumps([c.to_dict() for c in Class.query.all()])
+
+@application.route('/api/classes', methods=['POST'])
+def add_class():
+    data = request.get_json()
+    # RN05: Unique combination check
+    if Class.query.filter_by(name=data['name'], subject_id=data['subjectId'], year_semester=data['yearSemester']).first():
+        return 'Já existe uma turma com esta combinação de nome, disciplina e ano/semestre.', 400
+    new_class = Class(id=f"cls_{datetime.now().timestamp()}", name=data['name'], subject_id=data['subjectId'],
+                      year_semester=data['yearSemester'], teacher=data.get('teacher'))
+    db.session.add(new_class)
+    db.session.commit()
+    return json.dumps(new_class.to_dict()), 201
+
+@application.route('/api/classes/<string:class_id>', methods=['PUT'])
+def update_class(class_id):
+    cls = Class.query.get_or_404(class_id)
+    data = request.get_json()
+    cls.name = data.get('name', cls.name)
+    cls.subject_id = data.get('subjectId', cls.subject_id)
+    cls.year_semester = data.get('yearSemester', cls.year_semester)
+    cls.teacher = data.get('teacher', cls.teacher)
+    db.session.commit()
+    return json.dumps(cls.to_dict())
+
+@application.route('/api/classes/<string:class_id>', methods=['DELETE'])
+def delete_class(class_id):
+    cls = Class.query.get_or_404(class_id)
+    db.session.delete(cls)
+    db.session.commit()
+    return '', 204
+
+# Students
+@application.route('/api/students', methods=['GET'])
+def get_students():
+    class_id = request.args.get('class_id')
+    if class_id:
+        cls = Class.query.get_or_404(class_id)
+        return json.dumps([s.to_dict() for s in cls.students])
+    return json.dumps([s.to_dict() for s in Student.query.all()])
+
+@application.route('/api/students', methods=['POST'])
+def add_student():
+    data = request.get_json()
+    new_student = Student(id=f"std_{datetime.now().timestamp()}", name=data['name'], call_number=data.get('callNumber'))
+    db.session.add(new_student)
+    db.session.commit()
+    return json.dumps(new_student.to_dict()), 201
+
+@application.route('/api/students/<string:student_id>', methods=['PUT'])
+def update_student(student_id):
+    student = Student.query.get_or_404(student_id)
+    data = request.get_json()
+    student.name = data.get('name', student.name)
+    student.call_number = data.get('callNumber', student.call_number)
+    db.session.commit()
+    return json.dumps(student.to_dict())
+
+@application.route('/api/students/<string:student_id>', methods=['DELETE'])
+def delete_student(student_id):
+    # RN10: Check for enrollments
+    student = Student.query.get_or_404(student_id)
+    if student.classes:
+        return 'Este aluno está matriculado em uma ou mais turmas e não pode ser excluído.', 400
+    db.session.delete(student)
+    db.session.commit()
+    return '', 204
+
+# Enrollments
+@application.route('/api/classes/<string:class_id>/students', methods=['POST'])
+def enroll_student(class_id):
+    cls = Class.query.get_or_404(class_id)
+    data = request.get_json()
+    student = Student.query.get_or_404(data['studentId'])
+    # RN09: Avoid duplicate enrollment
+    if student in cls.students:
+        return 'Este aluno já está matriculado nesta turma.', 400
+    cls.students.append(student)
+    db.session.commit()
+    return json.dumps(cls.to_dict())
+
+@application.route('/api/classes/<string:class_id>/students/<string:student_id>', methods=['DELETE'])
+def remove_student_from_class(class_id, student_id):
+    cls = Class.query.get_or_404(class_id)
+    student = Student.query.get_or_404(student_id)
+    if student in cls.students:
+        cls.students.remove(student)
+        db.session.commit()
+    return json.dumps(cls.to_dict())
+
+# Evaluations and Grades
+@application.route('/api/evaluations', methods=['POST'])
+def add_evaluation():
+    data = request.get_json()
+    new_eval = Evaluation(id=f"eval_{datetime.now().timestamp()}", **data)
+    db.session.add(new_eval)
+    db.session.commit()
+    return json.dumps(new_eval.to_dict()), 201
+
+@application.route('/api/evaluations/<string:eval_id>', methods=['PUT'])
+def update_evaluation(eval_id):
+    evaluation = Evaluation.query.get_or_404(eval_id)
+    data = request.get_json()
+    evaluation.name = data.get('name', evaluation.name)
+    evaluation.weight = data.get('weight', evaluation.weight)
+    evaluation.max_grade = data.get('max_grade', evaluation.max_grade)
+    db.session.commit()
+    return json.dumps(evaluation.to_dict())
+
+@application.route('/api/evaluations/<string:eval_id>', methods=['DELETE'])
+def delete_evaluation(eval_id):
+    # RN16: Delete associated grades
+    Grade.query.filter_by(evaluation_id=eval_id).delete()
+    evaluation = Evaluation.query.get_or_404(eval_id)
+    db.session.delete(evaluation)
+    db.session.commit()
+    return '', 204
+
+@application.route('/api/evaluations/<string:eval_id>/grades', methods=['GET'])
+def get_grades(eval_id):
+    grades = Grade.query.filter_by(evaluation_id=eval_id).all()
+    return json.dumps([g.to_dict() for g in grades])
+
+@application.route('/api/evaluations/<string:eval_id>/grades', methods=['POST'])
+def save_grades(eval_id):
+    evaluation = Evaluation.query.get_or_404(eval_id)
+    data = request.get_json()
+    # Delete old grades for this evaluation
+    Grade.query.filter_by(evaluation_id=eval_id).delete()
+    for grade_data in data:
+        # RN13: Validate max grade
+        if grade_data['grade'] > evaluation.max_grade:
+            return f"A nota para {grade_data['studentId']} não pode ser maior que {evaluation.max_grade}.", 400
+        new_grade = Grade(evaluation_id=eval_id, student_id=grade_data['studentId'], grade=grade_data['grade'])
+        db.session.add(new_grade)
+    db.session.commit()
+    return get_grades(eval_id)
 
 @application.route('/api/chat', methods=['POST'])
 def chat():

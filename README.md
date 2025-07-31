@@ -4,11 +4,12 @@ Uma aplicação web de agenda pessoal e acadêmica com backend em Python, utiliz
 
 ## Visão Geral
 
-Este projeto é uma Single Page Application (SPA) para gerenciamento de tarefas, eventos e planos de aula, com um backend em Flask (Python) que oferece uma API para persistir dados e um serviço de chat com IA.
+Este projeto é uma Single Page Application (SPA) para gerenciamento de tarefas, planos de aula e dados acadêmicos, com um backend em Flask (Python) que oferece uma API para persistir todos os dados da aplicação e um serviço de chat com IA.
 
 ## Principais Funcionalidades
 
-- **Gerenciamento de Tarefas:** Crie, atualize e exclua tarefas com persistência no banco de dados.
+- **Gerenciamento Acadêmico Completo:** Crie e gerencie disciplinas, turmas, alunos, avaliações e notas.
+- **Gerenciamento de Tarefas:** Crie, atualize e exclua tarefas.
 - **Planos de Aula:** Elabore e gerencie planos de aula.
 - **Upload de Materiais:** Faça upload de arquivos que são armazenados de forma segura no Amazon S3.
 - **Chat com IA:** Converse com uma IA para obter ajuda e informações.
@@ -53,13 +54,14 @@ Este projeto é uma Single Page Application (SPA) para gerenciamento de tarefas,
     export DB_NAME='seu_banco_de_dados_aqui'
     ```
 
-4.  **Inicialize o Banco de Dados:**
-    Antes de executar a aplicação pela primeira vez, crie as tabelas no banco de dados.
+4.  **Execute as Migrações do Banco de Dados:**
+    Antes de executar a aplicação pela primeira vez, crie a estrutura do banco de dados.
     ```bash
     # Certifique-se de que o Flask pode encontrar a aplicação
     export FLASK_APP=application.py
 
-    flask init-db
+    # Aplica as migrações para criar as tabelas
+    flask db upgrade
     ```
 
 5.  **Execute o servidor:**
@@ -72,4 +74,4 @@ Este projeto é uma Single Page Application (SPA) para gerenciamento de tarefas,
 
 A aplicação está configurada para ser implantada no **AWS Elastic Beanstalk** com um banco de dados **Amazon RDS (PostgreSQL)**.
 
-Para implantar, configure todas as variáveis de ambiente mencionadas acima no painel de configuração do seu ambiente Elastic Beanstalk. Você também precisará configurar o seu ambiente para executar as migrações do banco de dados (por exemplo, usando `container_commands` no `.ebextensions`).
+Para implantar, configure todas as variáveis de ambiente mencionadas acima no painel de configuração do seu ambiente Elastic Beanstalk. Você também precisará configurar o seu ambiente para executar o comando `flask db upgrade` durante o processo de implantação para garantir que o banco de dados de produção esteja sempre atualizado (por exemplo, usando `container_commands` no `.ebextensions`).
