@@ -1,4 +1,5 @@
 import os
+import uuid
 from flask import Flask, request, Response, send_from_directory
 from openai import OpenAI
 import sys
@@ -56,7 +57,7 @@ class Task(db.Model):
         }
 
 class LessonPlan(db.Model):
-    id = db.Column(db.String(50), primary_key=True)
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     title = db.Column(db.String(255), nullable=False)
     class_ids = db.Column(db.JSON, nullable=False)
@@ -82,12 +83,12 @@ class LessonPlan(db.Model):
 # --- Education Models ---
 
 enrollment_table = db.Table('enrollment',
-    db.Column('student_id', db.String(50), db.ForeignKey('student.id'), primary_key=True),
-    db.Column('class_id', db.String(50), db.ForeignKey('class.id'), primary_key=True)
+    db.Column('student_id', db.String(36), db.ForeignKey('student.id'), primary_key=True),
+    db.Column('class_id', db.String(36), db.ForeignKey('class.id'), primary_key=True)
 )
 
 class Subject(db.Model):
-    id = db.Column(db.String(50), primary_key=True)
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = db.Column(db.String(100), unique=True, nullable=False)
     code = db.Column(db.String(20), unique=True, nullable=True)
     description = db.Column(db.Text, nullable=True)
@@ -97,9 +98,9 @@ class Subject(db.Model):
         return {'id': self.id, 'name': self.name, 'code': self.code, 'description': self.description}
 
 class Class(db.Model):
-    id = db.Column(db.String(50), primary_key=True)
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = db.Column(db.String(100), nullable=False)
-    subject_id = db.Column(db.String(50), db.ForeignKey('subject.id'), nullable=False)
+    subject_id = db.Column(db.String(36), db.ForeignKey('subject.id'), nullable=False)
     year_semester = db.Column(db.String(50), nullable=False)
     teacher = db.Column(db.String(100), nullable=True)
     students = db.relationship('Student', secondary=enrollment_table, lazy='subquery',
@@ -111,7 +112,7 @@ class Class(db.Model):
                 'yearSemester': self.year_semester, 'teacher': self.teacher}
 
 class Student(db.Model):
-    id = db.Column(db.String(50), primary_key=True)
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = db.Column(db.String(100), nullable=False)
     call_number = db.Column(db.String(20), nullable=True) # Unique per class, handled in logic
     grades = db.relationship('Grade', backref='student', lazy=True)
@@ -120,9 +121,9 @@ class Student(db.Model):
         return {'id': self.id, 'name': self.name, 'callNumber': self.call_number}
 
 class Evaluation(db.Model):
-    id = db.Column(db.String(50), primary_key=True)
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = db.Column(db.String(100), nullable=False)
-    class_id = db.Column(db.String(50), db.ForeignKey('class.id'), nullable=False)
+    class_id = db.Column(db.String(36), db.ForeignKey('class.id'), nullable=False)
     weight = db.Column(db.Float, nullable=False)
     max_grade = db.Column(db.Float, nullable=False)
     grades = db.relationship('Grade', backref='evaluation', lazy=True)
@@ -133,8 +134,8 @@ class Evaluation(db.Model):
 
 class Grade(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    evaluation_id = db.Column(db.String(50), db.ForeignKey('evaluation.id'), nullable=False)
-    student_id = db.Column(db.String(50), db.ForeignKey('student.id'), nullable=False)
+    evaluation_id = db.Column(db.String(36), db.ForeignKey('evaluation.id'), nullable=False)
+    student_id = db.Column(db.String(36), db.ForeignKey('student.id'), nullable=False)
     grade = db.Column(db.Float, nullable=False)
 
     def to_dict(self):
@@ -276,7 +277,6 @@ def get_lesson_plans():
 def add_lesson_plan():
     data = request.get_json()
     new_plan = LessonPlan(
-        id=data['id'],
         title=data['title'],
         class_ids=data['classIds'],
         date=datetime.strptime(data['date'], '%Y-%m-%d').date(),
@@ -323,7 +323,11 @@ def add_subject():
     # RN04: Unique name/code check
     if Subject.query.filter((Subject.name == data['name']) | (Subject.code == data['code'])).first():
         return 'Já existe uma disciplina com este nome ou código.', 400
-    new_subject = Subject(id=f"subj_{datetime.now().timestamp()}", **data)
+    new_subject = Subject(
+        name=data['name'],
+        code=data.get('code'),
+        description=data.get('description')
+    )
     db.session.add(new_subject)
     db.session.commit()
     return json.dumps(new_subject.to_dict()), 201
@@ -359,8 +363,12 @@ def add_class():
     # RN05: Unique combination check
     if Class.query.filter_by(name=data['name'], subject_id=data['subjectId'], year_semester=data['yearSemester']).first():
         return 'Já existe uma turma com esta combinação de nome, disciplina e ano/semestre.', 400
-    new_class = Class(id=f"cls_{datetime.now().timestamp()}", name=data['name'], subject_id=data['subjectId'],
-                      year_semester=data['yearSemester'], teacher=data.get('teacher'))
+    new_class = Class(
+        name=data['name'],
+        subject_id=data['subjectId'],
+        year_semester=data['yearSemester'],
+        teacher=data.get('teacher')
+    )
     db.session.add(new_class)
     db.session.commit()
     return json.dumps(new_class.to_dict()), 201
@@ -395,7 +403,10 @@ def get_students():
 @application.route('/api/students', methods=['POST'])
 def add_student():
     data = request.get_json()
-    new_student = Student(id=f"std_{datetime.now().timestamp()}", name=data['name'], call_number=data.get('callNumber'))
+    new_student = Student(
+        name=data['name'],
+        call_number=data.get('callNumber')
+    )
     db.session.add(new_student)
     db.session.commit()
     return json.dumps(new_student.to_dict()), 201
@@ -445,7 +456,12 @@ def remove_student_from_class(class_id, student_id):
 @application.route('/api/evaluations', methods=['POST'])
 def add_evaluation():
     data = request.get_json()
-    new_eval = Evaluation(id=f"eval_{datetime.now().timestamp()}", **data)
+    new_eval = Evaluation(
+        name=data['name'],
+        class_id=data['classId'],
+        weight=data['weight'],
+        max_grade=data['maxGrade']
+    )
     db.session.add(new_eval)
     db.session.commit()
     return json.dumps(new_eval.to_dict()), 201

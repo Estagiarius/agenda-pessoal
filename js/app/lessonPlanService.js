@@ -37,15 +37,10 @@
 
     async function addLessonPlan(lessonPlanData) {
         try {
-            const newLessonPlan = {
-                id: `lp_${new Date().getTime()}`,
-                ...lessonPlanData
-            };
-
             const response = await fetch('/api/lesson-plans', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newLessonPlan)
+                body: JSON.stringify(lessonPlanData)
             });
 
             if (!response.ok) {
