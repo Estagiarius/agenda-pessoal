@@ -9,8 +9,8 @@ UPLOAD_FOLDER = 'uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-app = Flask(__name__, static_folder='.', static_url_path='')
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+application = Flask(__name__, static_folder='.', static_url_path='')
+application.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 # Configuração do Cliente OpenAI para a API da Maritaca
@@ -28,11 +28,11 @@ else:
 
 DEFAULT_MODEL = "sabia-3.1"
 
-@app.route('/')
+@application.route('/')
 def serve_index():
     return send_from_directory('.', 'index.html')
 
-@app.route('/upload', methods=['POST'])
+@application.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
         return 'No file part', 400
@@ -41,10 +41,10 @@ def upload_file():
         return 'No selected file', 400
     if file:
         filename = file.filename
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        file.save(os.path.join(application.config['UPLOAD_FOLDER'], filename))
 
         # Save metadata
-        materials_path = os.path.join(app.config['UPLOAD_FOLDER'], 'materials.json')
+        materials_path = os.path.join(application.config['UPLOAD_FOLDER'], 'materials.json')
         materials = []
         if os.path.exists(materials_path):
             with open(materials_path, 'r') as f:
@@ -55,7 +55,7 @@ def upload_file():
             'title': request.form.get('title', filename),
             'type': filename.split('.')[-1],
             'tags': [tag.strip() for tag in request.form.get('tags', '').split(',')],
-            'url': os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            'url': os.path.join(application.config['UPLOAD_FOLDER'], filename)
         }
         materials.append(new_material)
 
@@ -64,7 +64,7 @@ def upload_file():
 
         return 'File uploaded successfully', 200
 
-@app.route('/api/chat', methods=['POST'])
+@application.route('/api/chat', methods=['POST'])
 def chat():
     if not client:
         error_message = json.dumps({"error": "A funcionalidade de chat não está configurada no servidor."})
@@ -100,8 +100,3 @@ def chat():
             yield f"data: {error_message}\n\n"
 
     return Response(generate(), mimetype='text/event-stream')
-
-if __name__ == '__main__':
-    PORT = 8000
-    print(f"Servidor Flask rodando em http://127.0.0.1:{PORT}", file=sys.stdout)
-    app.run(port=PORT)
