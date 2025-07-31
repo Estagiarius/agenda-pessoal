@@ -6,9 +6,10 @@
     let materials = [];
 
     function loadMaterials() {
-        return fetch('/uploads/materials.json')
+        return fetch('/api/materials')
             .then(response => {
                 if (!response.ok) {
+                    console.error('Failed to load materials from server.');
                     return [];
                 }
                 return response.json();
@@ -17,7 +18,8 @@
                 materials = data;
                 return materials;
             })
-            .catch(() => {
+            .catch((error) => {
+                console.error('Error loading materials:', error);
                 materials = [];
                 return materials;
             });

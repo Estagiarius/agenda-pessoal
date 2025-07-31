@@ -3,15 +3,22 @@ from flask import Flask, request, Response, send_from_directory
 from openai import OpenAI
 import sys
 import json
+import boto3
+from botocore.exceptions import NoCredentialsError
 
 # Configuração do Flask
-UPLOAD_FOLDER = 'uploads'
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-
 application = Flask(__name__, static_folder='.', static_url_path='')
-application.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+# Configuração do S3
+S3_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME')
+s3_client = None
+if S3_BUCKET_NAME:
+    try:
+        s3_client = boto3.client('s3')
+    except NoCredentialsError:
+        print("AVISO: Credenciais da AWS não encontradas. O upload para o S3 está desativado.", file=sys.stderr)
+else:
+    print("AVISO: O nome do bucket S3 (S3_BUCKET_NAME) não foi definido. O upload para o S3 está desativado.", file=sys.stderr)
 
 # Configuração do Cliente OpenAI para a API da Maritaca
 client = None
@@ -34,35 +41,74 @@ def serve_index():
 
 @application.route('/upload', methods=['POST'])
 def upload_file():
+    if not s3_client or not S3_BUCKET_NAME:
+        return 'Serviço S3 não configurado no servidor.', 503
+
     if 'file' not in request.files:
-        return 'No file part', 400
+        return 'Nenhuma parte do arquivo', 400
     file = request.files['file']
     if file.filename == '':
-        return 'No selected file', 400
+        return 'Nenhum arquivo selecionado', 400
+
     if file:
         filename = file.filename
-        file.save(os.path.join(application.config['UPLOAD_FOLDER'], filename))
+        try:
+            # Upload para o S3
+            s3_client.upload_fileobj(
+                file,
+                S3_BUCKET_NAME,
+                filename,
+                ExtraArgs={'ContentType': file.content_type}
+            )
+            file_url = f"https//s3.amazonaws.com/{S3_BUCKET_NAME}/{filename}"
 
-        # Save metadata
-        materials_path = os.path.join(application.config['UPLOAD_FOLDER'], 'materials.json')
-        materials = []
-        if os.path.exists(materials_path):
-            with open(materials_path, 'r') as f:
-                materials = json.load(f)
+            # Atualizar metadados em materials.json no S3
+            materials_path = 'materials.json'
+            materials = []
+            try:
+                # Tenta baixar o materials.json existente do S3
+                response = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=materials_path)
+                materials = json.loads(response['Body'].read().decode('utf-8'))
+            except s3_client.exceptions.NoSuchKey:
+                # O arquivo não existe ainda, o que é normal na primeira vez
+                pass
 
-        new_material = {
-            'id': f'mat_{len(materials) + 1}',
-            'title': request.form.get('title', filename),
-            'type': filename.split('.')[-1],
-            'tags': [tag.strip() for tag in request.form.get('tags', '').split(',')],
-            'url': os.path.join(application.config['UPLOAD_FOLDER'], filename)
-        }
-        materials.append(new_material)
+            new_material = {
+                'id': f'mat_{len(materials) + 1}',
+                'title': request.form.get('title', filename),
+                'type': filename.split('.')[-1],
+                'tags': [tag.strip() for tag in request.form.get('tags', '').split(',')],
+                'url': file_url
+            }
+            materials.append(new_material)
 
-        with open(materials_path, 'w') as f:
-            json.dump(materials, f, indent=4)
+            # Salva o materials.json atualizado de volta no S3
+            s3_client.put_object(
+                Bucket=S3_BUCKET_NAME,
+                Key=materials_path,
+                Body=json.dumps(materials, indent=4),
+                ContentType='application/json'
+            )
 
-        return 'File uploaded successfully', 200
+            return 'Arquivo enviado com sucesso', 200
+        except Exception as e:
+            print(f"ERRO: Falha ao fazer upload para o S3: {e}", file=sys.stderr)
+            return 'Falha no upload do arquivo', 500
+
+@application.route('/api/materials', methods=['GET'])
+def get_materials():
+    if not s3_client or not S3_BUCKET_NAME:
+        return 'Serviço S3 não configurado no servidor.', 503
+
+    try:
+        response = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key='materials.json')
+        materials_json = response['Body'].read().decode('utf-8')
+        return Response(materials_json, mimetype='application/json')
+    except s3_client.exceptions.NoSuchKey:
+        return json.dumps([]), 200
+    except Exception as e:
+        print(f"ERRO: Falha ao buscar materiais do S3: {e}", file=sys.stderr)
+        return 'Falha ao buscar materiais', 500
 
 @application.route('/api/chat', methods=['POST'])
 def chat():

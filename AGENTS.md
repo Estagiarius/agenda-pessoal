@@ -4,55 +4,67 @@ Este documento fornece um guia para os agentes de IA sobre como entender e traba
 
 ## Visão Geral do Projeto
 
-Este projeto é uma aplicação web de agenda pessoal que roda inteiramente no navegador. Ele não possui um backend, e todos os dados são armazenados localmente no navegador do usuário (localStorage).
+Este projeto é uma aplicação web de agenda pessoal com um backend em Python (Flask). A aplicação foi preparada para ser implantada na AWS.
 
 A aplicação inclui as seguintes funcionalidades:
 
-*   **Agenda/Calendário:** Para gerenciar eventos e tarefas.
-*   **Banco de Questões:** Para criar, armazenar e filtrar questões de múltipla escolha.
-*   **Sistema de Quiz:** Para gerar e realizar quizzes a partir das questões do banco.
+*   **Agenda/Calendário:** Para gerenciar eventos e tarefas (frontend).
+*   **Banco de Questões e Quizzes:** Funcionalidades de frontend para aprendizado.
+*   **Upload de Materiais:** Os usuários podem fazer upload de arquivos, que são armazenados no Amazon S3.
+*   **Chat com IA:** Uma interface de chat que se conecta à API da Maritaca.
 
 ## Estrutura do Código
 
 O código está organizado da seguinte forma:
 
+*   `application.py`: O servidor backend Flask.
+*   `requirements.txt`: Dependências do Python.
+*   `Procfile`: Comando para iniciar o servidor web Gunicorn.
+*   `.ebextensions/`: Arquivos de configuração do AWS Elastic Beanstalk.
+*   `.gitignore`: Arquivos e diretórios ignorados pelo Git.
 *   `index.html`: O ponto de entrada principal da aplicação.
-*   `css/`: Contém os arquivos de estilo (CSS).
-*   `js/`: Contém os arquivos de lógica da aplicação (JavaScript).
-    *   `js/app/`: Contém os módulos principais da aplicação, como `calendar.js`, `chat.js`, `eventService.js`, etc.
-    *   `js/libs/`: Contém bibliotecas de terceiros, como jQuery e Bootstrap.
-*   `views/`: Contém os templates HTML para as diferentes seções da aplicação (por exemplo, `home.html`, `tasks.html`, `quiz_take.html`).
-*   `tests/`: Contém os testes unitários.
+*   `css/`: Arquivos de estilo (CSS).
+*   `js/`: Lógica do frontend (JavaScript).
+*   `views/`: Templates HTML para as diferentes seções.
+*   `tests/`: Testes unitários para o frontend.
 
 ## Como Executar a Aplicação
 
-Para executar a aplicação, utilize o script `launch.py`:
+Para executar a aplicação localmente, você precisará ter o Python e as dependências instaladas:
 
 ```bash
-python launch.py
+# Instalar dependências
+pip install -r requirements.txt
+
+# Executar o servidor Flask (para desenvolvimento)
+# Nota: Para produção, use o comando do Procfile.
+python application.py
 ```
 
-Isso abrirá o `index.html` no navegador padrão.
+## Configuração do Ambiente
 
-## Como Executar os Testes
+A aplicação requer as seguintes variáveis de ambiente para funcionar corretamente:
 
-Os testes unitários podem ser executados abrindo o arquivo `tests/test-runner.html` em um navegador.
+*   `MARITACA_API_KEY`: A chave de API para o serviço de chat da Maritaca.
+*   `S3_BUCKET_NAME`: O nome do bucket Amazon S3 para armazenamento de arquivos.
+*   `AWS_ACCESS_KEY_ID`: Chave de acesso da AWS.
+*   `AWS_SECRET_ACCESS_KEY`: Chave de acesso secreta da AWS.
+*   `AWS_REGION`: A região da AWS onde o bucket S3 está localizado (opcional, mas recomendado).
 
 ## Fluxo de Trabalho de Desenvolvimento
 
-1.  **Modificar o código-fonte:** Faça as alterações necessárias nos arquivos HTML, CSS ou JavaScript.
+1.  **Modificar o código:** Faça as alterações no backend (Python/Flask) ou no frontend (HTML/CSS/JS).
 2.  **Testar as alterações:**
-    *   Para alterações na lógica de negócios (por exemplo, `eventService.js`, `questionService.js`), adicione ou atualize os testes unitários em `tests/` e execute-os abrindo `tests/test-runner.html`.
-    *   Para alterações na interface do usuário, abra o `index.html` (usando `launch.py`) e verifique visualmente as mudanças.
-3.  **Não há processo de build:** Como a aplicação é puramente front-end, não há necessidade de compilar ou construir nada. As alterações são refletidas simplesmente ao recarregar a página no navegador.
-
-## Preferências de Estilo de Código
-
-*   **JavaScript:** Siga as convenções de estilo do JavaScript moderno (ES6+), mesmo que o código existente possa usar estilos mais antigos.
-*   **HTML/CSS:** Mantenha o código limpo e bem formatado. Utilize as classes do Bootstrap sempre que possível para manter a consistência visual.
+    *   Para o backend, considere adicionar testes unitários (atualmente não há nenhum).
+    *   Para o frontend, execute os testes em `tests/test-runner.html`.
+3.  **Implantação:** A aplicação está configurada para implantação no AWS Elastic Beanstalk. O deploy é feito através do CLI da AWS ou do console.
 
 ## Pontos Importantes
 
-*   **Persistência de Dados:** Todos os dados são armazenados no `localStorage` do navegador. Isso significa que os dados são persistentes entre as sessões, mas são específicos para cada navegador e máquina. Não há banco de dados no servidor.
-*   **Roteamento:** O roteamento é feito no lado do cliente usando JavaScript para carregar diferentes `views/*.html` no `index.html`. A lógica de roteamento está em `js/app/router.js`.
-*   **Dependências:** As dependências de JavaScript (como jQuery) estão incluídas diretamente no repositório. Não há um gerenciador de pacotes como npm ou yarn. Para adicionar uma nova dependência, adicione o arquivo da biblioteca em `js/libs/` e inclua-o no `index.html`.
+*   **Persistência de Dados:**
+    *   Dados da aplicação (tarefas, eventos) são armazenados no `localStorage` do navegador.
+    *   Arquivos enviados por upload são armazenados no Amazon S3. Os metadados desses arquivos (`materials.json`) também são armazenados no S3.
+*   **Roteamento:** O roteamento principal é feito no lado do cliente (`js/app/router.js`). O backend Flask serve a página principal e fornece endpoints de API (`/upload`, `/api/materials`, `/api/chat`).
+*   **Dependências:**
+    *   As dependências do Python são gerenciadas pelo `pip` e listadas em `requirements.txt`.
+    *   As dependências do frontend estão no repositório.
