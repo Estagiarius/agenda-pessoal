@@ -6,21 +6,9 @@
     let materials = [];
 
     function loadMaterials() {
-        return fetch('/uploads/materials.json')
-            .then(response => {
-                if (!response.ok) {
-                    return [];
-                }
-                return response.json();
-            })
-            .then(data => {
-                materials = data;
-                return materials;
-            })
-            .catch(() => {
-                materials = [];
-                return materials;
-            });
+        console.warn("A funcionalidade de upload de materiais está desativada. Nenhum material será carregado.");
+        materials = [];
+        return Promise.resolve(materials);
     }
 
     window.materialService.getMaterials = function() {

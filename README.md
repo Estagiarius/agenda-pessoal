@@ -12,15 +12,22 @@ Este projeto é uma Single Page Application (SPA) para gerenciamento de tarefas,
 - **Recursos Didáticos:** Crie um banco de questões e gere quizzes para testar seus conhecimentos.
 - **Gestão Acadêmica:** Organize disciplinas, turmas, alunos e notas, com a funcionalidade de gerar boletins.
 
+## Implantação (GitHub Pages)
+
+Esta aplicação está preparada para ser implantada no GitHub Pages.
+
+**Atenção:** Como o GitHub Pages serve apenas conteúdo estático, as seguintes funcionalidades que dependem de um backend **não estão disponíveis** na versão implantada:
+
+*   **Upload de Materiais:** A funcionalidade de upload de novos arquivos foi desativada.
+*   **Chat com IA:** A funcionalidade de chat com o assistente de IA foi desativada.
+
+O restante da aplicação, incluindo a agenda, tarefas, quizzes e gestão acadêmica, funciona normalmente, salvando os dados no `localStorage` do seu navegador.
+
 ## Começando
 
-### Para Executar a Aplicação
+### Para Executar a Aplicação Localmente
 
-Use o script `launch.py` para abrir o `index.html` no seu navegador padrão:
-
-```bash
-python launch.py
-```
+Para rodar a aplicação localmente, basta abrir o arquivo `index.html` diretamente no seu navegador. Não é mais necessário usar o script `launch.py`.
 
 ### Para Executar os Testes
 
@@ -38,8 +45,8 @@ Abra o arquivo `tests/test-runner.html` em um navegador para rodar os testes uni
 │   └── lib/          # Bibliotecas de terceiros
 ├── tests/            # Testes unitários
 ├── views/            # Templates HTML das seções
-├── index.html        # Ponto de entrada da aplicação
-└── launch.py         # Script para iniciar a aplicação
+├── _config.yml       # Configuração do Jekyll para GitHub Pages
+└── index.html        # Ponto de entrada da aplicação
 ```
 
 ## Como Contribuir
