@@ -1,7 +1,0 @@
-AVISO: A chave da API da Maritaca (MARITACA_API_KEY) não foi definida. A funcionalidade de chat estará desativada.
-Servidor Flask rodando em http://127.0.0.1:8000
- * Serving Flask app 'launch'
- * Debug mode: off
-[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
- * Running on http://127.0.0.1:8000
-[33mPress CTRL+C to quit[0m

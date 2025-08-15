@@ -55,9 +55,37 @@ async function initCalendar() {
         console.error('Erro ao inicializar o calendário:', error);
         calendarDiv.innerHTML = '<p class="text-danger">Não foi possível carregar os eventos.</p>';
     }
-    
+
     await displayUpcomingEvents();
+
+    const addEventBtn = document.getElementById('quick-action-add-event-btn');
+    if (addEventBtn) {
+        addEventBtn.onclick = showEventModalForToday;
+    }
 }
+
+function showEventModalForToday() {
+    const eventForm = document.getElementById('eventForm');
+    if (eventForm) {
+        eventForm.reset();
+    }
+
+    // Set date to today
+    const today = moment();
+    document.getElementById('eventDateInput').value = today.format('YYYY-MM-DD');
+    document.getElementById('selectedDateDisplay').textContent = today.format('DD/MM/YYYY');
+
+    // Clear reminders and show modal
+    currentModalReminders = [];
+    renderConfiguredReminders(); // Assuming this function exists and clears the UI list
+    $('#eventModal').modal('show');
+}
+
+// Add an event listener for the modal's 'shown' event to set focus
+$('#eventModal').on('shown.bs.modal', function () {
+    $('#eventTitleInput').focus();
+});
+
 
 async function showEventDetails(eventId) {
     try {
@@ -110,6 +138,10 @@ async function displayUpcomingEvents() {
 // --- Funções de UI para a página Agenda Completa ---
 
 async function initAllEventsView() {
+    const addEventBtn = document.getElementById('full-calendar-add-event-btn');
+    if (addEventBtn) {
+        addEventBtn.onclick = showEventModalForToday;
+    }
     // ... (event listeners for filters, bulk actions, etc.) ...
     await filterAndRenderAllEvents();
 }
