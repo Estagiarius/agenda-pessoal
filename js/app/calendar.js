@@ -197,12 +197,45 @@ document.addEventListener('DOMContentLoaded', function() {
     const saveEventButton = document.getElementById('saveEventButton');
     if (saveEventButton) {
         saveEventButton.onclick = async function() {
-            const eventObject = { /* ... get data from form ... */ };
+            // Correctly gather all data from the form fields
+            const title = document.getElementById('eventTitleInput').value;
+            const date = document.getElementById('eventDateInput').value; // Read from the new date input
+            const startTime = document.getElementById('eventStartTimeInput').value;
+            const endTime = document.getElementById('eventEndTimeInput').value;
+            const description = document.getElementById('eventDescriptionInput').value;
+            const category = document.getElementById('eventCategoryInput').value;
+            const recurrenceFrequency = document.getElementById('eventRecurrenceFrequency').value;
+            const recurrenceEndDate = document.getElementById('eventRecurrenceEndDate').value;
+
+            // The validation is in the service, but a client-side check is good for UX.
+            if (!title || !date) {
+                alert('Por favor, insira pelo menos um título e uma data.');
+                return;
+            }
+
+            const eventObject = {
+                title: title,
+                date: date,
+                startTime: startTime,
+                endTime: endTime,
+                description: description,
+                category: category,
+                reminders: [...currentModalReminders],
+                recurrenceFrequency: recurrenceFrequency,
+                recurrenceEndDate: recurrenceEndDate
+            };
+
             try {
                 await window.eventService.addEvent(eventObject);
                 showToast('Evento salvo com sucesso!');
                 $('#eventModal').modal('hide');
-                await initCalendar(); // Recarrega o calendário
+
+                // Refresh the main view (calendar or all events list)
+                if (window.location.hash === '#/all-events') {
+                    await filterAndRenderAllEvents();
+                } else {
+                    await initCalendar();
+                }
             } catch (error) {
                 alert('Falha ao salvar o evento: ' + error.message);
             }
