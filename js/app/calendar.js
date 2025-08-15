@@ -5,6 +5,32 @@ let currentModalReminders = [];
 
 moment.locale('pt-br');
 
+// Helper function to render configured reminders in the modal
+function renderConfiguredReminders() {
+    const configuredRemindersList = document.getElementById('configuredRemindersList');
+    if (!configuredRemindersList) return;
+
+    configuredRemindersList.innerHTML = ''; // Clear current list
+    currentModalReminders.forEach(reminder => {
+        const listItem = document.createElement('div');
+        listItem.className = 'list-group-item d-flex justify-content-between align-items-center p-2';
+
+        const text = document.createElement('span');
+        text.textContent = `${reminder.value} ${reminder.unit === 'minutes' ? 'Minutos Antes' : 'Horas Antes'}`;
+
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'btn btn-danger btn-xs remove-reminder';
+        removeButton.innerHTML = '&times;';
+        removeButton.dataset.reminderId = reminder.id;
+        removeButton.style.marginLeft = '10px';
+
+        listItem.appendChild(text);
+        listItem.appendChild(removeButton);
+        configuredRemindersList.appendChild(listItem);
+    });
+}
+
 
 async function initCalendar() {
     const calendarDiv = document.querySelector('#calendar');
@@ -182,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
     }
-    
+
     // Attach other listeners, like for delete buttons
     document.body.addEventListener('click', async function(e) {
         if (e.target.matches('.delete-event-btn')) {
