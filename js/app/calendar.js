@@ -69,7 +69,6 @@ async function initCalendar() {
             onSelect: function(isSelected) {
                 const formattedDate = moment(this).format('YYYY-MM-DD');
                 document.getElementById('eventDateInput').value = formattedDate;
-                document.getElementById('selectedDateDisplay').textContent = moment(this).format('DD/MM/YYYY');
                 currentModalReminders = [];
                 renderConfiguredReminders();
                 $('#eventModal').modal('show');
@@ -99,7 +98,6 @@ function showEventModalForToday() {
     // Set date to today
     const today = moment();
     document.getElementById('eventDateInput').value = today.format('YYYY-MM-DD');
-    document.getElementById('selectedDateDisplay').textContent = today.format('DD/MM/YYYY');
 
     // Clear reminders and show modal
     currentModalReminders = [];
