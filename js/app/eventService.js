@@ -1,205 +1,140 @@
 (function(window) {
     'use strict';
 
-    // Function to add a new event
-    // eventObject is expected to have: title, date, startTime, endTime, description
-
-    const EVENTS_STORAGE_KEY = 'teacherAgendaEvents';
-    let events = []; // Single declaration of events
-    let nextEventId = 1; // Single declaration of nextEventId
-
-    function loadEvents() {
-        const storedEvents = localStorage.getItem(EVENTS_STORAGE_KEY);
-        if (storedEvents) {
-            try {
-                const parsedEvents = JSON.parse(storedEvents);
-                if (Array.isArray(parsedEvents) && parsedEvents.length > 0) {
-                    events = parsedEvents;
-                    let maxId = 0;
-                    events.forEach(event => {
-                        if (event.id && typeof event.id === 'number') {
-                            if (event.id > maxId) {
-                                maxId = event.id;
-                            }
-                        } else {
-                            // If an event from storage is missing an ID or has an invalid one,
-                            // assign it a new ID. This also handles the initial nextEventId value.
-                            event.id = nextEventId++;
-                        }
-                    });
-                    // Ensure nextEventId is greater than any ID found, or 1 if list was empty or no valid IDs.
-                    nextEventId = Math.max(1, maxId + 1);
-                } else {
-                     // Stored data was empty array or not an array
-                     events = [];
-                     nextEventId = 1;
-                }
-            } catch (e) {
-                console.error('Error parsing stored events:', e);
-                events = [];
-                nextEventId = 1;
-            }
-        } else {
-            // No data in local storage
-            events = [];
-            nextEventId = 1;
+    // Helper para chamadas de API, similar ao de educationService
+    async function apiRequest(url, options = {}) {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: response.statusText }));
+            throw new Error(errorData.message || 'Ocorreu um erro na solicitação de eventos à API.');
         }
+        if (response.status === 204) { // No Content
+            return;
+        }
+        return response.json();
     }
-    loadEvents(); // Load events when the service initializes
 
-    function saveEvents() {
-        localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(events));
+    // --- Funções do Serviço de Eventos ---
+
+    async function getEvents() {
+        return apiRequest('/api/events');
     }
 
-
-    function addEvent(eventObject) {
+    async function addEvent(eventObject) {
         if (!eventObject || !eventObject.title || !eventObject.date) {
-            console.error('Event object must have at least a title and a date.');
-            return null;
+            throw new Error('Event object must have at least a title and a date.');
         }
 
+        // A lógica de recorrência permanece no frontend por enquanto,
+        // mas agora dispara múltiplas chamadas de API.
         const { recurrenceFrequency, recurrenceEndDate, ...baseEvent } = eventObject;
 
         if (recurrenceFrequency && recurrenceFrequency !== 'none' && recurrenceEndDate) {
             const recurrenceId = 'rec-' + new Date().getTime();
             let currentDate = moment(baseEvent.date);
             const endDate = moment(recurrenceEndDate);
+            const promises = [];
 
             while (currentDate.isSameOrBefore(endDate)) {
                 const newEvent = {
                     ...baseEvent,
-                    id: nextEventId++,
                     date: currentDate.format('YYYY-MM-DD'),
                     recurrenceId: recurrenceId,
                     reminders: baseEvent.reminders || []
                 };
-                events.push(newEvent);
+                // Não precisa de 'id' aqui, o backend vai gerar
+                delete newEvent.id;
+
+                promises.push(apiRequest('/api/events', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newEvent)
+                }));
 
                 switch (recurrenceFrequency) {
-                    case 'daily':
-                        currentDate.add(1, 'days');
-                        break;
-                    case 'weekly':
-                        currentDate.add(1, 'weeks');
-                        break;
-                    case 'monthly':
-                        currentDate.add(1, 'months');
-                        break;
+                    case 'daily': currentDate.add(1, 'days'); break;
+                    case 'weekly': currentDate.add(1, 'weeks'); break;
+                    case 'monthly': currentDate.add(1, 'months'); break;
                 }
             }
+            return Promise.all(promises);
         } else {
-            const newEvent = {
-                id: nextEventId++,
-                ...baseEvent,
-                reminders: baseEvent.reminders || []
-            };
-            events.push(newEvent);
-        }
-
-        console.log('eventService: Evento adicionado/atualizado:', JSON.stringify(eventObject));
-        saveEvents();
-        return eventObject;
-    }
-
-    function getEvents() {
-        return [...events]; // Return a copy
-    }
-
-    function getEventsForDate(dateString) {
-        return events.filter(event => event.date === dateString);
-    }
-
-    function getEventById(eventId) {
-        console.log(`eventService: Attempting to find event with ID: ${eventId}`);
-        if (typeof eventId === 'undefined' || eventId === null) {
-            console.warn('eventService: getEventById called with undefined or null eventId.');
-            return undefined;
-        }
-        const event = events.find(e => String(e.id) === String(eventId));
-        if (event) {
-            console.log('eventService: Event found:', event);
-            return event; // Return a copy to prevent direct modification of the stored event
-        } else {
-            console.log(`eventService: Event not found with ID: ${eventId}`);
-            return undefined;
+            delete baseEvent.id;
+            return apiRequest('/api/events', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(baseEvent)
+            });
         }
     }
 
-    // Function to update an existing event
-    function updateEvent(updatedEventObject) {
+    async function getEventsForDate(dateString) {
+        const allEvents = await getEvents();
+        return allEvents.filter(event => event.date === dateString);
+    }
+
+    async function getEventById(eventId) {
+        // Esta função pode ser otimizada se o backend fornecer um endpoint /api/events/<id>
+        // Por enquanto, filtramos do resultado geral.
+        const allEvents = await getEvents();
+        return allEvents.find(e => String(e.id) === String(eventId));
+    }
+
+    async function updateEvent(updatedEventObject) {
         if (!updatedEventObject || typeof updatedEventObject.id === 'undefined') {
-            console.error('Event object must have an id to be updated.');
-            return false;
+            throw new Error('Event object must have an id to be updated.');
         }
-        const eventIndex = events.findIndex(event => event.id === updatedEventObject.id);
-
-        if (eventIndex === -1) {
-            console.error('Event with id ' + updatedEventObject.id + ' not found for update.');
-            return false;
-        }
-
-        events[eventIndex] = updatedEventObject;
-        console.log('eventService: Evento atualizado (para lembrete mostrado):', JSON.stringify(updatedEventObject));
-        saveEvents(); // Use saveEvents here
-        return true;
+        return apiRequest(`/api/events/${updatedEventObject.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedEventObject)
+        });
     }
-    
 
-    function deleteEvent(eventId) {
+    async function deleteEvent(eventId) {
         if (typeof eventId === 'undefined' || eventId === null) {
-            console.error('Event ID must be provided for deletion.');
-            return false;
+            throw new Error('Event ID must be provided for deletion.');
         }
-        const eventIndex = events.findIndex(event => String(event.id) === String(eventId));
-
-        if (eventIndex === -1) {
-            console.error('Event with id ' + eventId + ' not found for deletion.');
-            return false;
-        }
-
-        const deletedEvent = events.splice(eventIndex, 1);
-        console.log('eventService: Event deleted:', JSON.stringify(deletedEvent[0]));
-        saveEvents();
-        return true;
+        return apiRequest(`/api/events/${eventId}`, { method: 'DELETE' });
     }
 
-    function deleteRecurrentEvent(eventId, recurrenceId, deleteType) {
-        const eventToDelete = getEventById(eventId);
+    async function deleteRecurrentEvent(eventId, recurrenceId, deleteType) {
+        const allEvents = await getEvents();
+        const eventToDelete = allEvents.find(e => String(e.id) === String(eventId));
         if (!eventToDelete) {
-            return false;
+            throw new Error("Evento a ser deletado não encontrado.");
         }
 
-        let eventsToDelete = [];
+        let eventsToDeleteIds = [];
         if (deleteType === 'this') {
-            eventsToDelete.push(eventToDelete);
+            eventsToDeleteIds.push(eventToDelete.id);
         } else {
-            const allRecurrentEvents = events.filter(e => e.recurrenceId === recurrenceId);
+            const allRecurrentEvents = allEvents.filter(e => e.recurrenceId === recurrenceId);
             if (deleteType === 'future') {
-                eventsToDelete = allRecurrentEvents.filter(e => moment(e.date).isSameOrAfter(moment(eventToDelete.date)));
+                eventsToDeleteIds = allRecurrentEvents
+                    .filter(e => moment(e.date).isSameOrAfter(moment(eventToDelete.date)))
+                    .map(e => e.id);
             } else if (deleteType === 'all') {
-                eventsToDelete = allRecurrentEvents;
+                eventsToDeleteIds = allRecurrentEvents.map(e => e.id);
             }
         }
 
-        eventsToDelete.forEach(e => deleteEvent(e.id));
-        return true;
+        const deletePromises = eventsToDeleteIds.map(id => deleteEvent(id));
+        return Promise.all(deletePromises);
     }
 
-    function deleteAllEvents() {
-        events = [];
-        saveEvents();
-    }
+    // NOTA: deleteAllEvents não é mais uma boa prática com um backend.
+    // Isso seria uma operação perigosa. A função será removida.
+    // Se for necessária, deve ser uma função de admin protegida.
 
-    // Expose 
     window.eventService = {
-        addEvent: addEvent,
-        getEvents: getEvents,
-        getEventsForDate: getEventsForDate,
-        getEventById: getEventById,
-        updateEvent: updateEvent,
-        deleteEvent: deleteEvent, // Expose deleteEvent
-        deleteRecurrentEvent: deleteRecurrentEvent,
-        deleteAllEvents: deleteAllEvents
+        addEvent,
+        getEvents,
+        getEventsForDate,
+        getEventById,
+        updateEvent,
+        deleteEvent,
+        deleteRecurrentEvent
     };
 
 })(window);

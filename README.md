@@ -1,10 +1,12 @@
 # Agenda Pessoal
 
-Uma aplicação web de agenda pessoal e acadêmica que roda 100% no navegador, sem necessidade de backend.
+Uma aplicação web de agenda pessoal e acadêmica com backend em Python (Flask) e frontend em JavaScript.
 
 ## Visão Geral
 
-Este projeto é uma Single Page Application (SPA) para gerenciamento de tarefas, eventos e atividades acadêmicas. Todos os dados são armazenados localmente no navegador do usuário, utilizando `localStorage`.
+Este projeto é uma Single Page Application (SPA) para gerenciamento de tarefas, eventos e atividades acadêmicas. A aplicação utiliza um backend leve em Flask para servir a aplicação e fornecer APIs, enquanto o frontend é responsável pela interface e interação com o usuário.
+
+**Importante:** Atualmente, a aplicação está em um processo de transição. Muitos dados ainda são salvos localmente no navegador (`localStorage`), mas o objetivo é mover toda a persistência de dados para o servidor para permitir o acesso de qualquer lugar.
 
 ## Principais Funcionalidades
 
@@ -16,11 +18,20 @@ Este projeto é uma Single Page Application (SPA) para gerenciamento de tarefas,
 
 ### Para Executar a Aplicação
 
-Use o script `launch.py` para abrir o `index.html` no seu navegador padrão:
+1.  **Instale as dependências:**
+    Certifique-se de que você tem Python e pip instalados. Em seguida, instale as dependências do projeto:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-```bash
-python launch.py
-```
+2.  **Inicie o servidor:**
+    Execute o script `launch.py` para iniciar o servidor web local:
+    ```bash
+    python launch.py
+    ```
+
+3.  **Acesse a aplicação:**
+    Abra seu navegador e acesse o endereço fornecido no terminal (normalmente `http://127.0.0.1:8000`).
 
 ### Para Executar os Testes
 

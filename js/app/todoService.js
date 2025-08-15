@@ -1,148 +1,79 @@
-// js/app/todoService.js
 (function(window) {
     'use strict';
 
-    const TASKS_STORAGE_KEY = 'TASKS_STORAGE_KEY'; // Renamed key
-    let tasks = []; // Renamed array
-    let nextId = 1; // Renamed ID generator
-
-    function _loadTasks() { // Renamed and made "private"
-        const storedTasks = localStorage.getItem(TASKS_STORAGE_KEY);
-        if (storedTasks) {
-            try {
-                const parsedTasks = JSON.parse(storedTasks);
-                if (Array.isArray(parsedTasks)) {
-                    tasks = parsedTasks.map(task => {
-                        // Migration: Ensure 'completed' field exists, converting from 'status' if necessary
-                        if (typeof task.completed === 'undefined') {
-                            task.completed = task.status === 'Completed'; // Assuming 'Completed' status means true
-                        }
-                        delete task.status; // Remove old 'status' field
-
-                        // Add default priority for tasks loaded from storage that don't have it
-                        if (typeof task.priority === 'undefined') {
-                            task.priority = 'Medium'; // Default priority
-                        }
-                        return task;
-                    });
-
-                    if (tasks.length > 0) {
-                        let maxId = 0;
-                        tasks.forEach(task => {
-                            if (task.id && typeof task.id === 'number') {
-                                if (task.id > maxId) {
-                                    maxId = task.id;
-                                }
-                            } else {
-                                task.id = nextId++; // Assign new ID if missing or invalid
-                            }
-                        });
-                        nextId = Math.max(1, maxId + 1);
-                    } else {
-                        // tasks array is empty after parsing or was initially empty
-                        nextId = 1;
-                    }
-                } else {
-                     // storedTasks was not an array
-                     tasks = [];
-                     nextId = 1;
-                }
-            } catch (e) {
-                console.error('Error parsing stored tasks:', e);
-                tasks = [];
-                nextId = 1;
-            }
-        } else {
-            // No tasks in storage
-            tasks = [];
-            nextId = 1;
+    // Helper para chamadas de API
+    async function apiRequest(url, options = {}) {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: response.statusText }));
+            throw new Error(errorData.message || 'Ocorreu um erro na solicitação de tarefas à API.');
         }
+        if (response.status === 204) { // No Content
+            return;
+        }
+        return response.json();
     }
-    _loadTasks(); // Load tasks when the service initializes
 
-    function _saveTasks() { // Renamed and made "private"
-        localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+    async function getTasks() {
+        return apiRequest('/api/tasks');
     }
 
-    function addTask(taskData) { // Renamed
+    async function addTask(taskData) {
         if (!taskData || !taskData.text) {
-            console.error('Task must have text.');
-            return null;
+            throw new Error('Task must have text.');
         }
-        const newTask = {
-            id: nextId++,
+        const newTaskPayload = {
             text: taskData.text,
-            completed: false, // Default to not completed
+            completed: false,
             priority: taskData.priority || 'Medium',
             dueDate: taskData.dueDate || null
         };
-        tasks.push(newTask);
-        _saveTasks();
-        return {...newTask}; // Return a copy
+        return apiRequest('/api/tasks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newTaskPayload)
+        });
     }
 
-    function getTasks() { // Renamed
-        return tasks.map(task => ({...task})); // Return a copy of all tasks
+    async function updateTask(id, updatedData) {
+        return apiRequest(`/api/tasks/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData)
+        });
     }
 
-    function updateTask(id, updatedData) {
-        const taskId = parseInt(id);
-        const taskIndex = tasks.findIndex(t => t.id === taskId);
-        if (taskIndex !== -1) {
-            // Merge existing task with updatedData, but ensure 'id' and 'completed' status are handled carefully
-            const originalTask = tasks[taskIndex];
-            tasks[taskIndex] = {
-                ...originalTask,
-                ...updatedData,
-                id: taskId // Ensure original ID is preserved
-            };
-            _saveTasks();
-            return {...tasks[taskIndex]}; // Return a copy
-        }
-        console.error('Task not found for update:', id);
-        return null;
-    }
-
-    function toggleTaskCompleted(id) {
-        const taskId = parseInt(id);
-        const task = tasks.find(t => t.id === taskId);
+    async function toggleTaskCompleted(id) {
+        const allTasks = await getTasks();
+        const task = allTasks.find(t => String(t.id) === String(id));
         if (task) {
-            task.completed = !task.completed;
-            _saveTasks();
-            return {...task}; // Return a copy
+            return updateTask(id, { ...task, completed: !task.completed });
         }
-        console.error('Task not found for toggle:', id);
-        return null;
+        throw new Error('Task not found for toggle.');
     }
 
-    function deleteTask(id) { // Renamed
-        const taskId = parseInt(id);
-        const index = tasks.findIndex(t => t.id === taskId);
-        if (index > -1) {
-            const deletedTaskArray = tasks.splice(index, 1);
-            _saveTasks();
-            return deletedTaskArray[0]; // Return the deleted task (which is a copy already due to splice)
-        }
-        console.error('Task not found for deletion:', id);
-        return null;
+    async function deleteTask(id) {
+        return apiRequest(`/api/tasks/${id}`, { method: 'DELETE' });
     }
 
-    function getOpenTasks() {
-        return tasks.filter(task => !task.completed).map(task => ({...task}));
+    async function getOpenTasks() {
+        const allTasks = await getTasks();
+        return allTasks.filter(task => !task.completed);
     }
 
-    function getCompletedTasks() {
-        return tasks.filter(task => task.completed).map(task => ({...task}));
+    async function getCompletedTasks() {
+        const allTasks = await getTasks();
+        return allTasks.filter(task => task.completed);
     }
 
     window.todoService = {
-        addTask: addTask,
-        getTasks: getTasks,
-        updateTask: updateTask,
-        toggleTaskCompleted: toggleTaskCompleted,
-        deleteTask: deleteTask,
-        getOpenTasks: getOpenTasks,
-        getCompletedTasks: getCompletedTasks
+        addTask,
+        getTasks,
+        updateTask,
+        toggleTaskCompleted,
+        deleteTask,
+        getOpenTasks,
+        getCompletedTasks
     };
 
 })(window);
