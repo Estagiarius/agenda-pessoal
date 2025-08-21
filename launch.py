@@ -818,6 +818,146 @@ def delete_tarefa(tarefa_id):
     return '', 204
 
 
+# --- API para Planos de Aula ---
+
+def _get_lesson_plan_details(conn, plan_id):
+    """Helper function to fetch a full lesson plan with its relations."""
+    plan_row = conn.execute('SELECT * FROM plano_de_aula WHERE id = ?', (plan_id,)).fetchone()
+    if not plan_row:
+        return None
+
+    plan = dict(plan_row)
+
+    # Get associated classes
+    class_ids_rows = conn.execute('SELECT id_turma FROM plano_aula_turma WHERE id_plano_aula = ?', (plan_id,)).fetchall()
+    plan['classIds'] = [row['id_turma'] for row in class_ids_rows]
+
+    # Get associated materials
+    material_ids_rows = conn.execute('SELECT id_material FROM plano_aula_material WHERE id_plano_aula = ?', (plan_id,)).fetchall()
+    plan['materialIds'] = [row['id_material'] for row in material_ids_rows]
+
+    # Get associated evaluations
+    evaluation_ids_rows = conn.execute('SELECT id_avaliacao FROM plano_aula_avaliacao WHERE id_plano_aula = ?', (plan_id,)).fetchall()
+    plan['evaluationIds'] = [row['id_avaliacao'] for row in evaluation_ids_rows]
+
+    return plan
+
+@app.route('/api/planos_de_aula', methods=['GET'])
+def get_planos_de_aula():
+    conn = db.get_db_connection()
+    planos_rows = conn.execute('SELECT * FROM plano_de_aula ORDER BY date DESC').fetchall()
+
+    # For the list view, we might not need all details, but for simplicity, we'll fetch them.
+    # In a real-world scenario with performance concerns, this could be optimized.
+    planos = [_get_lesson_plan_details(conn, row['id']) for row in planos_rows]
+    conn.close()
+
+    return jsonify(planos)
+
+@app.route('/api/planos_de_aula/<string:plan_id>', methods=['GET'])
+def get_plano_de_aula(plan_id):
+    conn = db.get_db_connection()
+    plan = _get_lesson_plan_details(conn, plan_id)
+    conn.close()
+
+    if plan is None:
+        return jsonify({'error': 'Plano de aula não encontrado'}), 404
+    return jsonify(plan)
+
+@app.route('/api/planos_de_aula', methods=['POST'])
+def create_plano_de_aula():
+    data = request.get_json()
+    if not data or not data.get('title'):
+        return jsonify({'error': 'O campo "title" é obrigatório.'}), 400
+
+    conn = db.get_db_connection()
+    cursor = conn.cursor()
+
+    new_id = f"lp_{uuid.uuid4().hex}"
+    now_iso = date.today().isoformat()
+
+    try:
+        cursor.execute('BEGIN')
+
+        # Insert into main table
+        cursor.execute(
+            'INSERT INTO plano_de_aula (id, title, date, objectives, methodology, resources, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            (new_id, data['title'], data.get('date'), data.get('objectives'), data.get('methodology'), data.get('resources'), now_iso)
+        )
+
+        # Insert into join tables
+        if data.get('classIds'):
+            cursor.executemany('INSERT INTO plano_aula_turma (id_plano_aula, id_turma) VALUES (?, ?)', [(new_id, class_id) for class_id in data['classIds']])
+        if data.get('materialIds'):
+            cursor.executemany('INSERT INTO plano_aula_material (id_plano_aula, id_material) VALUES (?, ?)', [(new_id, material_id) for material_id in data['materialIds']])
+        if data.get('evaluationIds'):
+            cursor.executemany('INSERT INTO plano_aula_avaliacao (id_plano_aula, id_avaliacao) VALUES (?, ?)', [(new_id, eval_id) for eval_id in data['evaluationIds']])
+
+        cursor.execute('COMMIT')
+    except Exception as e:
+        cursor.execute('ROLLBACK')
+        conn.close()
+        return jsonify({'error': f'Erro ao criar plano de aula: {e}'}), 500
+
+    # Fetch the complete new plan to return
+    new_plan = _get_lesson_plan_details(conn, new_id)
+    conn.close()
+
+    return jsonify(new_plan), 201
+
+@app.route('/api/planos_de_aula/<string:plan_id>', methods=['PUT'])
+def update_plano_de_aula(plan_id):
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Dados inválidos'}), 400
+
+    conn = db.get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute('BEGIN')
+
+        # Update main table
+        cursor.execute(
+            'UPDATE plano_de_aula SET title = ?, date = ?, objectives = ?, methodology = ?, resources = ? WHERE id = ?',
+            (data.get('title'), data.get('date'), data.get('objectives'), data.get('methodology'), data.get('resources'), plan_id)
+        )
+
+        # Update join tables by deleting old and inserting new
+        cursor.execute('DELETE FROM plano_aula_turma WHERE id_plano_aula = ?', (plan_id,))
+        if data.get('classIds'):
+            cursor.executemany('INSERT INTO plano_aula_turma (id_plano_aula, id_turma) VALUES (?, ?)', [(plan_id, class_id) for class_id in data['classIds']])
+
+        cursor.execute('DELETE FROM plano_aula_material WHERE id_plano_aula = ?', (plan_id,))
+        if data.get('materialIds'):
+            cursor.executemany('INSERT INTO plano_aula_material (id_plano_aula, id_material) VALUES (?, ?)', [(plan_id, material_id) for material_id in data['materialIds']])
+
+        cursor.execute('DELETE FROM plano_aula_avaliacao WHERE id_plano_aula = ?', (plan_id,))
+        if data.get('evaluationIds'):
+            cursor.executemany('INSERT INTO plano_aula_avaliacao (id_plano_aula, id_avaliacao) VALUES (?, ?)', [(plan_id, eval_id) for eval_id in data['evaluationIds']])
+
+        cursor.execute('COMMIT')
+    except Exception as e:
+        cursor.execute('ROLLBACK')
+        conn.close()
+        return jsonify({'error': f'Erro ao atualizar plano de aula: {e}'}), 500
+
+    # Fetch the complete updated plan to return
+    updated_plan = _get_lesson_plan_details(conn, plan_id)
+    conn.close()
+
+    return jsonify(updated_plan)
+
+@app.route('/api/planos_de_aula/<string:plan_id>', methods=['DELETE'])
+def delete_plano_de_aula(plan_id):
+    conn = db.get_db_connection()
+    # ON DELETE CASCADE will handle join table deletions
+    conn.execute('DELETE FROM plano_de_aula WHERE id = ?', (plan_id,))
+    conn.commit()
+    conn.close()
+    return '', 204
+
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     if not client:

@@ -121,6 +121,52 @@ def init_db():
     )
     ''')
 
+    # Tabela para Planos de Aula
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS plano_de_aula (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        date TEXT,
+        objectives TEXT,
+        methodology TEXT,
+        resources TEXT,
+        created_at TEXT NOT NULL
+    )
+    ''')
+
+    # Tabela de associação: Planos de Aula <-> Turmas
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS plano_aula_turma (
+        id_plano_aula TEXT NOT NULL,
+        id_turma TEXT NOT NULL,
+        PRIMARY KEY (id_plano_aula, id_turma),
+        FOREIGN KEY (id_plano_aula) REFERENCES plano_de_aula(id) ON DELETE CASCADE,
+        FOREIGN KEY (id_turma) REFERENCES turma(id) ON DELETE CASCADE
+    )
+    ''')
+
+    # Tabela de associação: Planos de Aula <-> Materiais
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS plano_aula_material (
+        id_plano_aula TEXT NOT NULL,
+        id_material TEXT NOT NULL,
+        PRIMARY KEY (id_plano_aula, id_material),
+        FOREIGN KEY (id_plano_aula) REFERENCES plano_de_aula(id) ON DELETE CASCADE,
+        FOREIGN KEY (id_material) REFERENCES materials(id) ON DELETE CASCADE
+    )
+    ''')
+
+    # Tabela de associação: Planos de Aula <-> Avaliações
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS plano_aula_avaliacao (
+        id_plano_aula TEXT NOT NULL,
+        id_avaliacao TEXT NOT NULL,
+        PRIMARY KEY (id_plano_aula, id_avaliacao),
+        FOREIGN KEY (id_plano_aula) REFERENCES plano_de_aula(id) ON DELETE CASCADE,
+        FOREIGN KEY (id_avaliacao) REFERENCES avaliacao(id) ON DELETE CASCADE
+    )
+    ''')
+
     conn.commit()
     conn.close()
 
