@@ -36,76 +36,98 @@
 
     // --- Gestão de Disciplinas (Subjects) ---
 
-    const subjectsKey = 'subjects';
+    // A lógica de persistência para disciplinas foi migrada para o backend.
+    // As funções agora são assíncronas e usam a API /api/disciplinas.
 
     /**
-     * Lista todas as disciplinas.
-     * @returns {Array} - Uma lista de disciplinas.
+     * Lista todas as disciplinas a partir da API.
+     * @returns {Promise<Array>} - Uma promessa que resolve para uma lista de disciplinas.
      */
-    window.educationService.getSubjects = function() {
-        return getData(subjectsKey);
-    };
-
-    /**
-     * Adiciona uma nova disciplina.
-     * @param {object} subjectData - Dados da disciplina { name, code, description }.
-     * @returns {object} - A nova disciplina com um ID.
-     */
-    window.educationService.addSubject = function(subjectData) {
-        const subjects = this.getSubjects();
-
-        // RN04: O nome ou código da disciplina deve ser único
-        if (subjects.some(s => s.name === subjectData.name || (subjectData.code && s.code === subjectData.code))) {
-            throw new Error('Já existe uma disciplina com este nome ou código.');
+    window.educationService.getSubjects = async function() {
+        const response = await fetch('/api/disciplinas');
+        if (!response.ok) {
+            console.error('Erro ao buscar disciplinas da API.');
+            return [];
         }
-
-        const newSubject = {
-            id: `subj_${new Date().getTime()}`,
-            ...subjectData
-        };
-
-        subjects.push(newSubject);
-        saveData(subjectsKey, subjects);
-        return newSubject;
+        return response.json();
     };
 
     /**
-     * Busca uma disciplina pelo ID.
-     * @param {string} id - O ID da disciplina.
-     * @returns {object|undefined} - A disciplina encontrada.
+     * Adiciona uma nova disciplina através da API.
+     * @param {object} subjectData - Dados da disciplina { nome, codigo, descricao }.
+     * @returns {Promise<object>} - A promessa que resolve para a nova disciplina criada.
      */
-    window.educationService.getSubjectById = function(id) {
-        return this.getSubjects().find(s => s.id === id);
+    window.educationService.addSubject = async function(subjectData) {
+        // A validação de unicidade (RN04) agora deve ser tratada idealmente no backend.
+        // Por enquanto, a chamada é direta.
+        const response = await fetch('/api/disciplinas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(subjectData)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erro ao adicionar disciplina.');
+        }
+        return response.json();
     };
 
     /**
-     * Atualiza uma disciplina existente.
+     * Busca uma disciplina pelo ID a partir da API.
+     * @param {string} id - O ID da disciplina.
+     * @returns {Promise<object|undefined>} - A disciplina encontrada.
+     */
+    window.educationService.getSubjectById = async function(id) {
+        const response = await fetch(`/api/disciplinas/${id}`);
+        if (!response.ok) {
+            if (response.status === 404) return undefined;
+            throw new Error('Erro ao buscar disciplina.');
+        }
+        return response.json();
+    };
+
+    /**
+     * Atualiza uma disciplina existente através da API.
      * @param {string} id - O ID da disciplina a ser atualizada.
      * @param {object} updatedData - Os novos dados da disciplina.
+     * @returns {Promise<object>} - A disciplina atualizada.
      */
-    window.educationService.updateSubject = function(id, updatedData) {
-        let subjects = this.getSubjects();
-        const index = subjects.findIndex(s => s.id === id);
-        if (index !== -1) {
-            subjects[index] = { ...subjects[index], ...updatedData };
-            saveData(subjectsKey, subjects);
+    window.educationService.updateSubject = async function(id, updatedData) {
+        const response = await fetch(`/api/disciplinas/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erro ao atualizar disciplina.');
         }
+        return response.json();
     };
 
     /**
-     * Exclui uma disciplina.
+     * Exclui uma disciplina através da API.
      * @param {string} id - O ID da disciplina a ser excluída.
      */
-    window.educationService.deleteSubject = function(id) {
-        // RN03: Verifica se existem turmas associadas
-        const classes = this.getClasses();
+    window.educationService.deleteSubject = async function(id) {
+        // RN03: A verificação de dependência com Turmas é mantida no cliente por enquanto,
+        // já que a lógica de Turmas ainda reside no localStorage.
+        const classes = this.getClasses(); // Esta função ainda lê do localStorage.
         if (classes.some(c => c.subjectId === id)) {
             throw new Error('Não é possível excluir a disciplina, pois existem turmas associadas a ela.');
         }
 
-        let subjects = this.getSubjects();
-        subjects = subjects.filter(s => s.id !== id);
-        saveData(subjectsKey, subjects);
+        const response = await fetch(`/api/disciplinas/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok && response.status !== 204) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erro ao excluir disciplina.');
+        }
+        // Não retorna conteúdo no sucesso (204)
     };
 
     // --- Gestão de Turmas (Classes) ---

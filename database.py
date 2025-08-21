@@ -29,6 +29,16 @@ def init_db():
     )
     ''')
 
+    # Tabela para as Disciplinas
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS disciplina (
+        id TEXT PRIMARY KEY,
+        nome TEXT NOT NULL,
+        codigo TEXT,
+        descricao TEXT
+    )
+    ''')
+
     conn.commit()
     conn.close()
 

@@ -89,6 +89,93 @@ def get_materials():
 
     return jsonify(materials)
 
+# --- API para Disciplinas ---
+
+@app.route('/api/disciplinas', methods=['GET'])
+def get_disciplinas():
+    conn = db.get_db_connection()
+    disciplinas_rows = conn.execute('SELECT * FROM disciplina ORDER BY nome').fetchall()
+    conn.close()
+    disciplinas = [dict(row) for row in disciplinas_rows]
+    return jsonify(disciplinas)
+
+@app.route('/api/disciplinas', methods=['POST'])
+def create_disciplina():
+    data = request.get_json()
+    if not data or not data.get('nome'):
+        return jsonify({'error': 'O campo "nome" é obrigatório'}), 400
+
+    new_id = f"disc_{uuid.uuid4().hex}"
+    nome = data['nome']
+    codigo = data.get('codigo', '')
+    descricao = data.get('descricao', '')
+
+    conn = db.get_db_connection()
+    conn.execute(
+        'INSERT INTO disciplina (id, nome, codigo, descricao) VALUES (?, ?, ?, ?)',
+        (new_id, nome, codigo, descricao)
+    )
+    conn.commit()
+
+    new_disciplina = conn.execute('SELECT * FROM disciplina WHERE id = ?', (new_id,)).fetchone()
+    conn.close()
+
+    return jsonify(dict(new_disciplina)), 201
+
+@app.route('/api/disciplinas/<string:disciplina_id>', methods=['GET'])
+def get_disciplina(disciplina_id):
+    conn = db.get_db_connection()
+    disciplina = conn.execute('SELECT * FROM disciplina WHERE id = ?', (disciplina_id,)).fetchone()
+    conn.close()
+    if disciplina is None:
+        return jsonify({'error': 'Disciplina não encontrada'}), 404
+    return jsonify(dict(disciplina))
+
+@app.route('/api/disciplinas/<string:disciplina_id>', methods=['PUT'])
+def update_disciplina(disciplina_id):
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Dados inválidos'}), 400
+
+    conn = db.get_db_connection()
+    # Verifica se a disciplina existe
+    disciplina = conn.execute('SELECT * FROM disciplina WHERE id = ?', (disciplina_id,)).fetchone()
+    if disciplina is None:
+        conn.close()
+        return jsonify({'error': 'Disciplina não encontrada'}), 404
+
+    # Coleta os novos dados
+    nome = data.get('nome', disciplina['nome'])
+    codigo = data.get('codigo', disciplina['codigo'])
+    descricao = data.get('descricao', disciplina['descricao'])
+
+    conn.execute(
+        'UPDATE disciplina SET nome = ?, codigo = ?, descricao = ? WHERE id = ?',
+        (nome, codigo, descricao, disciplina_id)
+    )
+    conn.commit()
+
+    updated_disciplina = conn.execute('SELECT * FROM disciplina WHERE id = ?', (disciplina_id,)).fetchone()
+    conn.close()
+
+    return jsonify(dict(updated_disciplina))
+
+@app.route('/api/disciplinas/<string:disciplina_id>', methods=['DELETE'])
+def delete_disciplina(disciplina_id):
+    conn = db.get_db_connection()
+    # Verifica se a disciplina existe antes de deletar
+    disciplina = conn.execute('SELECT * FROM disciplina WHERE id = ?', (disciplina_id,)).fetchone()
+    if disciplina is None:
+        conn.close()
+        return jsonify({'error': 'Disciplina não encontrada'}), 404
+
+    conn.execute('DELETE FROM disciplina WHERE id = ?', (disciplina_id,))
+    conn.commit()
+    conn.close()
+
+    return '', 204
+
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     if not client:
