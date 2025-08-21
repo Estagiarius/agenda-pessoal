@@ -4,35 +4,8 @@
     // Namespace para o serviço de educação
     window.educationService = {};
 
-    // --- Estrutura de Dados e Persistência ---
-
-    /**
-     * Obtém os dados do localStorage.
-     * @param {string} key - A chave para os dados (ex: 'subjects', 'classes').
-     * @returns {Array} - Os dados encontrados ou um array vazio.
-     */
-    function getData(key) {
-        try {
-            const data = localStorage.getItem(key);
-            return data ? JSON.parse(data) : [];
-        } catch (e) {
-            console.error(`Erro ao ler dados de ${key} do localStorage`, e);
-            return [];
-        }
-    }
-
-    /**
-     * Salva os dados no localStorage.
-     * @param {string} key - A chave para os dados.
-     * @param {Array} data - Os dados a serem salvos.
-     */
-    function saveData(key, data) {
-        try {
-            localStorage.setItem(key, JSON.stringify(data));
-        } catch (e) {
-            console.error(`Erro ao salvar dados em ${key} no localStorage`, e);
-        }
-    }
+    // A persistência de dados agora é totalmente gerenciada pelo backend.
+    // As funções getData e saveData baseadas em localStorage foram removidas.
 
     // --- Gestão de Disciplinas (Subjects) ---
 
@@ -325,87 +298,95 @@
 
     // --- Gestão de Avaliações (Evaluations) ---
 
-    const evaluationsKey = 'evaluations';
-    const gradesKey = 'grades';
-
-    /**
-     * Adiciona uma nova avaliação.
-     */
-    window.educationService.addEvaluation = function(evaluationData) {
-        if (!evaluationData.name || !evaluationData.classId || isNaN(evaluationData.weight) || isNaN(evaluationData.maxGrade)) {
-            throw new Error("Dados da avaliação inválidos. Verifique os campos obrigatórios.");
-        }
-        const evaluations = getData(evaluationsKey);
-        const newEvaluation = {
-            id: `eval_${new Date().getTime()}`,
-            ...evaluationData
-        };
-        evaluations.push(newEvaluation);
-        saveData(evaluationsKey, evaluations);
-        return newEvaluation;
-    };
-
-    window.educationService.getEvaluationsByClass = function(classIds) {
-        const evaluations = getData(evaluationsKey);
-        if (Array.isArray(classIds)) {
-            return evaluations.filter(e => classIds.includes(e.classId));
-        }
-        return evaluations.filter(e => e.classId === classIds);
-    };
-
-    window.educationService.getEvaluationById = function(id) {
-        const evaluations = getData(evaluationsKey);
-        return evaluations.find(e => e.id === id);
-    };
-
-    window.educationService.updateEvaluation = function(id, updatedData) {
-        let evaluations = getData(evaluationsKey);
-        const index = evaluations.findIndex(e => e.id === id);
-        if (index !== -1) {
-            evaluations[index] = { ...evaluations[index], ...updatedData };
-            saveData(evaluationsKey, evaluations);
-        }
-    };
-
-    window.educationService.deleteEvaluation = function(id) {
-        let evaluations = getData(evaluationsKey);
-        evaluations = evaluations.filter(e => e.id !== id);
-        saveData(evaluationsKey, evaluations);
-
-        // RN16: Excluir notas associadas
-        let grades = getData(gradesKey);
-        grades = grades.filter(g => g.evaluationId !== id);
-        saveData(gradesKey, grades);
-    };
-
-    window.educationService.saveGrades = function(evaluationId, newGrades) {
-        const evaluation = getData(evaluationsKey).find(e => e.id === evaluationId);
-        const maxGrade = evaluation ? evaluation.maxGrade : 10;
-
-        let grades = getData(gradesKey);
-        // Remove notas antigas para esta avaliação
-        grades = grades.filter(g => g.evaluationId !== evaluationId);
-
-        newGrades.forEach(grade => {
-            // RN13: Validação da nota máxima
-            if (grade.grade > maxGrade) {
-                throw new Error(`A nota para ${grade.studentId} não pode ser maior que ${maxGrade}.`);
-            }
-            grades.push({ evaluationId, studentId: grade.studentId, grade: grade.grade });
+    window.educationService.addEvaluation = async function(evaluationData) {
+        const response = await fetch('/api/avaliacoes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(evaluationData)
         });
-
-        saveData(gradesKey, grades);
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erro ao adicionar avaliação.');
+        }
+        return response.json();
     };
 
-    window.educationService.getGradesByEvaluation = function(evaluationId) {
-        const grades = getData(gradesKey);
-        return grades.filter(g => g.evaluationId === evaluationId);
+    window.educationService.getEvaluationsByClass = async function(classId) {
+        const response = await fetch(`/api/turmas/${classId}/avaliacoes`);
+        if (!response.ok) {
+            console.error(`Erro ao buscar avaliações da turma ${classId}.`);
+            return [];
+        }
+        return response.json();
     };
 
-    window.educationService.calculateClassReport = function(classId) {
-        const students = this.getStudentsByClass(classId);
-        const evaluations = this.getEvaluationsByClass(classId);
-        const allGrades = getData(gradesKey);
+    window.educationService.getEvaluationById = async function(id) {
+        const response = await fetch(`/api/avaliacoes/${id}`);
+        if (!response.ok) {
+            if (response.status === 404) return undefined;
+            throw new Error('Erro ao buscar avaliação.');
+        }
+        return response.json();
+    };
+
+    window.educationService.updateEvaluation = async function(id, updatedData) {
+        const response = await fetch(`/api/avaliacoes/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erro ao atualizar avaliação.');
+        }
+        return response.json();
+    };
+
+    window.educationService.deleteEvaluation = async function(id) {
+        // A validação RN16 (excluir notas) agora é tratada pelo servidor.
+        const response = await fetch(`/api/avaliacoes/${id}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok && response.status !== 204) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erro ao excluir avaliação.');
+        }
+    };
+
+    window.educationService.saveGrades = async function(evaluationId, newGrades) {
+        // A validação RN13 (nota máxima) agora é tratada pelo servidor.
+        const response = await fetch(`/api/avaliacoes/${evaluationId}/notas`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newGrades)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erro ao salvar notas.');
+        }
+        return response.json();
+    };
+
+    window.educationService.getGradesByEvaluation = async function(evaluationId) {
+        const response = await fetch(`/api/avaliacoes/${evaluationId}/notas`);
+        if (!response.ok) {
+            console.error(`Erro ao buscar notas da avaliação ${evaluationId}.`);
+            return [];
+        }
+        return response.json();
+    };
+
+    window.educationService.calculateClassReport = async function(classId) {
+        // Esta função agora orquestra múltiplas chamadas de API.
+        const students = await this.getStudentsByClass(classId);
+        const evaluations = await this.getEvaluationsByClass(classId);
+
+        // Busca todas as notas de todas as avaliações em paralelo para eficiência.
+        const gradePromises = evaluations.map(e => this.getGradesByEvaluation(e.id));
+        const gradesByEvaluation = await Promise.all(gradePromises);
+
+        // Cria uma lista única com todas as notas para facilitar a busca.
+        const allGrades = gradesByEvaluation.flat();
 
         const report = students.map(student => {
             let totalWeightedGrade = 0;
@@ -413,14 +394,14 @@
             const studentGrades = {};
 
             evaluations.forEach(evaluation => {
-                const gradeObj = allGrades.find(g => g.evaluationId === evaluation.id && g.studentId === student.id);
-                const grade = gradeObj ? parseFloat(gradeObj.grade) : null;
+                const gradeObj = allGrades.find(g => g.id_avaliacao === evaluation.id && g.id_aluno === student.id);
+                const grade = gradeObj ? parseFloat(gradeObj.valor) : null;
 
                 studentGrades[evaluation.id] = grade;
 
                 // RN15: Se não houver nota, não entra no cálculo
                 if (grade !== null) {
-                    const weight = parseFloat(evaluation.weight);
+                    const weight = parseFloat(evaluation.peso);
                     totalWeightedGrade += grade * weight;
                     totalWeight += weight;
                 }

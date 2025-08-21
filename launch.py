@@ -417,6 +417,134 @@ def desmatricular_aluno(turma_id, aluno_id):
     return '', 204
 
 
+# --- API para Avaliações e Notas ---
+
+@app.route('/api/turmas/<string:turma_id>/avaliacoes', methods=['GET'])
+def get_avaliacoes_por_turma(turma_id):
+    conn = db.get_db_connection()
+    avaliacoes_rows = conn.execute('SELECT * FROM avaliacao WHERE id_turma = ? ORDER BY nome', (turma_id,)).fetchall()
+    conn.close()
+    avaliacoes = [dict(row) for row in avaliacoes_rows]
+    return jsonify(avaliacoes)
+
+@app.route('/api/avaliacoes', methods=['POST'])
+def create_avaliacao():
+    data = request.get_json()
+    if not data or not data.get('nome') or not data.get('id_turma') or 'peso' not in data or 'nota_maxima' not in data:
+        return jsonify({'error': 'Campos obrigatórios (nome, id_turma, peso, nota_maxima) estão faltando.'}), 400
+
+    new_id = f"aval_{uuid.uuid4().hex}"
+
+    conn = db.get_db_connection()
+    conn.execute(
+        'INSERT INTO avaliacao (id, nome, peso, nota_maxima, id_turma) VALUES (?, ?, ?, ?, ?)',
+        (new_id, data['nome'], data['peso'], data['nota_maxima'], data['id_turma'])
+    )
+    conn.commit()
+    new_avaliacao = conn.execute('SELECT * FROM avaliacao WHERE id = ?', (new_id,)).fetchone()
+    conn.close()
+    return jsonify(dict(new_avaliacao)), 201
+
+@app.route('/api/avaliacoes/<string:avaliacao_id>', methods=['GET'])
+def get_avaliacao(avaliacao_id):
+    conn = db.get_db_connection()
+    avaliacao = conn.execute('SELECT * FROM avaliacao WHERE id = ?', (avaliacao_id,)).fetchone()
+    conn.close()
+    if avaliacao is None:
+        return jsonify({'error': 'Avaliação não encontrada'}), 404
+    return jsonify(dict(avaliacao))
+
+@app.route('/api/avaliacoes/<string:avaliacao_id>', methods=['PUT'])
+def update_avaliacao(avaliacao_id):
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Dados inválidos'}), 400
+
+    conn = db.get_db_connection()
+    avaliacao = conn.execute('SELECT * FROM avaliacao WHERE id = ?', (avaliacao_id,)).fetchone()
+    if avaliacao is None:
+        conn.close()
+        return jsonify({'error': 'Avaliação não encontrada'}), 404
+
+    nome = data.get('nome', avaliacao['nome'])
+    peso = data.get('peso', avaliacao['peso'])
+    nota_maxima = data.get('nota_maxima', avaliacao['nota_maxima'])
+
+    conn.execute(
+        'UPDATE avaliacao SET nome = ?, peso = ?, nota_maxima = ? WHERE id = ?',
+        (nome, peso, nota_maxima, avaliacao_id)
+    )
+    conn.commit()
+    updated_avaliacao = conn.execute('SELECT * FROM avaliacao WHERE id = ?', (avaliacao_id,)).fetchone()
+    conn.close()
+    return jsonify(dict(updated_avaliacao))
+
+@app.route('/api/avaliacoes/<string:avaliacao_id>', methods=['DELETE'])
+def delete_avaliacao(avaliacao_id):
+    conn = db.get_db_connection()
+    # RN16: Excluir notas associadas
+    conn.execute('BEGIN')
+    try:
+        conn.execute('DELETE FROM nota WHERE id_avaliacao = ?', (avaliacao_id,))
+        conn.execute('DELETE FROM avaliacao WHERE id = ?', (avaliacao_id,))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        return jsonify({'error': f'Erro ao excluir avaliação: {e}'}), 500
+
+    conn.close()
+    return '', 204
+
+@app.route('/api/avaliacoes/<string:avaliacao_id>/notas', methods=['GET'])
+def get_notas_por_avaliacao(avaliacao_id):
+    conn = db.get_db_connection()
+    notas_rows = conn.execute('SELECT * FROM nota WHERE id_avaliacao = ?', (avaliacao_id,)).fetchall()
+    conn.close()
+    notas = [dict(row) for row in notas_rows]
+    return jsonify(notas)
+
+@app.route('/api/avaliacoes/<string:avaliacao_id>/notas', methods=['POST'])
+def save_notas(avaliacao_id):
+    grades = request.get_json()
+    if not isinstance(grades, list):
+        return jsonify({'error': 'O corpo da requisição deve ser uma lista de notas.'}), 400
+
+    conn = db.get_db_connection()
+    # RN13: Validação da nota máxima
+    avaliacao = conn.execute('SELECT nota_maxima FROM avaliacao WHERE id = ?', (avaliacao_id,)).fetchone()
+    if not avaliacao:
+        conn.close()
+        return jsonify({'error': 'Avaliação não encontrada.'}), 404
+    nota_maxima = avaliacao['nota_maxima']
+
+    for grade in grades:
+        if grade.get('grade') > nota_maxima:
+            conn.close()
+            return jsonify({'error': f"A nota para o aluno {grade.get('studentId')} não pode ser maior que {nota_maxima}."}), 400
+
+    # Usar uma transação para a operação de apagar e inserir
+    try:
+        cursor = conn.cursor()
+        cursor.execute('BEGIN')
+        # Remove notas antigas para esta avaliação
+        cursor.execute('DELETE FROM nota WHERE id_avaliacao = ?', (avaliacao_id,))
+
+        # Insere as novas notas
+        if grades:
+            grades_to_insert = [(g['studentId'], avaliacao_id, g['grade']) for g in grades]
+            cursor.executemany('INSERT INTO nota (id_aluno, id_avaliacao, valor) VALUES (?, ?, ?)', grades_to_insert)
+
+        cursor.execute('COMMIT')
+    except Exception as e:
+        cursor.execute('ROLLBACK')
+        conn.close()
+        return jsonify({'error': f'Erro ao salvar notas: {e}'}), 500
+
+    conn.close()
+    return jsonify({'success': True}), 201
+
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     if not client:

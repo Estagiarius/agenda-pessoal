@@ -72,6 +72,30 @@ def init_db():
     )
     ''')
 
+    # Tabela para as Avaliações
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS avaliacao (
+        id TEXT PRIMARY KEY,
+        nome TEXT NOT NULL,
+        peso REAL NOT NULL,
+        nota_maxima REAL NOT NULL,
+        id_turma TEXT NOT NULL,
+        FOREIGN KEY (id_turma) REFERENCES turma(id)
+    )
+    ''')
+
+    # Tabela para as Notas
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS nota (
+        id_aluno TEXT NOT NULL,
+        id_avaliacao TEXT NOT NULL,
+        valor REAL,
+        PRIMARY KEY (id_aluno, id_avaliacao),
+        FOREIGN KEY (id_aluno) REFERENCES aluno(id),
+        FOREIGN KEY (id_avaliacao) REFERENCES avaliacao(id)
+    )
+    ''')
+
     conn.commit()
     conn.close()
 
