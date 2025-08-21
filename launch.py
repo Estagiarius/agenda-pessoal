@@ -1,8 +1,10 @@
 import os
-from flask import Flask, request, Response, send_from_directory
+from flask import Flask, request, Response, send_from_directory, jsonify
 from openai import OpenAI
 import sys
 import json
+import uuid
+import database as db
 
 # Configuração do Flask
 UPLOAD_FOLDER = 'uploads'
@@ -41,28 +43,51 @@ def upload_file():
         return 'No selected file', 400
     if file:
         filename = file.filename
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        # Salva o arquivo no diretório de uploads
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
 
-        # Save metadata
-        materials_path = os.path.join(app.config['UPLOAD_FOLDER'], 'materials.json')
-        materials = []
-        if os.path.exists(materials_path):
-            with open(materials_path, 'r') as f:
-                materials = json.load(f)
+        # Salva os metadados no banco de dados
+        conn = db.get_db_connection()
 
-        new_material = {
-            'id': f'mat_{len(materials) + 1}',
-            'title': request.form.get('title', filename),
-            'type': filename.split('.')[-1],
-            'tags': [tag.strip() for tag in request.form.get('tags', '').split(',')],
-            'url': os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        }
-        materials.append(new_material)
+        # Gera um ID único para o material
+        material_id = f'mat_{uuid.uuid4().hex}'
 
-        with open(materials_path, 'w') as f:
-            json.dump(materials, f, indent=4)
+        # Coleta os outros dados do formulário
+        title = request.form.get('title', filename)
+        file_type = filename.split('.')[-1] if '.' in filename else ''
+        # Converte a lista de tags em uma string separada por vírgulas
+        tags_list = [tag.strip() for tag in request.form.get('tags', '').split(',') if tag.strip()]
+        tags_str = ','.join(tags_list)
+
+        cursor = conn.cursor()
+        cursor.execute(
+            'INSERT INTO materials (id, title, type, tags, url) VALUES (?, ?, ?, ?, ?)',
+            (material_id, title, file_type, tags_str, file_path)
+        )
+
+        conn.commit()
+        conn.close()
 
         return 'File uploaded successfully', 200
+
+@app.route('/api/materials')
+def get_materials():
+    conn = db.get_db_connection()
+    materials_rows = conn.execute('SELECT * FROM materials ORDER BY title').fetchall()
+    conn.close()
+
+    materials = []
+    for row in materials_rows:
+        material_dict = dict(row)
+        # Converte a string de tags de volta para uma lista para o frontend
+        if material_dict.get('tags'):
+            material_dict['tags'] = [tag.strip() for tag in material_dict['tags'].split(',')]
+        else:
+            material_dict['tags'] = []
+        materials.append(material_dict)
+
+    return jsonify(materials)
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
@@ -102,6 +127,9 @@ def chat():
     return Response(generate(), mimetype='text/event-stream')
 
 if __name__ == '__main__':
+    # Garante que o banco de dados e a tabela 'materials' existam ao iniciar
+    db.init_db()
+
     PORT = 8000
     print(f"Servidor Flask rodando em http://127.0.0.1:{PORT}", file=sys.stdout)
     app.run(port=PORT)

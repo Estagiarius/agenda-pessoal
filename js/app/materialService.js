@@ -6,7 +6,7 @@
     let materials = [];
 
     function loadMaterials() {
-        return fetch('/uploads/materials.json')
+        return fetch('/api/materials')
             .then(response => {
                 if (!response.ok) {
                     return [];
