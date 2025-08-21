@@ -51,6 +51,27 @@ def init_db():
     )
     ''')
 
+    # Tabela para os Alunos
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS aluno (
+        id TEXT PRIMARY KEY,
+        nome TEXT NOT NULL,
+        matricula TEXT,
+        data_nascimento TEXT
+    )
+    ''')
+
+    # Tabela de associação para Matrículas (Alunos <-> Turmas)
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS matricula (
+        id_aluno TEXT NOT NULL,
+        id_turma TEXT NOT NULL,
+        PRIMARY KEY (id_aluno, id_turma),
+        FOREIGN KEY (id_aluno) REFERENCES aluno(id),
+        FOREIGN KEY (id_turma) REFERENCES turma(id)
+    )
+    ''')
+
     conn.commit()
     conn.close()
 

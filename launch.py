@@ -286,6 +286,137 @@ def delete_turma(turma_id):
     return '', 204
 
 
+# --- API para Alunos ---
+
+@app.route('/api/alunos', methods=['GET'])
+def get_alunos():
+    conn = db.get_db_connection()
+    alunos_rows = conn.execute('SELECT * FROM aluno ORDER BY nome').fetchall()
+    conn.close()
+    alunos = [dict(row) for row in alunos_rows]
+    return jsonify(alunos)
+
+@app.route('/api/alunos', methods=['POST'])
+def create_aluno():
+    data = request.get_json()
+    if not data or not data.get('nome'):
+        return jsonify({'error': 'O campo "nome" é obrigatório'}), 400
+
+    new_id = f"aluno_{uuid.uuid4().hex}"
+    nome = data['nome']
+    matricula = data.get('matricula', '')
+    data_nascimento = data.get('data_nascimento', '')
+
+    conn = db.get_db_connection()
+    conn.execute(
+        'INSERT INTO aluno (id, nome, matricula, data_nascimento) VALUES (?, ?, ?, ?)',
+        (new_id, nome, matricula, data_nascimento)
+    )
+    conn.commit()
+    new_aluno = conn.execute('SELECT * FROM aluno WHERE id = ?', (new_id,)).fetchone()
+    conn.close()
+    return jsonify(dict(new_aluno)), 201
+
+@app.route('/api/alunos/<string:aluno_id>', methods=['GET'])
+def get_aluno(aluno_id):
+    conn = db.get_db_connection()
+    aluno = conn.execute('SELECT * FROM aluno WHERE id = ?', (aluno_id,)).fetchone()
+    conn.close()
+    if aluno is None:
+        return jsonify({'error': 'Aluno não encontrado'}), 404
+    return jsonify(dict(aluno))
+
+@app.route('/api/alunos/<string:aluno_id>', methods=['PUT'])
+def update_aluno(aluno_id):
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Dados inválidos'}), 400
+
+    conn = db.get_db_connection()
+    aluno = conn.execute('SELECT * FROM aluno WHERE id = ?', (aluno_id,)).fetchone()
+    if aluno is None:
+        conn.close()
+        return jsonify({'error': 'Aluno não encontrado'}), 404
+
+    nome = data.get('nome', aluno['nome'])
+    matricula = data.get('matricula', aluno['matricula'])
+    data_nascimento = data.get('data_nascimento', aluno['data_nascimento'])
+
+    conn.execute(
+        'UPDATE aluno SET nome = ?, matricula = ?, data_nascimento = ? WHERE id = ?',
+        (nome, matricula, data_nascimento, aluno_id)
+    )
+    conn.commit()
+    updated_aluno = conn.execute('SELECT * FROM aluno WHERE id = ?', (aluno_id,)).fetchone()
+    conn.close()
+    return jsonify(dict(updated_aluno))
+
+@app.route('/api/alunos/<string:aluno_id>', methods=['DELETE'])
+def delete_aluno(aluno_id):
+    conn = db.get_db_connection()
+    # RN10: Verifica se o aluno está matriculado em alguma turma
+    matriculas = conn.execute('SELECT id_turma FROM matricula WHERE id_aluno = ?', (aluno_id,)).fetchall()
+    if matriculas:
+        conn.close()
+        return jsonify({'error': 'Este aluno está matriculado em uma ou mais turmas e não pode ser excluído.'}), 400
+
+    conn.execute('DELETE FROM aluno WHERE id = ?', (aluno_id,))
+    conn.commit()
+    conn.close()
+    return '', 204
+
+# --- API para Matrículas (Enrollments) ---
+
+@app.route('/api/turmas/<string:turma_id>/alunos', methods=['GET'])
+def get_alunos_por_turma(turma_id):
+    conn = db.get_db_connection()
+    query = """
+        SELECT a.* FROM aluno a
+        JOIN matricula m ON a.id = m.id_aluno
+        WHERE m.id_turma = ?
+        ORDER BY a.nome
+    """
+    alunos_rows = conn.execute(query, (turma_id,)).fetchall()
+    conn.close()
+    alunos = [dict(row) for row in alunos_rows]
+    return jsonify(alunos)
+
+@app.route('/api/turmas/<string:turma_id>/alunos', methods=['POST'])
+def matricular_aluno(turma_id):
+    data = request.get_json()
+    if not data or not data.get('id_aluno'):
+        return jsonify({'error': 'O campo "id_aluno" é obrigatório'}), 400
+    id_aluno = data['id_aluno']
+
+    conn = db.get_db_connection()
+    # Adicionar lógica para verificar se aluno e turma existem, se necessário
+    try:
+        conn.execute('INSERT INTO matricula (id_aluno, id_turma) VALUES (?, ?)', (id_aluno, turma_id))
+        conn.commit()
+    except conn.IntegrityError:
+        # RN09: Lida com a violação da chave primária (matrícula duplicada)
+        conn.close()
+        return jsonify({'error': 'Este aluno já está matriculado nesta turma.'}), 409 # 409 Conflict
+    finally:
+        conn.close()
+
+    return jsonify({'success': True}), 201
+
+@app.route('/api/turmas/<string:turma_id>/alunos/<string:aluno_id>', methods=['DELETE'])
+def desmatricular_aluno(turma_id, aluno_id):
+    conn = db.get_db_connection()
+    # Verificar se a matrícula existe antes de deletar
+    matricula = conn.execute('SELECT * FROM matricula WHERE id_aluno = ? AND id_turma = ?', (aluno_id, turma_id)).fetchone()
+    if matricula is None:
+        conn.close()
+        return jsonify({'error': 'Matrícula não encontrada'}), 404
+
+    conn.execute('DELETE FROM matricula WHERE id_aluno = ? AND id_turma = ?', (aluno_id, turma_id))
+    conn.commit()
+    conn.close()
+    return '', 204
+
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     if not client:

@@ -226,114 +226,101 @@
 
     // --- Gestão de Alunos (Students) ---
 
-    const studentsKey = 'students';
-    const enrollmentsKey = 'enrollments'; // { studentId, classId }
-
-    /**
-     * Lista todos os alunos.
-     * @returns {Array} - Uma lista de alunos.
-     */
-    window.educationService.getStudents = function() {
-        return getData(studentsKey);
+    window.educationService.getStudents = async function() {
+        const response = await fetch('/api/alunos');
+        if (!response.ok) {
+            console.error('Erro ao buscar alunos.');
+            return [];
+        }
+        return response.json();
     };
 
-    /**
-     * Adiciona um novo aluno.
-     * @param {object} studentData - Dados do aluno.
-     * @returns {object} - O novo aluno com um ID.
-     */
-    window.educationService.addStudent = function(studentData) {
-        const students = this.getStudents();
+    window.educationService.addStudent = async function(studentData) {
+        const response = await fetch('/api/alunos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(studentData)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erro ao adicionar aluno.');
+        }
+        return response.json();
+    };
 
-        const newStudent = {
-            id: `std_${new Date().getTime()}`,
-            ...studentData
-        };
-
-        students.push(newStudent);
-        saveData(studentsKey, students);
+    window.educationService.addAndEnrollStudent = async function(studentData, classId) {
+        // Esta função agora cria o aluno e depois o matricula.
+        const newStudent = await this.addStudent(studentData);
+        await this.enrollStudentInClass(newStudent.id, classId);
         return newStudent;
     };
 
-    window.educationService.addAndEnrollStudent = function(studentData, classId) {
-        const enrolledStudents = this.getStudentsByClass(classId);
-        if (enrolledStudents.some(s => s.callNumber === studentData.callNumber)) {
-            throw new Error('Já existe um aluno com este número de chamada nesta turma.');
+    window.educationService.getStudentById = async function(id) {
+        const response = await fetch(`/api/alunos/${id}`);
+        if (!response.ok) {
+            if (response.status === 404) return undefined;
+            throw new Error('Erro ao buscar aluno.');
         }
-
-        const newStudent = this.addStudent(studentData);
-        this.enrollStudentInClass(newStudent.id, classId);
-        return newStudent;
+        return response.json();
     };
 
-    /**
-     * Busca um aluno pelo ID.
-     */
-    window.educationService.getStudentById = function(id) {
-        return this.getStudents().find(s => s.id === id);
+    window.educationService.updateStudent = async function(id, updatedData) {
+        const response = await fetch(`/api/alunos/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erro ao atualizar aluno.');
+        }
+        return response.json();
     };
 
-    /**
-     * Atualiza um aluno existente.
-     */
-    window.educationService.updateStudent = function(id, updatedData) {
-        let students = this.getStudents();
-        const index = students.findIndex(s => s.id === id);
-        if (index !== -1) {
-            students[index] = { ...students[index], ...updatedData };
-            saveData(studentsKey, students);
+    window.educationService.deleteStudent = async function(id) {
+        // A validação RN10 (verificar matrícula) agora é tratada pelo servidor.
+        const response = await fetch(`/api/alunos/${id}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok && response.status !== 204) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erro ao excluir aluno.');
         }
-    };
-
-    /**
-     * Exclui um aluno.
-     */
-    window.educationService.deleteStudent = function(id) {
-        // RN10: Verifica se o aluno está matriculado em alguma turma
-        const enrollments = getData(enrollmentsKey);
-        if (enrollments.some(e => e.studentId === id)) {
-            throw new Error('Este aluno está matriculado em uma ou mais turmas e não pode ser excluído.');
-        }
-
-        let students = this.getStudents();
-        students = students.filter(s => s.id !== id);
-        saveData(studentsKey, students);
     };
 
     // --- Gestão de Matrículas (Enrollments) ---
 
-    /**
-     * Matricula um aluno em uma turma.
-     */
-    window.educationService.enrollStudentInClass = function(studentId, classId) {
-        const enrollments = getData(enrollmentsKey);
-
-        // RN09: Não permite matrícula duplicada
-        if (enrollments.some(e => e.studentId === studentId && e.classId === classId)) {
-            throw new Error('Este aluno já está matriculado nesta turma.');
+    window.educationService.enrollStudentInClass = async function(studentId, classId) {
+        // A validação RN09 (matrícula duplicada) agora é tratada pelo servidor.
+        const response = await fetch(`/api/turmas/${classId}/alunos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_aluno: studentId })
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erro ao matricular aluno.');
         }
-
-        enrollments.push({ studentId, classId });
-        saveData(enrollmentsKey, enrollments);
+        return response.json();
     };
 
-    /**
-     * Remove um aluno de uma turma.
-     */
-    window.educationService.removeStudentFromClass = function(studentId, classId) {
-        let enrollments = getData(enrollmentsKey);
-        enrollments = enrollments.filter(e => !(e.studentId === studentId && e.classId === classId));
-        saveData(enrollmentsKey, enrollments);
+    window.educationService.removeStudentFromClass = async function(studentId, classId) {
+        const response = await fetch(`/api/turmas/${classId}/alunos/${studentId}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok && response.status !== 204) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erro ao desmatricular aluno.');
+        }
     };
 
-    /**
-     * Lista os alunos de uma turma específica.
-     */
-    window.educationService.getStudentsByClass = function(classId) {
-        const enrollments = getData(enrollmentsKey);
-        const studentIds = enrollments.filter(e => e.classId === classId).map(e => e.studentId);
-        const allStudents = this.getStudents();
-        return allStudents.filter(s => studentIds.includes(s.id));
+    window.educationService.getStudentsByClass = async function(classId) {
+        const response = await fetch(`/api/turmas/${classId}/alunos`);
+        if (!response.ok) {
+            console.error(`Erro ao buscar alunos da turma ${classId}.`);
+            return [];
+        }
+        return response.json();
     };
 
     // --- Gestão de Avaliações (Evaluations) ---
