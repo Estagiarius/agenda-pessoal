@@ -1078,6 +1078,49 @@ def delete_pergunta(pergunta_id):
     return '', 204
 
 
+# --- API para Configurações ---
+
+@app.route('/api/configuracoes', methods=['GET'])
+def get_configuracoes():
+    conn = db.get_db_connection()
+    # There should only ever be one row for settings
+    settings_row = conn.execute('SELECT value FROM configuracoes WHERE key = ?', ('user_settings',)).fetchone()
+    conn.close()
+
+    if settings_row:
+        # Return saved settings
+        return jsonify(json.loads(settings_row['value']))
+    else:
+        # Return default settings if none are saved
+        return jsonify({
+            'theme': 'light',
+            'notifications': {
+                'enabled': True,
+                'reminders': [10, 30]
+            },
+            'language': 'pt-BR'
+        })
+
+@app.route('/api/configuracoes', methods=['POST'])
+def save_configuracoes():
+    settings_data = request.get_json()
+    if not settings_data:
+        return jsonify({'error': 'Dados de configurações inválidos.'}), 400
+
+    settings_json = json.dumps(settings_data)
+
+    conn = db.get_db_connection()
+    # Use INSERT OR REPLACE to handle both creation and update
+    conn.execute(
+        'INSERT OR REPLACE INTO configuracoes (key, value) VALUES (?, ?)',
+        ('user_settings', settings_json)
+    )
+    conn.commit()
+    conn.close()
+
+    return jsonify(settings_data)
+
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     if not client:

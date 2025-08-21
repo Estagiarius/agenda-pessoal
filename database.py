@@ -179,6 +179,14 @@ def init_db():
     )
     ''')
 
+    # Tabela para Configurações da Aplicação (key-value store)
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS configuracoes (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+    )
+    ''')
+
     conn.commit()
     conn.close()
 
