@@ -110,6 +110,17 @@ def init_db():
     )
     ''')
 
+    # Tabela para Tarefas (To-Do List)
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS tarefa (
+        id TEXT PRIMARY KEY,
+        text TEXT NOT NULL,
+        completed INTEGER NOT NULL DEFAULT 0,
+        priority TEXT,
+        due_date TEXT
+    )
+    ''')
+
     conn.commit()
     conn.close()
 

@@ -732,6 +732,92 @@ def delete_evento(evento_id):
     return '', 204
 
 
+# --- API para Tarefas (To-Do) ---
+
+@app.route('/api/tarefas', methods=['GET'])
+def get_tarefas():
+    conn = db.get_db_connection()
+    tarefas_rows = conn.execute('SELECT * FROM tarefa ORDER BY id').fetchall()
+    conn.close()
+
+    tarefas = []
+    for row in tarefas_rows:
+        tarefa_dict = dict(row)
+        # Convert integer to boolean for the frontend
+        tarefa_dict['completed'] = bool(tarefa_dict['completed'])
+        tarefas.append(tarefa_dict)
+
+    return jsonify(tarefas)
+
+@app.route('/api/tarefas', methods=['POST'])
+def create_tarefa():
+    data = request.get_json()
+    if not data or not data.get('text'):
+        return jsonify({'error': 'O campo "text" é obrigatório.'}), 400
+
+    new_id = f"task_{uuid.uuid4().hex}"
+
+    conn = db.get_db_connection()
+    conn.execute(
+        'INSERT INTO tarefa (id, text, completed, priority, due_date) VALUES (?, ?, ?, ?, ?)',
+        (new_id, data['text'], 0, data.get('priority'), data.get('dueDate'))
+    )
+    conn.commit()
+    new_tarefa = conn.execute('SELECT * FROM tarefa WHERE id = ?', (new_id,)).fetchone()
+    conn.close()
+
+    tarefa_dict = dict(new_tarefa)
+    tarefa_dict['completed'] = bool(tarefa_dict['completed'])
+
+    return jsonify(tarefa_dict), 201
+
+@app.route('/api/tarefas/<string:tarefa_id>', methods=['PUT'])
+def update_tarefa(tarefa_id):
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Dados inválidos'}), 400
+
+    conn = db.get_db_connection()
+    tarefa = conn.execute('SELECT * FROM tarefa WHERE id = ?', (tarefa_id,)).fetchone()
+    if tarefa is None:
+        conn.close()
+        return jsonify({'error': 'Tarefa não encontrada'}), 404
+
+    # Use 'get' with a default value of the existing data
+    text = data.get('text', tarefa['text'])
+    priority = data.get('priority', tarefa['priority'])
+    due_date = data.get('dueDate', tarefa['due_date'])
+    # Handle 'completed' specifically, as it might be False
+    completed = data.get('completed', bool(tarefa['completed']))
+
+    conn.execute(
+        'UPDATE tarefa SET text = ?, priority = ?, due_date = ?, completed = ? WHERE id = ?',
+        (text, priority, due_date, 1 if completed else 0, tarefa_id)
+    )
+    conn.commit()
+    updated_tarefa = conn.execute('SELECT * FROM tarefa WHERE id = ?', (tarefa_id,)).fetchone()
+    conn.close()
+
+    tarefa_dict = dict(updated_tarefa)
+    tarefa_dict['completed'] = bool(tarefa_dict['completed'])
+
+    return jsonify(tarefa_dict)
+
+@app.route('/api/tarefas/<string:tarefa_id>', methods=['DELETE'])
+def delete_tarefa(tarefa_id):
+    conn = db.get_db_connection()
+    tarefa = conn.execute('SELECT * FROM tarefa WHERE id = ?', (tarefa_id,)).fetchone()
+    if tarefa is None:
+        conn.close()
+        return jsonify({'error': 'Tarefa não encontrada'}), 404
+
+    conn.execute('DELETE FROM tarefa WHERE id = ?', (tarefa_id,))
+    conn.commit()
+    conn.close()
+
+    return '', 204
+
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     if not client:
