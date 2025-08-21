@@ -2,19 +2,36 @@ document.addEventListener('DOMContentLoaded', function() {
     const mainContentArea = document.getElementById('main-content-area');
     const views = {}; // Removed direct HTML content
 
-    function initSettingsViewLogic() {
+    async function initSettingsViewLogic() {
         const enableSoundCheckbox = document.getElementById('enableSoundNotification');
         
-        if (enableSoundCheckbox && window.settingsService) {
-            const currentSettings = window.settingsService.getNotificationSettings();
-            enableSoundCheckbox.checked = currentSettings.enableSound;
-            enableSoundCheckbox.addEventListener('change', function() {
-                window.settingsService.saveNotificationSettings({ enableSound: this.checked });
-            });
-        } else {
+        if (!enableSoundCheckbox || !window.settingsService) {
             if (!enableSoundCheckbox) console.error('#enableSoundNotification checkbox not found.');
             if (!window.settingsService) console.error('settingsService not available.');
+            return;
         }
+
+        // Fetch the full settings object
+        const currentSettings = await window.settingsService.getSettings();
+
+        // Set the initial state of the checkbox
+        if (currentSettings && currentSettings.notifications) {
+            enableSoundCheckbox.checked = currentSettings.notifications.enableSound || false;
+        }
+
+        // Add event listener to save on change
+        enableSoundCheckbox.addEventListener('change', async function() {
+            const latestSettings = await window.settingsService.getSettings();
+            const newSettings = {
+                ...latestSettings,
+                notifications: {
+                    ...(latestSettings.notifications || {}),
+                    enableSound: this.checked
+                }
+            };
+            await window.settingsService.saveSettings(newSettings);
+            showToast('Configuração salva!');
+        });
     }
 
     function fetchView(viewPath, callback) {

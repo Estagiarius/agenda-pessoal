@@ -72,6 +72,15 @@ def upload_file():
 
         return 'File uploaded successfully', 200
 
+@app.route('/api/materials/<string:material_id>')
+def get_material(material_id):
+    conn = db.get_db_connection()
+    material = conn.execute('SELECT * FROM materials WHERE id = ?', (material_id,)).fetchone()
+    conn.close()
+    if material is None:
+        return jsonify({'error': 'Material não encontrado'}), 404
+    return jsonify(dict(material))
+
 @app.route('/api/materials')
 def get_materials():
     conn = db.get_db_connection()
@@ -445,6 +454,14 @@ def create_avaliacao():
     new_avaliacao = conn.execute('SELECT * FROM avaliacao WHERE id = ?', (new_id,)).fetchone()
     conn.close()
     return jsonify(dict(new_avaliacao)), 201
+
+@app.route('/api/avaliacoes', methods=['GET'])
+def get_all_avaliacoes():
+    conn = db.get_db_connection()
+    avaliacoes_rows = conn.execute('SELECT * FROM avaliacao ORDER BY nome').fetchall()
+    conn.close()
+    avaliacoes = [dict(row) for row in avaliacoes_rows]
+    return jsonify(avaliacoes)
 
 @app.route('/api/avaliacoes/<string:avaliacao_id>', methods=['GET'])
 def get_avaliacao(avaliacao_id):

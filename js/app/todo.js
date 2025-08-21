@@ -1,4 +1,4 @@
-function initTodoApp() {
+async function initTodoApp() {
     const taskInput = document.getElementById('taskInput');
     const taskDueDateInput = document.getElementById('taskDueDateInput');
     const taskPriorityInput = document.getElementById('taskPriorityInput');
@@ -20,7 +20,7 @@ function initTodoApp() {
         return;
     }
 
-    function getTasks() {
+    async function getTasks() {
         if (!window.todoService) {
             console.error('todoService is not available.');
             return [];
@@ -28,17 +28,17 @@ function initTodoApp() {
 
         let tasks;
         if (currentFilter === 'open') {
-            tasks = window.todoService.getOpenTasks();
+            tasks = await window.todoService.getOpenTasks();
         } else if (currentFilter === 'completed') {
-            tasks = window.todoService.getCompletedTasks();
+            tasks = await window.todoService.getCompletedTasks();
         } else {
-            tasks = window.todoService.getTasks();
+            tasks = await window.todoService.getTasks();
         }
 
         // Sorting logic
         if (currentSort === 'priority') {
             const priorityOrder = { 'High': 1, 'Medium': 2, 'Low': 3 };
-            tasks.sort((a, b) => (priorityOrder[a.priority] || 0) - (priorityOrder[b.priority] || 0));
+            tasks.sort((a, b) => (priorityOrder[a.priority] || 3) - (priorityOrder[b.priority] || 3));
         } else { // Default sort by due date
             tasks.sort((a, b) => {
                 if (!a.dueDate) return 1;
@@ -50,8 +50,8 @@ function initTodoApp() {
         return tasks;
     }
 
-    function renderTasks() {
-        const tasksToRender = getTasks();
+    async function renderTasks() {
+        const tasksToRender = await getTasks();
         taskList.innerHTML = '';
 
         if (tasksToRender.length === 0) {
@@ -69,6 +69,7 @@ function initTodoApp() {
             li.dataset.id = task.id;
 
             const dueDateFormatted = task.dueDate ? moment(task.dueDate).format('DD/MM/YYYY') : 'Sem data';
+            const priorityLower = (task.priority || 'medium').toLowerCase();
 
             li.innerHTML = `
                 <div class="task-main-content">
@@ -76,7 +77,7 @@ function initTodoApp() {
                     <span class="task-text">${task.text}</span>
                 </div>
                 <div class="task-details">
-                    <span class="badge priority-${task.priority.toLowerCase()}">${task.priority}</span>
+                    <span class="badge priority-${priorityLower}">${task.priority || 'Medium'}</span>
                     <span class="due-date">${dueDateFormatted}</span>
                     <button class="btn btn-danger btn-sm delete-task">Excluir</button>
                 </div>
@@ -85,7 +86,7 @@ function initTodoApp() {
         });
     }
 
-    function handleAddTask() {
+    async function handleAddTask() {
         const text = taskInput.value.trim();
         const dueDate = taskDueDateInput.value;
         const priority = taskPriorityInput.value;
@@ -100,10 +101,10 @@ function initTodoApp() {
             return;
         }
 
-        window.todoService.addTask({ text, dueDate, priority });
+        await window.todoService.addTask({ text, dueDate, priority });
         taskInput.value = '';
         taskDueDateInput.value = '';
-        renderTasks();
+        await renderTasks();
     }
 
     function updateFilterButtons() {
@@ -115,20 +116,22 @@ function initTodoApp() {
 
     // Event Listeners
     addTaskButton.addEventListener('click', handleAddTask);
-    taskInput.addEventListener('keypress', e => e.key === 'Enter' && handleAddTask());
+    taskInput.addEventListener('keypress', e => {
+        if (e.key === 'Enter') handleAddTask();
+    });
     
-    taskList.addEventListener('click', e => {
+    taskList.addEventListener('click', async (e) => {
         const target = e.target;
         const taskId = target.closest('.task-item')?.dataset.id;
         if (!taskId) return;
 
         if (target.classList.contains('task-checkbox')) {
-            window.todoService.toggleTaskCompleted(taskId);
-            renderTasks();
+            await window.todoService.toggleTaskCompleted(taskId);
+            await renderTasks();
         } else if (target.classList.contains('delete-task')) {
             if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
-                window.todoService.deleteTask(taskId);
-                renderTasks();
+                await window.todoService.deleteTask(taskId);
+                await renderTasks();
             }
         }
     });
@@ -141,10 +144,10 @@ function initTodoApp() {
     sortByPriorityBtn.addEventListener('click', () => { currentSort = 'priority'; renderTasks(); });
 
     // Initial render
-    renderTasks();
+    await renderTasks();
 }
 
-function initRecentTasks() {
+async function initRecentTasks() {
     const upcomingTasksList = document.getElementById('upcoming-tasks-list');
 
     if (!upcomingTasksList) {
@@ -157,7 +160,7 @@ function initRecentTasks() {
         return;
     }
 
-    const tasks = window.todoService.getOpenTasks();
+    const tasks = await window.todoService.getOpenTasks();
 
     tasks.sort((a, b) => {
         if (!a.dueDate) return 1;

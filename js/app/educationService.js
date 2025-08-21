@@ -342,6 +342,15 @@
         return response.json();
     };
 
+    window.educationService.getAllEvaluations = async function() {
+        const response = await fetch('/api/avaliacoes');
+        if (!response.ok) {
+            console.error('Erro ao buscar todas as avaliações.');
+            return [];
+        }
+        return response.json();
+    };
+
     window.educationService.deleteEvaluation = async function(id) {
         // A validação RN16 (excluir notas) agora é tratada pelo servidor.
         const response = await fetch(`/api/avaliacoes/${id}`, {
