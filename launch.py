@@ -5,6 +5,7 @@ import sys
 import json
 import uuid
 import database as db
+from datetime import date, timedelta
 
 # Configuração do Flask
 UPLOAD_FOLDER = 'uploads'
@@ -543,6 +544,192 @@ def save_notas(avaliacao_id):
 
     conn.close()
     return jsonify({'success': True}), 201
+
+
+# --- API para Eventos do Calendário ---
+
+@app.route('/api/eventos', methods=['GET'])
+def get_eventos():
+    start_date_str = request.args.get('start')
+    end_date_str = request.args.get('end')
+
+    conn = db.get_db_connection()
+    if start_date_str and end_date_str:
+        # Fetch events within a date range
+        event_rows = conn.execute(
+            'SELECT * FROM evento WHERE date BETWEEN ? AND ? ORDER BY date, start_time',
+            (start_date_str, end_date_str)
+        ).fetchall()
+    else:
+        # Fetch all events if no range is specified
+        event_rows = conn.execute('SELECT * FROM evento ORDER BY date, start_time').fetchall()
+
+    conn.close()
+
+    events = []
+    for row in event_rows:
+        event_dict = dict(row)
+        if event_dict.get('reminders'):
+            event_dict['reminders'] = [int(r) for r in event_dict['reminders'].split(',') if r]
+        else:
+            event_dict['reminders'] = []
+        events.append(event_dict)
+
+    return jsonify(events)
+
+@app.route('/api/eventos', methods=['POST'])
+def create_evento():
+    data = request.get_json()
+    if not data or not data.get('title') or not data.get('date'):
+        return jsonify({'error': 'Campos "title" e "date" são obrigatórios.'}), 400
+
+    conn = db.get_db_connection()
+    cursor = conn.cursor()
+
+    recurrence_frequency = data.get('recurrenceFrequency')
+    recurrence_end_date_str = data.get('recurrenceEndDate')
+
+    events_to_insert = []
+
+    base_event = {
+        'title': data['title'],
+        'date': data['date'],
+        'start_time': data.get('startTime'),
+        'end_time': data.get('endTime'),
+        'description': data.get('description'),
+        'reminders': ','.join(map(str, data.get('reminders', [])))
+    }
+
+    if recurrence_frequency and recurrence_frequency != 'none' and recurrence_end_date_str:
+        recurrence_id = f"rec_{uuid.uuid4().hex}"
+        current_date = date.fromisoformat(base_event['date'])
+        end_date = date.fromisoformat(recurrence_end_date_str)
+
+        delta = None
+        if recurrence_frequency == 'daily':
+            delta = timedelta(days=1)
+        elif recurrence_frequency == 'weekly':
+            delta = timedelta(weeks=1)
+
+        while current_date <= end_date:
+            event_id = f"evt_{uuid.uuid4().hex}"
+            events_to_insert.append((
+                event_id, base_event['title'], current_date.isoformat(),
+                base_event['start_time'], base_event['end_time'],
+                base_event['description'], recurrence_id, base_event['reminders']
+            ))
+            if delta:
+                current_date += delta
+            elif recurrence_frequency == 'monthly':
+                # This is a simplified version, for a real app use a library like dateutil
+                if current_date.month == 12:
+                    current_date = current_date.replace(year=current_date.year + 1, month=1)
+                else:
+                    current_date = current_date.replace(month=current_date.month + 1)
+            else:
+                break
+    else:
+        event_id = f"evt_{uuid.uuid4().hex}"
+        events_to_insert.append((
+            event_id, base_event['title'], base_event['date'],
+            base_event['start_time'], base_event['end_time'],
+            base_event['description'], None, base_event['reminders']
+        ))
+
+    try:
+        cursor.execute('BEGIN')
+        cursor.executemany(
+            'INSERT INTO evento (id, title, date, start_time, end_time, description, recurrence_id, reminders) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            events_to_insert
+        )
+        cursor.execute('COMMIT')
+    except Exception as e:
+        cursor.execute('ROLLBACK')
+        conn.close()
+        return jsonify({'error': f'Erro ao criar evento(s): {e}'}), 500
+
+    conn.close()
+    return jsonify({'success': True, 'count': len(events_to_insert)}), 201
+
+@app.route('/api/eventos/<string:evento_id>', methods=['GET'])
+def get_evento(evento_id):
+    conn = db.get_db_connection()
+    evento = conn.execute('SELECT * FROM evento WHERE id = ?', (evento_id,)).fetchone()
+    conn.close()
+    if evento is None:
+        return jsonify({'error': 'Evento não encontrado'}), 404
+
+    event_dict = dict(evento)
+    if event_dict.get('reminders'):
+        event_dict['reminders'] = [int(r) for r in event_dict['reminders'].split(',') if r]
+    else:
+        event_dict['reminders'] = []
+    return jsonify(event_dict)
+
+@app.route('/api/eventos/<string:evento_id>', methods=['PUT'])
+def update_evento(evento_id):
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Dados inválidos'}), 400
+
+    conn = db.get_db_connection()
+    evento = conn.execute('SELECT * FROM evento WHERE id = ?', (evento_id,)).fetchone()
+    if evento is None:
+        conn.close()
+        return jsonify({'error': 'Evento não encontrado'}), 404
+
+    title = data.get('title', evento['title'])
+    date_str = data.get('date', evento['date'])
+    start_time = data.get('startTime', evento['start_time'])
+    end_time = data.get('endTime', evento['end_time'])
+    description = data.get('description', evento['description'])
+    reminders = ','.join(map(str, data.get('reminders', [])))
+
+    conn.execute(
+        'UPDATE evento SET title = ?, date = ?, start_time = ?, end_time = ?, description = ?, reminders = ? WHERE id = ?',
+        (title, date_str, start_time, end_time, description, reminders, evento_id)
+    )
+    conn.commit()
+    updated_evento = conn.execute('SELECT * FROM evento WHERE id = ?', (evento_id,)).fetchone()
+    conn.close()
+
+    event_dict = dict(updated_evento)
+    if event_dict.get('reminders'):
+        event_dict['reminders'] = [int(r) for r in event_dict['reminders'].split(',') if r]
+    else:
+        event_dict['reminders'] = []
+
+    return jsonify(event_dict)
+
+@app.route('/api/eventos/<string:evento_id>', methods=['DELETE'])
+def delete_evento(evento_id):
+    scope = request.args.get('scope', 'this') # 'this', 'future', 'all'
+
+    conn = db.get_db_connection()
+    evento_to_delete = conn.execute('SELECT * FROM evento WHERE id = ?', (evento_id,)).fetchone()
+    if evento_to_delete is None:
+        conn.close()
+        return jsonify({'error': 'Evento não encontrado'}), 404
+
+    try:
+        conn.execute('BEGIN')
+        if scope == 'this' or not evento_to_delete['recurrence_id']:
+            conn.execute('DELETE FROM evento WHERE id = ?', (evento_id,))
+        elif scope == 'all':
+            conn.execute('DELETE FROM evento WHERE recurrence_id = ?', (evento_to_delete['recurrence_id'],))
+        elif scope == 'future':
+            conn.execute(
+                'DELETE FROM evento WHERE recurrence_id = ? AND date >= ?',
+                (evento_to_delete['recurrence_id'], evento_to_delete['date'])
+            )
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        return jsonify({'error': f'Erro ao excluir evento(s): {e}'}), 500
+
+    conn.close()
+    return '', 204
 
 
 @app.route('/api/chat', methods=['POST'])

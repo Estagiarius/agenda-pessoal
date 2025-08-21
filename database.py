@@ -96,6 +96,20 @@ def init_db():
     )
     ''')
 
+    # Tabela para Eventos do Calendário
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS evento (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        date TEXT NOT NULL,
+        start_time TEXT,
+        end_time TEXT,
+        description TEXT,
+        recurrence_id TEXT,
+        reminders TEXT
+    )
+    ''')
+
     conn.commit()
     conn.close()
 
