@@ -176,6 +176,116 @@ def delete_disciplina(disciplina_id):
     return '', 204
 
 
+# --- API para Turmas ---
+
+@app.route('/api/turmas', methods=['GET'])
+def get_turmas():
+    conn = db.get_db_connection()
+    # Join com disciplina para obter o nome da disciplina, que é útil para a UI
+    query = """
+        SELECT t.*, d.nome as disciplina_nome
+        FROM turma t
+        JOIN disciplina d ON t.id_disciplina = d.id
+        ORDER BY t.nome
+    """
+    turmas_rows = conn.execute(query).fetchall()
+    conn.close()
+    turmas = [dict(row) for row in turmas_rows]
+    return jsonify(turmas)
+
+@app.route('/api/turmas', methods=['POST'])
+def create_turma():
+    data = request.get_json()
+    if not data or not data.get('nome') or not data.get('id_disciplina'):
+        return jsonify({'error': 'Os campos "nome" e "id_disciplina" são obrigatórios'}), 400
+
+    new_id = f"turma_{uuid.uuid4().hex}"
+    nome = data['nome']
+    id_disciplina = data['id_disciplina']
+    ano_semestre = data.get('ano_semestre', '')
+    professor = data.get('professor', '')
+
+    conn = db.get_db_connection()
+    # RN02: Verificar se a disciplina existe
+    disciplina = conn.execute('SELECT id FROM disciplina WHERE id = ?', (id_disciplina,)).fetchone()
+    if disciplina is None:
+        conn.close()
+        return jsonify({'error': 'A disciplina especificada não existe.'}), 400
+
+    conn.execute(
+        'INSERT INTO turma (id, nome, ano_semestre, professor, id_disciplina) VALUES (?, ?, ?, ?, ?)',
+        (new_id, nome, ano_semestre, professor, id_disciplina)
+    )
+    conn.commit()
+
+    # Retorna a turma recém-criada com o nome da disciplina
+    new_turma_row = conn.execute("""
+        SELECT t.*, d.nome as disciplina_nome
+        FROM turma t
+        JOIN disciplina d ON t.id_disciplina = d.id
+        WHERE t.id = ?
+    """, (new_id,)).fetchone()
+    conn.close()
+
+    return jsonify(dict(new_turma_row)), 201
+
+@app.route('/api/turmas/<string:turma_id>', methods=['GET'])
+def get_turma(turma_id):
+    conn = db.get_db_connection()
+    turma = conn.execute('SELECT * FROM turma WHERE id = ?', (turma_id,)).fetchone()
+    conn.close()
+    if turma is None:
+        return jsonify({'error': 'Turma não encontrada'}), 404
+    return jsonify(dict(turma))
+
+@app.route('/api/turmas/<string:turma_id>', methods=['PUT'])
+def update_turma(turma_id):
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Dados inválidos'}), 400
+
+    conn = db.get_db_connection()
+    turma = conn.execute('SELECT * FROM turma WHERE id = ?', (turma_id,)).fetchone()
+    if turma is None:
+        conn.close()
+        return jsonify({'error': 'Turma não encontrada'}), 404
+
+    nome = data.get('nome', turma['nome'])
+    ano_semestre = data.get('ano_semestre', turma['ano_semestre'])
+    professor = data.get('professor', turma['professor'])
+    id_disciplina = data.get('id_disciplina', turma['id_disciplina'])
+
+    conn.execute(
+        'UPDATE turma SET nome = ?, ano_semestre = ?, professor = ?, id_disciplina = ? WHERE id = ?',
+        (nome, ano_semestre, professor, id_disciplina, turma_id)
+    )
+    conn.commit()
+
+    updated_turma_row = conn.execute("""
+        SELECT t.*, d.nome as disciplina_nome
+        FROM turma t
+        JOIN disciplina d ON t.id_disciplina = d.id
+        WHERE t.id = ?
+    """, (turma_id,)).fetchone()
+    conn.close()
+
+    return jsonify(dict(updated_turma_row))
+
+@app.route('/api/turmas/<string:turma_id>', methods=['DELETE'])
+def delete_turma(turma_id):
+    conn = db.get_db_connection()
+    turma = conn.execute('SELECT * FROM turma WHERE id = ?', (turma_id,)).fetchone()
+    if turma is None:
+        conn.close()
+        return jsonify({'error': 'Turma não encontrada'}), 404
+
+    conn.execute('DELETE FROM turma WHERE id = ?', (turma_id,))
+    conn.commit()
+    conn.close()
+
+    return '', 204
+
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     if not client:

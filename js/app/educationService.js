@@ -112,10 +112,10 @@
      * @param {string} id - O ID da disciplina a ser excluída.
      */
     window.educationService.deleteSubject = async function(id) {
-        // RN03: A verificação de dependência com Turmas é mantida no cliente por enquanto,
-        // já que a lógica de Turmas ainda reside no localStorage.
-        const classes = this.getClasses(); // Esta função ainda lê do localStorage.
-        if (classes.some(c => c.subjectId === id)) {
+        // RN03: A verificação de dependência com Turmas é mantida no cliente.
+        // Agora, ela precisa aguardar a resposta da API de turmas.
+        const classes = await this.getClasses();
+        if (classes.some(c => c.id_disciplina === id)) {
             throw new Error('Não é possível excluir a disciplina, pois existem turmas associadas a ela.');
         }
 
@@ -132,75 +132,96 @@
 
     // --- Gestão de Turmas (Classes) ---
 
-    const classesKey = 'classes';
+    // A lógica de persistência para turmas foi migrada para o backend.
+    // As funções agora são assíncronas e usam a API /api/turmas.
 
     /**
-     * Lista todas as turmas.
-     * @returns {Array} - Uma lista de turmas.
+     * Lista todas as turmas a partir da API.
+     * @returns {Promise<Array>} - Uma promessa que resolve para uma lista de turmas.
      */
-    window.educationService.getClasses = function() {
-        return getData(classesKey);
+    window.educationService.getClasses = async function() {
+        const response = await fetch('/api/turmas');
+        if (!response.ok) {
+            console.error('Erro ao buscar turmas da API.');
+            return [];
+        }
+        return response.json();
     };
 
     /**
-     * Adiciona uma nova turma.
-     * @param {object} classData - Dados da turma { name, subjectId, yearSemester, teacher }.
-     * @returns {object} - A nova turma com um ID.
+     * Adiciona uma nova turma através da API.
+     * @param {object} classData - Dados da turma { nome, id_disciplina, ano_semestre, professor }.
+     * @returns {Promise<object>} - A nova turma criada.
      */
-    window.educationService.addClass = function(classData) {
-        const classes = this.getClasses();
-
-        // RN02: Cada turma deve estar obrigatoriamente vinculada a uma única disciplina.
-        if (!classData.subjectId) {
-            throw new Error('A turma deve estar vinculada a uma disciplina.');
-        }
-
-        // RN05: A combinação de "Nome da Turma", "Disciplina" e "Ano/Semestre" deve ser única.
-        if (classes.some(c => c.name === classData.name && c.subjectId === classData.subjectId && c.yearSemester === classData.yearSemester)) {
+    window.educationService.addClass = async function(classData) {
+        // A validação RN05 (unicidade) permanece no cliente por enquanto.
+        const classes = await this.getClasses();
+        if (classes.some(c => c.nome === classData.nome && c.id_disciplina === classData.id_disciplina && c.ano_semestre === classData.ano_semestre)) {
             throw new Error('Já existe uma turma com esta combinação de nome, disciplina e ano/semestre.');
         }
 
-        const newClass = {
-            id: `cls_${new Date().getTime()}`,
-            ...classData
-        };
+        const response = await fetch('/api/turmas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(classData)
+        });
 
-        classes.push(newClass);
-        saveData(classesKey, classes);
-        return newClass;
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erro ao adicionar turma.');
+        }
+        return response.json();
     };
 
     /**
-     * Busca uma turma pelo ID.
+     * Busca uma turma pelo ID a partir da API.
      * @param {string} id - O ID da turma.
-     * @returns {object|undefined} - A turma encontrada.
+     * @returns {Promise<object|undefined>} - A turma encontrada.
      */
-    window.educationService.getClassById = function(id) {
-        return this.getClasses().find(c => c.id === id);
+    window.educationService.getClassById = async function(id) {
+        const response = await fetch(`/api/turmas/${id}`);
+        if (!response.ok) {
+            if (response.status === 404) return undefined;
+            throw new Error('Erro ao buscar turma.');
+        }
+        return response.json();
     };
 
     /**
-     * Atualiza uma turma existente.
+     * Atualiza uma turma existente através da API.
      * @param {string} id - O ID da turma a ser atualizada.
      * @param {object} updatedData - Os novos dados da turma.
+     * @returns {Promise<object>} - A turma atualizada.
      */
-    window.educationService.updateClass = function(id, updatedData) {
-        let classes = this.getClasses();
-        const index = classes.findIndex(c => c.id === id);
-        if (index !== -1) {
-            classes[index] = { ...classes[index], ...updatedData };
-            saveData(classesKey, classes);
+    window.educationService.updateClass = async function(id, updatedData) {
+        const response = await fetch(`/api/turmas/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erro ao atualizar turma.');
         }
+        return response.json();
     };
 
     /**
-     * Exclui uma turma.
+     * Exclui uma turma através da API.
      * @param {string} id - O ID da turma a ser excluída.
      */
-    window.educationService.deleteClass = function(id) {
-        let classes = this.getClasses();
-        classes = classes.filter(c => c.id !== id);
-        saveData(classesKey, classes);
+    window.educationService.deleteClass = async function(id) {
+        // RN: Verificar se existem alunos matriculados antes de excluir.
+        // Esta lógica será adicionada quando os alunos forem migrados.
+        const response = await fetch(`/api/turmas/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok && response.status !== 204) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erro ao excluir turma.');
+        }
     };
 
     // --- Gestão de Alunos (Students) ---

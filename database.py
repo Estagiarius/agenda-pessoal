@@ -39,6 +39,18 @@ def init_db():
     )
     ''')
 
+    # Tabela para as Turmas
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS turma (
+        id TEXT PRIMARY KEY,
+        nome TEXT NOT NULL,
+        ano_semestre TEXT,
+        professor TEXT,
+        id_disciplina TEXT NOT NULL,
+        FOREIGN KEY (id_disciplina) REFERENCES disciplina(id)
+    )
+    ''')
+
     conn.commit()
     conn.close()
 
