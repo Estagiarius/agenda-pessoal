@@ -958,6 +958,126 @@ def delete_plano_de_aula(plan_id):
     return '', 204
 
 
+# --- API para Banco de Questões ---
+
+def _format_question_response(question_row):
+    """Helper to convert question row to a proper JSON response."""
+    if not question_row:
+        return None
+    question_dict = dict(question_row)
+    # Deserialize the options from JSON string to a list
+    if question_dict.get('options'):
+        question_dict['options'] = json.loads(question_dict['options'])
+    else:
+        question_dict['options'] = []
+    return question_dict
+
+@app.route('/api/perguntas', methods=['GET'])
+def get_perguntas():
+    subject = request.args.get('subject')
+    difficulty = request.args.get('difficulty')
+
+    conn = db.get_db_connection()
+    query = 'SELECT * FROM pergunta'
+    filters = []
+    params = []
+
+    if subject:
+        filters.append('subject LIKE ?')
+        params.append(f'%{subject}%')
+    if difficulty:
+        filters.append('difficulty = ?')
+        params.append(difficulty)
+
+    if filters:
+        query += ' WHERE ' + ' AND '.join(filters)
+
+    perguntas_rows = conn.execute(query, params).fetchall()
+    conn.close()
+
+    perguntas = [_format_question_response(row) for row in perguntas_rows]
+    return jsonify(perguntas)
+
+@app.route('/api/perguntas/subjects', methods=['GET'])
+def get_question_subjects():
+    conn = db.get_db_connection()
+    subjects_rows = conn.execute('SELECT DISTINCT subject FROM pergunta WHERE subject IS NOT NULL AND subject != ""').fetchall()
+    conn.close()
+    subjects = [row['subject'] for row in subjects_rows]
+    return jsonify(subjects)
+
+@app.route('/api/perguntas', methods=['POST'])
+def create_pergunta():
+    data = request.get_json()
+    if not data or not data.get('text') or not data.get('answer'):
+        return jsonify({'error': 'Campos "text" e "answer" são obrigatórios.'}), 400
+
+    new_id = f"q_{uuid.uuid4().hex}"
+    options_json = json.dumps(data.get('options', []))
+
+    conn = db.get_db_connection()
+    conn.execute(
+        'INSERT INTO pergunta (id, text, subject, difficulty, options, answer) VALUES (?, ?, ?, ?, ?, ?)',
+        (new_id, data['text'], data.get('subject'), data.get('difficulty'), options_json, data['answer'])
+    )
+    conn.commit()
+    new_pergunta = conn.execute('SELECT * FROM pergunta WHERE id = ?', (new_id,)).fetchone()
+    conn.close()
+
+    return jsonify(_format_question_response(new_pergunta)), 201
+
+@app.route('/api/perguntas/<string:pergunta_id>', methods=['GET'])
+def get_pergunta(pergunta_id):
+    conn = db.get_db_connection()
+    pergunta = conn.execute('SELECT * FROM pergunta WHERE id = ?', (pergunta_id,)).fetchone()
+    conn.close()
+    if pergunta is None:
+        return jsonify({'error': 'Pergunta não encontrada'}), 404
+    return jsonify(_format_question_response(pergunta))
+
+@app.route('/api/perguntas/<string:pergunta_id>', methods=['PUT'])
+def update_pergunta(pergunta_id):
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Dados inválidos'}), 400
+
+    conn = db.get_db_connection()
+    pergunta = conn.execute('SELECT * FROM pergunta WHERE id = ?', (pergunta_id,)).fetchone()
+    if pergunta is None:
+        conn.close()
+        return jsonify({'error': 'Pergunta não encontrada'}), 404
+
+    text = data.get('text', pergunta['text'])
+    subject = data.get('subject', pergunta['subject'])
+    difficulty = data.get('difficulty', pergunta['difficulty'])
+    answer = data.get('answer', pergunta['answer'])
+    # Handle options update properly
+    if 'options' in data:
+        options_json = json.dumps(data['options'])
+    else:
+        options_json = pergunta['options']
+
+
+    conn.execute(
+        'UPDATE pergunta SET text = ?, subject = ?, difficulty = ?, options = ?, answer = ? WHERE id = ?',
+        (text, subject, difficulty, options_json, answer, pergunta_id)
+    )
+    conn.commit()
+    updated_pergunta = conn.execute('SELECT * FROM pergunta WHERE id = ?', (pergunta_id,)).fetchone()
+    conn.close()
+
+    return jsonify(_format_question_response(updated_pergunta))
+
+@app.route('/api/perguntas/<string:pergunta_id>', methods=['DELETE'])
+def delete_pergunta(pergunta_id):
+    conn = db.get_db_connection()
+    # Add check if question is used in any quiz results in the future if that gets implemented
+    conn.execute('DELETE FROM pergunta WHERE id = ?', (pergunta_id,))
+    conn.commit()
+    conn.close()
+    return '', 204
+
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     if not client:

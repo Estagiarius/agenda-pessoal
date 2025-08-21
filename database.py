@@ -167,6 +167,18 @@ def init_db():
     )
     ''')
 
+    # Tabela para o Banco de Questões
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS pergunta (
+        id TEXT PRIMARY KEY,
+        text TEXT NOT NULL,
+        subject TEXT,
+        difficulty TEXT,
+        options TEXT,
+        answer TEXT NOT NULL
+    )
+    ''')
+
     conn.commit()
     conn.close()
 
