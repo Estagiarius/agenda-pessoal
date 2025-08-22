@@ -344,22 +344,21 @@
             reader.onload = async (e) => {
                 const content = e.target.result;
                 const studentsData = parseCSV(content).map(student => {
-                    // Renomeia as chaves para corresponder ao backend e formata a data
-                    const formattedStudent = {
-                        nome: student.nome_do_aluno,
-                        numero_chamada: parseInt(student.numero_da_chamada, 10),
-                        data_nascimento: '',
-                        situacao: student.situação_do_aluno || 'Ativo'
-                    };
-
-                    const dob = student.data_de_nascimento_dd-mm-aaaa;
+                    const dob = student['data_de_nascimento_dd-mm-aaaa'];
+                    let formattedDob = '';
                     if (dob) {
                         const parts = dob.split('-');
-                        if (parts.length === 3) {
-                            formattedStudent.data_nascimento = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                        if (parts.length === 3 && parts[0].length === 2) { // dd-mm-yyyy
+                            formattedDob = `${parts[2]}-${parts[1]}-${parts[0]}`;
                         }
                     }
-                    return formattedStudent;
+
+                    return {
+                        nome: student.nome_do_aluno,
+                        numero_chamada: parseInt(student.numero_da_chamada, 10),
+                        data_nascimento: formattedDob,
+                        situacao: student.situação_do_aluno || 'Ativo'
+                    };
                 });
 
                 if (studentsData.length === 0) {
