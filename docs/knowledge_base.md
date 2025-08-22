@@ -3,10 +3,10 @@
 ### Primeiros Passos
 
 **P: Como começo a usar a agenda?**
-**R:** Abra o arquivo `index.html` em seu navegador. A página inicial exibirá um calendário e um resumo das tarefas recentes. Você pode navegar pelas diferentes seções usando o menu superior.
+**R:** A maneira mais fácil é executar o script `python launch.py`, que abrirá a aplicação no seu navegador. Após fazer login, a página inicial exibirá um calendário e um resumo das tarefas recentes. Você pode navegar pelas diferentes seções usando o menu superior.
 
 **P: Preciso criar uma conta?**
-**R:** Não, a aplicação funciona localmente no seu navegador. Todos os dados são armazenados no seu dispositivo, então não é necessário criar uma conta ou fazer login.
+**R:** Sim. Com a evolução da aplicação para um modelo cliente-servidor, agora é necessário ter uma conta para salvar seus dados de forma segura no servidor. Isso permite que você acesse suas informações de qualquer lugar.
 
 ### Gerenciamento de Tarefas
 
@@ -48,3 +48,35 @@
 
 **P: Como gero um boletim da turma?**
 **R:** Na página de detalhes da turma, clique no botão "Ver Boletim". O sistema calculará a média final de cada aluno com base nas avaliações e pesos definidos, e exibirá um boletim completo que pode ser exportado para CSV.
+
+### Chat com Assistente
+
+**P: Como funciona o chat com assistente?**
+**R:** Na seção "Chat", você pode conversar com um assistente de IA para tirar dúvidas ou pedir ajuda. Basta digitar sua pergunta e enviar. O histórico da conversa fica salvo durante a sessão.
+
+**P: Que tipo de perguntas posso fazer?**
+**R:** Você pode fazer perguntas sobre o funcionamento da aplicação, pedir resumos de conteúdo, ou qualquer outra dúvida que o modelo de IA possa responder.
+
+### Planos de Aula
+
+**P: Como crio um novo plano de aula?**
+**R:** Em "Gestão Acadêmica", vá para a seção "Planos de Aula". Clique em "Criar Novo" e preencha os campos como título, objetivos, metodologia, e a que turmas ele se aplica.
+
+**P: Posso anexar materiais ou vincular avaliações a um plano de aula?**
+**R:** Sim. No formulário do plano de aula, existem opções para anexar materiais de estudo previamente cadastrados e vincular avaliações existentes da turma.
+
+### Materiais de Estudo
+
+**P: Como adiciono um novo material de estudo?**
+**R:** Na seção "Recursos Didáticos", acesse "Materiais". Você pode fazer o upload de arquivos (como PDFs, documentos) e adicionar um título e tags para facilitar a busca.
+
+**P: Como encontro os materiais que adicionei?**
+**R:** Todos os materiais enviados ficam listados na tela de "Materiais". Você pode usar a barra de busca para filtrar por título, tipo ou tag.
+
+### Configurações
+
+**P: Onde posso alterar as configurações da aplicação?**
+**R:** No menu principal, há uma seção de "Configurações". Lá você pode alterar o tema visual da aplicação (claro/escuro), configurar preferências de notificação e idioma.
+
+**P: As minhas configurações são salvas?**
+**R:** Sim, as configurações são salvas na sua conta e serão mantidas entre os acessos em diferentes dispositivos.
