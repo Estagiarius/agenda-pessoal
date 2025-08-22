@@ -426,6 +426,63 @@ def desmatricular_aluno(turma_id, aluno_id):
     conn.close()
     return '', 204
 
+@app.route('/api/turmas/<string:turma_id>/alunos/import', methods=['POST'])
+def import_alunos(turma_id):
+    students_data = request.get_json()
+    if not isinstance(students_data, list):
+        return jsonify({'error': 'O corpo da requisição deve ser uma lista de alunos.'}), 400
+
+    conn = db.get_db_connection()
+    # Check if class exists
+    turma = conn.execute('SELECT * FROM turma WHERE id = ?', (turma_id,)).fetchone()
+    if turma is None:
+        conn.close()
+        return jsonify({'error': 'Turma não encontrada'}), 404
+
+    success_count = 0
+    error_count = 0
+    errors = []
+
+    # Use a transaction
+    try:
+        cursor = conn.cursor()
+        cursor.execute('BEGIN')
+
+        for student in students_data:
+            if not student.get('nome'):
+                error_count += 1
+                errors.append(f'Aluno sem nome ignorado: {student}')
+                continue
+
+            # Create student
+            aluno_id = f"aluno_{uuid.uuid4().hex}"
+            cursor.execute(
+                'INSERT INTO aluno (id, nome, matricula, data_nascimento) VALUES (?, ?, ?, ?)',
+                (aluno_id, student['nome'], student.get('matricula', ''), student.get('data_nascimento', ''))
+            )
+
+            # Enroll student
+            try:
+                cursor.execute('INSERT INTO matricula (id_aluno, id_turma) VALUES (?, ?)', (aluno_id, turma_id))
+                success_count += 1
+            except conn.IntegrityError:
+                error_count += 1
+                errors.append(f'Erro de integridade ao matricular aluno: {student.get("nome")}')
+
+
+        cursor.execute('COMMIT')
+    except Exception as e:
+        cursor.execute('ROLLBACK')
+        conn.close()
+        return jsonify({'error': f'Erro na transação do banco de dados: {e}', 'details': errors}), 500
+
+    conn.close()
+    return jsonify({
+        'message': f'{success_count} aluno(s) importado(s) com sucesso.',
+        'success_count': success_count,
+        'error_count': error_count,
+        'errors': errors
+    }), 201
 
 # --- API para Avaliações e Notas ---
 
@@ -664,6 +721,49 @@ def create_evento():
         cursor.execute('ROLLBACK')
         conn.close()
         return jsonify({'error': f'Erro ao criar evento(s): {e}'}), 500
+
+    conn.close()
+    return jsonify({'success': True, 'count': len(events_to_insert)}), 201
+
+@app.route('/api/eventos/import', methods=['POST'])
+def import_eventos():
+    events_data = request.get_json()
+    if not isinstance(events_data, list):
+        return jsonify({'error': 'O corpo da requisição deve ser uma lista de eventos.'}), 400
+
+    events_to_insert = []
+    for event in events_data:
+        if not event.get('title') or not event.get('date'):
+            continue  # Skip invalid events
+
+        event_id = f"evt_{uuid.uuid4().hex}"
+        events_to_insert.append((
+            event_id,
+            event['title'],
+            event['date'],
+            event.get('startTime'),
+            event.get('endTime'),
+            event.get('description'),
+            None,  # recurrence_id
+            ''     # reminders
+        ))
+
+    if not events_to_insert:
+        return jsonify({'error': 'Nenhum evento válido para importar.'}), 400
+
+    conn = db.get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute('BEGIN')
+        cursor.executemany(
+            'INSERT INTO evento (id, title, date, start_time, end_time, description, recurrence_id, reminders) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            events_to_insert
+        )
+        cursor.execute('COMMIT')
+    except Exception as e:
+        cursor.execute('ROLLBACK')
+        conn.close()
+        return jsonify({'error': f'Erro ao importar eventos: {e}'}), 500
 
     conn.close()
     return jsonify({'success': True, 'count': len(events_to_insert)}), 201
