@@ -1,5 +1,27 @@
 (function() {
     'use strict';
+    function parseCSV(content) {
+        const lines = content.split('\n').filter(line => line.trim() !== '');
+        if (lines.length < 1) {
+            return []; // Retorna vazio se não houver conteúdo
+        }
+        // Assume que a primeira linha é o cabeçalho
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        const data = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(',').map(v => v.trim());
+            // Pula linhas que não têm o mesmo número de colunas que o cabeçalho
+            if (values.length !== headers.length) continue;
+
+            const entry = {};
+            headers.forEach((header, index) => {
+                entry[header] = values[index];
+            });
+            data.push(entry);
+        }
+        return data;
+    }
 
     // --- Inicialização da View de Disciplinas ---
     window.initSubjectsView = async function() {
@@ -295,6 +317,43 @@
 
         document.getElementById('add-evaluation-btn').href = `#/evaluations/new?classId=${classId}`;
         document.getElementById('view-class-report-btn').href = `#/class_report?classId=${classId}`;
+
+        const importCsvInput = document.getElementById('import-students-csv');
+        importCsvInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const content = e.target.result;
+                const studentsData = parseCSV(content);
+
+                if (studentsData.length === 0) {
+                    showToast('Arquivo CSV vazio ou em formato inválido.', 'error');
+                    return;
+                }
+
+                try {
+                    const result = await window.educationService.importStudentsToClass(classId, studentsData);
+                    showToast(result.message || `${result.success_count} aluno(s) importado(s) com sucesso.`);
+                } catch (err) {
+                    showToast(`Erro ao importar alunos: ${err.message}`, 'error');
+                }
+
+                event.target.value = '';
+
+                await renderEnrolledStudents();
+            };
+
+            reader.onerror = () => {
+                showToast('Erro ao ler o arquivo.', 'error');
+                event.target.value = '';
+            };
+
+            reader.readAsText(file, 'UTF-8');
+        });
     };
 
     async function renderEvaluations(classId) {

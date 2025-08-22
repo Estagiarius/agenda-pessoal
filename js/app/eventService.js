@@ -95,9 +95,23 @@
         return Promise.resolve();
     }
 
+    async function importEvents(eventsData) {
+        const response = await fetch('/api/eventos/import', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(eventsData)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erro ao importar eventos.');
+        }
+        return response.json();
+    }
+
     // Expose the public API
     window.eventService = {
         addEvent,
+        importEvents,
         getEvents,
         getEventsForDate,
         getEventById,

@@ -296,6 +296,19 @@
         return response.json();
     };
 
+    window.educationService.importStudentsToClass = async function(classId, studentsData) {
+        const response = await fetch(`/api/turmas/${classId}/alunos/import`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(studentsData)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Erro ao importar alunos.');
+        }
+        return response.json();
+    };
+
     // --- Gestão de Avaliações (Evaluations) ---
 
     window.educationService.addEvaluation = async function(evaluationData) {

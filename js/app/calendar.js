@@ -1,3 +1,65 @@
+function parseICS(content) {
+    const events = [];
+    const lines = content.replace(/\r\n/g, '\n').split('\n');
+    let currentEvent = null;
+
+    lines.forEach(line => {
+        if (line.startsWith('BEGIN:VEVENT')) {
+            currentEvent = {};
+        } else if (line.startsWith('END:VEVENT')) {
+            if (currentEvent && currentEvent.title && currentEvent.date) {
+                events.push(currentEvent);
+            }
+            currentEvent = null;
+        } else if (currentEvent) {
+            const [key, ...valueParts] = line.split(':');
+            if (!key || valueParts.length === 0) return;
+
+            const value = valueParts.join(':').trim();
+            const keyParts = key.split(';');
+            const mainKey = keyParts[0];
+
+            switch (mainKey) {
+                case 'SUMMARY':
+                    currentEvent.title = value;
+                    break;
+                case 'DESCRIPTION':
+                    currentEvent.description = value.replace(/\\n/g, '\n');
+                    break;
+                case 'DTSTART':
+                case 'DTEND':
+                    // Formats: YYYYMMDDTHHMMSSZ, YYYYMMDDTHHMMSS, YYYYMMDD
+                    const dateMatch = value.match(/^(\d{8})/);
+                    const timeMatch = value.match(/T(\d{6})/);
+
+                    if (dateMatch) {
+                        const y = dateMatch[1].substring(0, 4);
+                        const m = dateMatch[1].substring(4, 6);
+                        const d = dateMatch[1].substring(6, 8);
+                        const dateStr = `${y}-${m}-${d}`;
+
+                        if (mainKey === 'DTSTART') {
+                            currentEvent.date = dateStr;
+                        }
+                    }
+
+                    if (timeMatch) {
+                        const h = timeMatch[1].substring(0, 2);
+                        const min = timeMatch[1].substring(2, 4);
+                        const timeStr = `${h}:${min}`;
+
+                        if (mainKey === 'DTSTART') {
+                            currentEvent.startTime = timeStr;
+                        } else { // DTEND
+                            currentEvent.endTime = timeStr;
+                        }
+                    }
+                    break;
+            }
+        }
+    });
+    return events;
+}
 // Variable to store the current filter category
 let currentFilterCategory = 'all';
 // Variable to store reminders for the event currently being edited/created in the modal
@@ -454,4 +516,35 @@ async function initAllEventsView() {
     });
 
     await filterAndRenderAllEvents();
+
+    const importIcsInput = document.getElementById('import-ics-file');
+    importIcsInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const content = e.target.result;
+            const eventsData = parseICS(content);
+
+            if (eventsData.length === 0) {
+                showToast('Arquivo .ics vazio ou sem eventos válidos.', 'error');
+                return;
+            }
+
+            try {
+                const result = await window.eventService.importEvents(eventsData);
+                showToast(`${result.count} evento(s) importado(s) com sucesso.`);
+            } catch (err) {
+                showToast(`Erro ao importar eventos: ${err.message}`, 'error');
+            }
+            event.target.value = ''; // Reset input
+            await initAllEventsView(); // Refresh view
+        };
+        reader.onerror = () => {
+            showToast('Erro ao ler o arquivo.', 'error');
+            event.target.value = '';
+        };
+        reader.readAsText(file);
+    });
 }
