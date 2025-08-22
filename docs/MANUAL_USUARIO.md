@@ -7,7 +7,7 @@ Aqui você encontrará tutoriais passo a passo sobre como gerenciar sua vida aca
 ## Índice
 
 1.  **[Primeiros Passos](#primeiros-passos)**
-    *   [Acessando a Aplicação e Fazendo Login](#acessando-a-aplicação-e-fazendo-login)
+    *   [Acessando a Aplicação](#acessando-a-aplicação-e-fazendo-login)
     *   [Visão Geral da Interface](#visão-geral-da-interface)
 2.  **[Gerenciando sua Agenda](#gerenciando-sua-agenda)**
     *   [Usando o Calendário](#usando-o-calendário)
@@ -35,7 +35,7 @@ Aqui você encontrará tutoriais passo a passo sobre como gerenciar sua vida aca
 
 Esta seção aborda como acessar a aplicação e oferece uma visão geral da sua interface para que você possa começar a usá-la rapidamente.
 
-### Acessando a Aplicação e Fazendo Login
+### Acessando a Aplicação
 <a name="acessando-a-aplicação-e-fazendo-login"></a>
 
 Para utilizar a Agenda Pessoal, você precisa primeiro iniciar o servidor local. Siga os passos abaixo:
@@ -47,13 +47,6 @@ Para utilizar a Agenda Pessoal, você precisa primeiro iniciar o servidor local.
     python launch.py
     ```
 4.  Após a execução, o script tentará abrir a aplicação automaticamente no seu navegador padrão. Caso isso não aconteça, você pode acessá-la manualmente no endereço `http://127.0.0.1:8000`.
-
-**Processo de Login**
-
-Ao acessar a aplicação pela primeira vez, você será apresentado a uma tela de login. Como a aplicação agora salva seus dados de forma segura em um servidor, é necessário ter uma conta.
-
--   **Se você já tem uma conta:** Insira seu email e senha para fazer o login.
--   **Se você é um novo usuário:** Procure pela opção "Criar conta" ou "Registrar-se" e siga as instruções para criar sua conta.
 
 ### Visão Geral da Interface
 <a name="visão-geral-da-interface"></a>
