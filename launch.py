@@ -456,19 +456,8 @@ def import_alunos(turma_id):
                 errors.append(f'Aluno sem nome ignorado: {student}')
                 continue
 
-            # Date conversion
-            data_nascimento_str = student.get('data_nascimento', '')
-            formatted_date = None
-            if data_nascimento_str:
-                try:
-                    # Input format is 'dd-mm-yyyy'
-                    dt_obj = datetime.strptime(data_nascimento_str, '%d-%m-%Y')
-                    # Database format is 'yyyy-mm-dd'
-                    formatted_date = dt_obj.strftime('%Y-%m-%d')
-                except ValueError:
-                    error_count += 1
-                    errors.append(f'Formato de data inválido para o aluno {student.get("nome")}: {data_nascimento_str}')
-                    continue
+            # The frontend now sends the date in YYYY-MM-DD format.
+            formatted_date = student.get('data_nascimento') if student.get('data_nascimento') else None
 
             # Create student
             aluno_id = f"aluno_{uuid.uuid4().hex}"
