@@ -46,7 +46,7 @@ graph TD
     end
 
     subgraph "Servidor (Backend)"
-        D[API REST <br> (Python)]
+        D[API REST (Python)]
         D --> E{Lógica de Negócios}
         E --> F[Banco de Dados]
         D --> G[Serviços Externos <br> ex: Modelo de IA]
