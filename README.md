@@ -1,22 +1,32 @@
 # Agenda Pessoal
 
-Uma aplicação web de agenda pessoal e acadêmica que roda 100% no navegador, sem necessidade de backend.
+Uma aplicação web de agenda pessoal e acadêmica com uma arquitetura cliente-servidor moderna.
 
 ## Visão Geral
 
-Este projeto é uma Single Page Application (SPA) para gerenciamento de tarefas, eventos e atividades acadêmicas. Todos os dados são armazenados localmente no navegador do usuário, utilizando `localStorage`.
+Este projeto é uma Single Page Application (SPA) que se conecta a um backend para oferecer uma experiência rica e persistente. Embora algumas funcionalidades legadas ainda utilizem o `localStorage`, o núcleo da aplicação agora salva os dados em um servidor central, permitindo acesso de qualquer lugar.
+
+Para um guia detalhado sobre como usar todas as funcionalidades, consulte nosso **[Manual do Usuário](docs/MANUAL_USUARIO.md)**.
 
 ## Principais Funcionalidades
 
-- **Agenda e Calendário:** Gerenciamento de eventos e tarefas.
-- **Recursos Didáticos:** Crie um banco de questões e gere quizzes para testar seus conhecimentos.
-- **Gestão Acadêmica:** Organize disciplinas, turmas, alunos e notas, com a funcionalidade de gerar boletins.
+- **Agenda e Calendário:** Gerenciamento completo de eventos e tarefas.
+- **Recursos Didáticos:**
+    - Crie e gerencie um banco de questões.
+    - Gere e realize quizzes para testar seus conhecimentos.
+    - Faça upload e organize materiais de estudo.
+- **Gestão Acadêmica:**
+    - Organize disciplinas, turmas, alunos e notas.
+    - Crie e gerencie planos de aula detalhados.
+    - Gere boletins e relatórios de desempenho.
+- **Chat com Assistente:** Converse com um assistente de IA para obter ajuda e informações.
+- **Configurações Centralizadas:** Personalize a aparência e o comportamento da aplicação.
 
 ## Começando
 
 ### Para Executar a Aplicação
 
-Use o script `launch.py` para abrir o `index.html` no seu navegador padrão:
+Use o script `launch.py` para iniciar o servidor e abrir o `index.html` no seu navegador padrão:
 
 ```bash
 python launch.py
@@ -35,7 +45,7 @@ Abra o arquivo `tests/test-runner.html` em um navegador para rodar os testes uni
 ├── fonts/            # Fontes
 ├── js/
 │   ├── app/          # Módulos da aplicação (lógica principal)
-│   └── lib/          # Bibliotecas de terceiros
+│   └── ...           # Bibliotecas de terceiros (jQuery, Bootstrap, etc.)
 ├── tests/            # Testes unitários
 ├── views/            # Templates HTML das seções
 ├── index.html        # Ponto de entrada da aplicação
