@@ -52,6 +52,13 @@ Abra o arquivo `tests/test-runner.html` em um navegador para rodar os testes uni
 └── launch.py         # Script para iniciar a aplicação
 ```
 
+## Para Desenvolvedores
+
+Para aqueles interessados em contribuir com o projeto ou entender sua arquitetura técnica, os seguintes documentos são essenciais:
+
+-   **[Documentação da API](docs/API.md):** Um guia detalhado de todos os endpoints da API REST.
+-   **[Manual de Implantação](docs/DEPLOY.md):** Instruções passo a passo para implantar a aplicação em um ambiente de produção.
+
 ## Como Contribuir
 
 1.  **Faça um Fork:** Crie um fork do projeto.
