@@ -5,7 +5,7 @@ import sys
 import json
 import uuid
 import database as db
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 
 # Configuração do Flask
 UPLOAD_FOLDER = 'uploads'
@@ -314,13 +314,14 @@ def create_aluno():
 
     new_id = f"aluno_{uuid.uuid4().hex}"
     nome = data['nome']
-    matricula = data.get('matricula', '')
+    numero_chamada = data.get('numero_chamada')
     data_nascimento = data.get('data_nascimento', '')
+    situacao = data.get('situacao', 'Ativo')
 
     conn = db.get_db_connection()
     conn.execute(
-        'INSERT INTO aluno (id, nome, matricula, data_nascimento) VALUES (?, ?, ?, ?)',
-        (new_id, nome, matricula, data_nascimento)
+        'INSERT INTO aluno (id, nome, numero_chamada, data_nascimento, situacao) VALUES (?, ?, ?, ?, ?)',
+        (new_id, nome, numero_chamada, data_nascimento, situacao)
     )
     conn.commit()
     new_aluno = conn.execute('SELECT * FROM aluno WHERE id = ?', (new_id,)).fetchone()
@@ -349,12 +350,13 @@ def update_aluno(aluno_id):
         return jsonify({'error': 'Aluno não encontrado'}), 404
 
     nome = data.get('nome', aluno['nome'])
-    matricula = data.get('matricula', aluno['matricula'])
+    numero_chamada = data.get('numero_chamada', aluno['numero_chamada'])
     data_nascimento = data.get('data_nascimento', aluno['data_nascimento'])
+    situacao = data.get('situacao', aluno['situacao'])
 
     conn.execute(
-        'UPDATE aluno SET nome = ?, matricula = ?, data_nascimento = ? WHERE id = ?',
-        (nome, matricula, data_nascimento, aluno_id)
+        'UPDATE aluno SET nome = ?, numero_chamada = ?, data_nascimento = ?, situacao = ? WHERE id = ?',
+        (nome, numero_chamada, data_nascimento, situacao, aluno_id)
     )
     conn.commit()
     updated_aluno = conn.execute('SELECT * FROM aluno WHERE id = ?', (aluno_id,)).fetchone()
@@ -454,11 +456,25 @@ def import_alunos(turma_id):
                 errors.append(f'Aluno sem nome ignorado: {student}')
                 continue
 
+            # Date conversion
+            data_nascimento_str = student.get('data_nascimento', '')
+            formatted_date = None
+            if data_nascimento_str:
+                try:
+                    # Input format is 'dd-mm-yyyy'
+                    dt_obj = datetime.strptime(data_nascimento_str, '%d-%m-%Y')
+                    # Database format is 'yyyy-mm-dd'
+                    formatted_date = dt_obj.strftime('%Y-%m-%d')
+                except ValueError:
+                    error_count += 1
+                    errors.append(f'Formato de data inválido para o aluno {student.get("nome")}: {data_nascimento_str}')
+                    continue
+
             # Create student
             aluno_id = f"aluno_{uuid.uuid4().hex}"
             cursor.execute(
-                'INSERT INTO aluno (id, nome, matricula, data_nascimento) VALUES (?, ?, ?, ?)',
-                (aluno_id, student['nome'], student.get('matricula', ''), student.get('data_nascimento', ''))
+                'INSERT INTO aluno (id, nome, numero_chamada, data_nascimento, situacao) VALUES (?, ?, ?, ?, ?)',
+                (aluno_id, student['nome'], student.get('numero_chamada'), formatted_date, student.get('situacao', 'Ativo'))
             )
 
             # Enroll student

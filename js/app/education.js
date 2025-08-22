@@ -3,20 +3,18 @@
     function parseCSV(content) {
         const lines = content.split('\n').filter(line => line.trim() !== '');
         if (lines.length < 1) {
-            return []; // Retorna vazio se não houver conteúdo
+            return [];
         }
-        // Assume que a primeira linha é o cabeçalho
-        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s+/g, '_').replace(/[()]/g, ''));
         const data = [];
 
         for (let i = 1; i < lines.length; i++) {
             const values = lines[i].split(',').map(v => v.trim());
-            // Pula linhas que não têm o mesmo número de colunas que o cabeçalho
-            if (values.length !== headers.length) continue;
+            if (values.length > headers.length) continue; // Allow fewer columns
 
             const entry = {};
             headers.forEach((header, index) => {
-                entry[header] = values[index];
+                entry[header] = values[index] || '';
             });
             data.push(entry);
         }
@@ -260,22 +258,32 @@
             enrolledList.innerHTML = '';
             let enrolledStudents = await window.educationService.getStudentsByClass(classId);
 
-            // This assumes student objects have a 'status' property, which is not in the DB schema.
-            // This part of the logic might need adjustment if student status is a feature to be kept.
-            // For now, the filter will be ignored as 'status' is not a field.
-            // if (hideInactiveCheckbox.checked) {
-            //     enrolledStudents = enrolledStudents.filter(student => student.status === 'Ativo');
-            // }
+            if (hideInactiveCheckbox.checked) {
+                enrolledStudents = enrolledStudents.filter(student => student.situacao === 'Ativo');
+            }
 
-            enrolledStudents.sort((a, b) => (a.callNumber || 0) - (b.callNumber || 0));
+            enrolledStudents.sort((a, b) => (a.numero_chamada || 0) - (b.numero_chamada || 0));
+
+            // Adiciona um cabeçalho à lista
+            enrolledList.innerHTML = `
+                <li class="list-group-item list-group-item-info">
+                    <div class="row">
+                        <div class="col-xs-2"><strong>Nº</strong></div>
+                        <div class="col-xs-5"><strong>Nome</strong></div>
+                        <div class="col-xs-3"><strong>Situação</strong></div>
+                        <div class="col-xs-2"><strong>Ações</strong></div>
+                    </div>
+                </li>
+            `;
 
             enrolledStudents.forEach(student => {
                 const item = `
                     <li class="list-group-item">
                         <div class="row">
-                            <div class="col-xs-6">${student.nome}</div>
-                            <div class="col-xs-3">${student.matricula || ''}</div>
-                            <div class="col-xs-3">
+                            <div class="col-xs-2">${student.numero_chamada || ''}</div>
+                            <div class="col-xs-5">${student.nome}</div>
+                            <div class="col-xs-3">${student.situacao || 'N/A'}</div>
+                            <div class="col-xs-2">
                                 <button class="btn btn-xs btn-danger pull-right" onclick="removeStudentFromClassWrapper('${student.id}', '${classId}')">Remover</button>
                             </div>
                         </div>
@@ -294,9 +302,16 @@
         document.getElementById('saveNewStudentBtn').onclick = async () => {
             const studentData = {
                 nome: document.getElementById('add-student-name').value,
-                matricula: document.getElementById('add-student-call-number').value, // Assuming call number is matricula
-                data_nascimento: document.getElementById('add-student-birthdate').value
+                numero_chamada: parseInt(document.getElementById('add-student-call-number').value, 10),
+                data_nascimento: document.getElementById('add-student-birthdate').value,
+                situacao: document.getElementById('add-student-status').value
             };
+
+            if (!studentData.nome) {
+                alert('O nome do aluno é obrigatório.');
+                return;
+            }
+
             const targetClassId = document.getElementById('add-student-class-id').value;
 
             try {
@@ -328,7 +343,24 @@
             const reader = new FileReader();
             reader.onload = async (e) => {
                 const content = e.target.result;
-                const studentsData = parseCSV(content);
+                const studentsData = parseCSV(content).map(student => {
+                    // Renomeia as chaves para corresponder ao backend e formata a data
+                    const formattedStudent = {
+                        nome: student.nome_do_aluno,
+                        numero_chamada: parseInt(student.numero_da_chamada, 10),
+                        data_nascimento: '',
+                        situacao: student.situação_do_aluno || 'Ativo'
+                    };
+
+                    const dob = student.data_de_nascimento_dd-mm-aaaa;
+                    if (dob) {
+                        const parts = dob.split('-');
+                        if (parts.length === 3) {
+                            formattedStudent.data_nascimento = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                        }
+                    }
+                    return formattedStudent;
+                });
 
                 if (studentsData.length === 0) {
                     showToast('Arquivo CSV vazio ou em formato inválido.', 'error');
@@ -338,6 +370,9 @@
                 try {
                     const result = await window.educationService.importStudentsToClass(classId, studentsData);
                     showToast(result.message || `${result.success_count} aluno(s) importado(s) com sucesso.`);
+                    if (result.errors && result.errors.length > 0) {
+                        console.warn('Erros de importação:', result.errors);
+                    }
                 } catch (err) {
                     showToast(`Erro ao importar alunos: ${err.message}`, 'error');
                 }
