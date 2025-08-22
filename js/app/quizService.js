@@ -10,10 +10,11 @@ const quizService = (() => {
 
     /**
      * Generates a new quiz based on the provided configuration.
+     * This is now an async function as it depends on the async questionService.
      * @param {object} config - Quiz configuration { numQuestions, subject, difficulty }
-     * @returns {Array<Question>} An array of questions for the quiz, or empty if none match.
+     * @returns {Promise<Array<Question>>} A promise that resolves to an array of questions for the quiz.
      */
-    function generateQuiz(config) {
+    async function generateQuiz(config) {
         currentQuiz.config = config;
         currentQuiz.questions = [];
         currentQuiz.userAnswers = [];
@@ -27,8 +28,8 @@ const quizService = (() => {
             filters.difficulty = config.difficulty;
         }
 
-        // Assuming questionService.getQuestions is globally available
-        let availableQuestions = questionService.getQuestions(filters);
+        // questionService.getQuestions is now async
+        let availableQuestions = await questionService.getQuestions(filters);
 
         // Shuffle available questions to get a random selection
         let shuffledQuestions = availableQuestions.sort(() => 0.5 - Math.random());
