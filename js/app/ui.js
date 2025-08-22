@@ -307,11 +307,6 @@ const ui = (() => {
                 }
             });
         }
-                } else {
-                    displayFeedback(`Por favor, preencha todos os campos obrigatórios: ${missingFields.join(', ')}.`, 'danger', 'add-question-feedback');
-                }
-            });
-        }
 
         const formInputsToClearFeedback = ['question-text', 'question-subject', 'question-difficulty', 'question-answer'];
         formInputsToClearFeedback.forEach(inputId => {
