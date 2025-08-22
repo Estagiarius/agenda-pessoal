@@ -119,17 +119,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         } else if (viewKey === '#/questions') {
-            fetchView('views/question_bank.html', () => {
+            fetchView('views/question_bank.html', async () => { // Async callback
                 if (typeof ui !== 'undefined' && typeof ui.showQuestionBank === 'function') {
-                    ui.showQuestionBank(); // This function might need to target the newly injected content
+                    await ui.showQuestionBank(); // Await the async function
                 } else {
                     console.error('ui.showQuestionBank() não está disponível.');
                 }
             });
         } else if (viewKey === '#/quiz-config') {
-            fetchView('views/quiz_config.html', () => {
+            fetchView('views/quiz_config.html', async () => { // Async callback
                 if (typeof ui !== 'undefined' && typeof ui.showQuizConfigView === 'function') {
-                    ui.showQuizConfigView();
+                    await ui.showQuizConfigView(); // Await the async function
                 } else {
                     console.error('ui.showQuizConfigView() não está disponível.');
                 }

@@ -79,7 +79,7 @@ const ui = (() => {
         };
     }
 
-    function handleFilterChange() {
+    async function handleFilterChange() {
         const subjectFilter = document.getElementById('filter-subject').value;
         const difficultyFilter = document.getElementById('filter-difficulty').value;
 
@@ -87,7 +87,8 @@ const ui = (() => {
         if (subjectFilter) filters.subject = subjectFilter;
         if (difficultyFilter) filters.difficulty = difficultyFilter;
 
-        renderQuestions(questionService.getQuestions(filters));
+        const questions = await questionService.getQuestions(filters);
+        renderQuestions(questions);
     }
 
     function displayFeedback(message, type, containerId) {
@@ -164,17 +165,22 @@ const ui = (() => {
         questionsListDiv.appendChild(ul);
     }
 
-    function populateSubjectFilter() {
-        const subjects = questionService.getAllSubjects();
-        const filterSubjectDatalist = document.getElementById('subject-datalist'); 
-        
-        if (filterSubjectDatalist) {
-            filterSubjectDatalist.innerHTML = ''; 
-            subjects.forEach(subject => {
-                const option = document.createElement('option');
-                option.value = subject;
-                filterSubjectDatalist.appendChild(option);
-            });
+    async function populateSubjectFilter() {
+        try {
+            const subjects = await questionService.getAllSubjects();
+            const filterSubjectDatalist = document.getElementById('subject-datalist');
+
+            if (filterSubjectDatalist) {
+                filterSubjectDatalist.innerHTML = '';
+                subjects.forEach(subject => {
+                    const option = document.createElement('option');
+                    option.value = subject;
+                    filterSubjectDatalist.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error("Failed to populate subject filter:", error);
+            displayFeedback("Falha ao carregar a lista de assuntos.", "error", "add-question-feedback");
         }
     }
 
@@ -216,7 +222,7 @@ const ui = (() => {
     function initQuestionBankEventListeners() {
         const addQuestionForm = document.getElementById('add-question-form');
         if (addQuestionForm) {
-            addQuestionForm.addEventListener('submit', event => {
+            addQuestionForm.addEventListener('submit', async event => { // Make listener async
                 event.preventDefault();
 
                 const text = document.getElementById('question-text').value;
@@ -268,28 +274,39 @@ const ui = (() => {
                 });
             
                 if (isValid) {
-                    questionService.addQuestion(text, subject, difficulty, options, answer);
-                    renderQuestions(questionService.getQuestions());
-                    populateSubjectFilter(); 
-                    addQuestionForm.reset(); 
-            
-                    const optionsContainer = document.getElementById('question-options-container');
-                    if (optionsContainer) {
-                        optionsContainer.innerHTML = `
-                            <div class="form-group dynamic-option">
-                                <label>Opção 1:</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control question-option-input" placeholder="Texto da opção">
-                                    <span class="input-group-btn">
-                                        <button type="button" class="btn btn-danger remove-option-btn" style="display:none;">Remover</button>
-                                    </span>
+                    try {
+                        await questionService.addQuestion(text, subject, difficulty, options, answer);
+                        const allQuestions = await questionService.getQuestions();
+                        renderQuestions(allQuestions);
+                        await populateSubjectFilter();
+                        addQuestionForm.reset();
+
+                        const optionsContainer = document.getElementById('question-options-container');
+                        if (optionsContainer) {
+                            optionsContainer.innerHTML = `
+                                <div class="form-group dynamic-option">
+                                    <label>Opção 1:</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control question-option-input" placeholder="Texto da opção">
+                                        <span class="input-group-btn">
+                                            <button type="button" class="btn btn-danger remove-option-btn" style="display:none;">Remover</button>
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
-                        `;
-                        updateOptionLabels(); 
+                            `;
+                            updateOptionLabels();
+                        }
+
+                        displayFeedback('Pergunta adicionada com sucesso!', 'success', 'add-question-feedback');
+                    } catch (error) {
+                        console.error("Failed to add question:", error);
+                        displayFeedback('Falha ao adicionar a pergunta. Verifique o console para mais detalhes.', 'danger', 'add-question-feedback');
                     }
-                    
-                    displayFeedback('Pergunta adicionada com sucesso!', 'success', 'add-question-feedback');
+                } else {
+                    displayFeedback(`Por favor, preencha todos os campos obrigatórios: ${missingFields.join(', ')}.`, 'danger', 'add-question-feedback');
+                }
+            });
+        }
                 } else {
                     displayFeedback(`Por favor, preencha todos os campos obrigatórios: ${missingFields.join(', ')}.`, 'danger', 'add-question-feedback');
                 }
@@ -366,16 +383,16 @@ const ui = (() => {
         updateOptionLabels();
     }
 
-    function showQuestionBank() {
-        // Container visibility is now handled by the router loading the partial.
-        // This function focuses on initializing the content of the question bank view.
-        renderQuestions(questionService.getQuestions());
-        populateSubjectFilter();
-        initQuestionBankEventListeners(); 
-        // const homeView = document.getElementById('home-view'); 
-        // if (homeView) {
-        //     homeView.style.display = 'none'; // Router should handle visibility of other general areas
-        // }
+    async function showQuestionBank() {
+        try {
+            const questions = await questionService.getQuestions();
+            renderQuestions(questions);
+            await populateSubjectFilter();
+            initQuestionBankEventListeners(); // This one doesn't need await as it just attaches listeners
+        } catch (error) {
+            console.error("Failed to show question bank:", error);
+            displayFeedback("Falha ao carregar o banco de questões.", "error", "questions-list");
+        }
     }
 
     function hideQuestionBank() {
@@ -387,22 +404,23 @@ const ui = (() => {
     
     // ---- Quiz Configuration UI Logic ----
 
-    function populateQuizSubjectFilter() {
+    async function populateQuizSubjectFilter() {
         const subjectSelect = document.getElementById('quiz-subject');
         if (!subjectSelect) return;
 
         subjectSelect.innerHTML = '<option value="">Todos os Assuntos</option>'; 
-        if (typeof questionService === 'undefined' || typeof questionService.getAllSubjects !== 'function') {
-            console.error('questionService ou getAllSubjects não está disponível para popular os assuntos do quiz.');
-            return;
+        try {
+            const subjects = await questionService.getAllSubjects();
+            subjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject;
+                option.textContent = subject;
+                subjectSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error("Failed to populate quiz subject filter:", error);
+            displayFeedback("Falha ao carregar a lista de assuntos para o quiz.", "error", "quiz-config-feedback");
         }
-        const subjects = questionService.getAllSubjects();
-        subjects.forEach(subject => {
-            const option = document.createElement('option');
-            option.value = subject;
-            option.textContent = subject;
-            subjectSelect.appendChild(option);
-        });
     }
 
     function initQuizConfigEventListeners() {
@@ -410,32 +428,37 @@ const ui = (() => {
         if (quizConfigForm) {
             if (quizConfigForm.dataset.listenerAttached) return;
 
-            quizConfigForm.addEventListener('submit', event => {
+            quizConfigForm.addEventListener('submit', async event => { // Make async
                 event.preventDefault();
                 const numQuestions = document.getElementById('quiz-num-questions').value;
                 const subject = document.getElementById('quiz-subject').value;
                 const difficulty = document.getElementById('quiz-difficulty').value;
                 
-                const generatedQuestions = quizService.generateQuiz({ 
-                    numQuestions: numQuestions, 
-                    subject: subject, 
-                    difficulty: difficulty 
-                });
-    
-                if (generatedQuestions && generatedQuestions.length > 0) {
-                    window.location.hash = '#/quiz/take'; 
-                } else {
-                    displayFeedback('Nenhuma pergunta encontrada com os seus critérios. Por favor, tente opções diferentes ou adicione mais perguntas.', 'warning', 'quiz-config-feedback');
+                try {
+                    const generatedQuestions = await quizService.generateQuiz({ // Await the async call
+                        numQuestions: numQuestions,
+                        subject: subject,
+                        difficulty: difficulty
+                    });
+
+                    if (generatedQuestions && generatedQuestions.length > 0) {
+                        window.location.hash = '#/quiz/take';
+                    } else {
+                        displayFeedback('Nenhuma pergunta encontrada com os seus critérios. Por favor, tente opções diferentes ou adicione mais perguntas.', 'warning', 'quiz-config-feedback');
+                    }
+                } catch (error) {
+                    console.error("Failed to generate quiz:", error);
+                    displayFeedback('Falha ao gerar o quiz. Verifique o console para mais detalhes.', 'danger', 'quiz-config-feedback');
                 }
             });
             quizConfigForm.dataset.listenerAttached = 'true'; 
         }
     }
 
-    function showQuizConfigView() {
+    async function showQuizConfigView() {
         // Container visibility is now handled by the router.
         // This function focuses on initializing the content of the quiz config view.
-        populateQuizSubjectFilter();
+        await populateQuizSubjectFilter();
         initQuizConfigEventListeners();
     }
 
