@@ -60,13 +60,13 @@ graph TD
 
     B -.-> C
 
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style B fill:#ccf,stroke:#333,stroke-width:2px
-    style C fill:#fcf,stroke:#333,stroke-width:2px
-    style D fill:#cff,stroke:#333,stroke-width:2px
-    style E fill:#cfc,stroke:#333,stroke-width:2px
-    style F fill:#f9c,stroke:#333,stroke-width:2px
-    style G fill:#ffc,stroke:#333,stroke-width:2px
+    style A fill:#1976d2,stroke:#333,stroke-width:2px
+    style B fill:#64b5f6,stroke:#333,stroke-width:2px
+    style C fill:#ffb300,stroke:#333,stroke-width:2px
+    style D fill:#388e3c,stroke:#333,stroke-width:2px
+    style E fill:#81c784,stroke:#333,stroke-width:2px
+    style F fill:#d32f2f,stroke:#333,stroke-width:2px
+    style G fill:#fbc02d,stroke:#333,stroke-width:2px
 ```
 
 ### 5. Considerações de Segurança
