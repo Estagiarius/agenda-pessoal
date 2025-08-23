@@ -2,19 +2,45 @@
     'use strict';
     function parseCSV(content) {
         const lines = content.split('\n').filter(line => line.trim() !== '');
-        if (lines.length < 1) {
-            return [];
-        }
-        const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s+/g, '_').replace(/[()]/g, ''));
-        const data = [];
+        if (lines.length < 1) return [];
 
-        for (let i = 1; i < lines.length; i++) {
-            const values = lines[i].split(',').map(v => v.trim());
-            if (values.length > headers.length) continue; // Allow fewer columns
+        // 1. Find the header row index by looking for keywords
+        let headerIndex = -1;
+        const headerKeywords = ['nº de chamada', 'nome do aluno', 'data de nascimento'];
+        for (let i = 0; i < lines.length; i++) {
+            const lowerLine = lines[i].toLowerCase();
+            if (headerKeywords.every(keyword => lowerLine.includes(keyword))) {
+                headerIndex = i;
+                break;
+            }
+        }
+        if (headerIndex === -1) return []; // Header not found
+
+        // 2. Detect delimiter from the header row
+        const headerLine = lines[headerIndex];
+        const delimiter = headerLine.includes(';') ? ';' : ',';
+
+        // 3. Normalize headers to be used as keys
+        const headers = headerLine.split(delimiter).map(h =>
+            h.trim().toLowerCase()
+             .replace(/nº de chamada/g, 'numero_chamada')
+             .replace(/nome do aluno/g, 'nome_do_aluno')
+             .replace(/data de nascimento/g, 'data_nascimento')
+             .replace(/situação do aluno/g, 'situacao')
+             .replace(/\s+/g, '_')
+        );
+
+        // 4. Parse data rows
+        const data = [];
+        for (let i = headerIndex + 1; i < lines.length; i++) {
+            const values = lines[i].split(delimiter).map(v => v.trim());
+            if (values.length < 2) continue; // Skip empty or invalid lines
 
             const entry = {};
             headers.forEach((header, index) => {
-                entry[header] = values[index] || '';
+                if (header) { // Only assign if header is not empty
+                    entry[header] = values[index] || '';
+                }
             });
             data.push(entry);
         }
@@ -344,20 +370,21 @@
             reader.onload = async (e) => {
                 const content = e.target.result;
                 const studentsData = parseCSV(content).map(student => {
-                    const dob = student['data_de_nascimento_dd-mm-aaaa'];
+                    const dob = student.data_nascimento; // Use the new normalized header
                     let formattedDob = '';
                     if (dob) {
-                        const parts = dob.split('-');
-                        if (parts.length === 3 && parts[0].length === 2) { // dd-mm-yyyy
+                        // Handles dd/mm/yyyy
+                        const parts = dob.split('/');
+                        if (parts.length === 3) {
                             formattedDob = `${parts[2]}-${parts[1]}-${parts[0]}`;
                         }
                     }
 
                     return {
                         nome: student.nome_do_aluno,
-                        numero_chamada: parseInt(student.numero_da_chamada, 10),
+                        numero_chamada: parseInt(student.numero_chamada, 10),
                         data_nascimento: formattedDob,
-                        situacao: student.situação_do_aluno || 'Ativo'
+                        situacao: student.situacao || 'Ativo'
                     };
                 });
 
