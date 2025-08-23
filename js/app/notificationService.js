@@ -127,7 +127,7 @@
     /**
      * Checks for pending event reminders and shows notifications if due.
      */
-    function checkReminders() {
+    async function checkReminders() {
         console.log('notificationService: Executando checkReminders...', new Date().toLocaleTimeString());
         if (!window.eventService || typeof window.eventService.getEvents !== 'function') {
             console.warn('eventService not available or not fully initialized for checking reminders.'); // Changed to warn and updated message
@@ -138,8 +138,13 @@
             return; // moment.js is crucial for date/time manipulation here
         }
 
-        const allEvents = window.eventService.getEvents();
+        const allEvents = await window.eventService.getEvents();
         const now = new Date();
+
+        if (!Array.isArray(allEvents)) {
+            console.warn('checkReminders: getEvents() did not return an array, skipping check.');
+            return;
+        }
 
         allEvents.forEach(event => {
             if (!event.reminders || !Array.isArray(event.reminders)) {

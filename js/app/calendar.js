@@ -471,8 +471,8 @@ async function initAllEventsView() {
                 const vevents = vcalendar.getAllSubcomponents('vevent');
 
                 const eventsToImport = [];
-                const now = new ICAL.Time.now();
-                const twoYearsFromNow = now.clone().add(2, 'years');
+                const oneYearFromNow = new Date();
+                oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
 
                 vevents.forEach(vevent => {
                     const event = new ICAL.Event(vevent);
@@ -480,7 +480,12 @@ async function initAllEventsView() {
                     if (event.isRecurring()) {
                         const iterator = event.iterator();
                         let next;
-                        while ((next = iterator.next()) && next.compare(twoYearsFromNow) <= 0) {
+                        let count = 0;
+                        while ((next = iterator.next()) && count < 100) {
+                            const nextDate = next.toJSDate();
+                            if (nextDate > oneYearFromNow) {
+                                break;
+                            }
                             const occurrence = event.getOccurrenceDetails(next);
                             eventsToImport.push({
                                 title: occurrence.item.summary,
@@ -489,6 +494,7 @@ async function initAllEventsView() {
                                 endTime: occurrence.endDate && !occurrence.endDate.isDate ? occurrence.endDate.toJSDate().toTimeString().substring(0, 5) : '',
                                 description: occurrence.item.description || ''
                             });
+                            count++;
                         }
                     } else {
                         eventsToImport.push({
