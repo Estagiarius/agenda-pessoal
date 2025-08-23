@@ -2,21 +2,45 @@
     'use strict';
     function parseCSV(content) {
         const lines = content.split('\n').filter(line => line.trim() !== '');
-        if (lines.length < 1) {
-            return []; // Retorna vazio se não houver conteúdo
-        }
-        // Assume que a primeira linha é o cabeçalho
-        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-        const data = [];
+        if (lines.length < 1) return [];
 
-        for (let i = 1; i < lines.length; i++) {
-            const values = lines[i].split(',').map(v => v.trim());
-            // Pula linhas que não têm o mesmo número de colunas que o cabeçalho
-            if (values.length !== headers.length) continue;
+        // 1. Find the header row index by looking for keywords
+        let headerIndex = -1;
+        const headerKeywords = ['nº de chamada', 'nome do aluno', 'data de nascimento'];
+        for (let i = 0; i < lines.length; i++) {
+            const lowerLine = lines[i].toLowerCase();
+            if (headerKeywords.every(keyword => lowerLine.includes(keyword))) {
+                headerIndex = i;
+                break;
+            }
+        }
+        if (headerIndex === -1) return []; // Header not found
+
+        // 2. Detect delimiter from the header row
+        const headerLine = lines[headerIndex];
+        const delimiter = headerLine.includes(';') ? ';' : ',';
+
+        // 3. Normalize headers to be used as keys
+        const headers = headerLine.split(delimiter).map(h =>
+            h.trim().toLowerCase()
+             .replace(/nº de chamada/g, 'numero_chamada')
+             .replace(/nome do aluno/g, 'nome_do_aluno')
+             .replace(/data de nascimento/g, 'data_nascimento')
+             .replace(/situação do aluno/g, 'situacao')
+             .replace(/\s+/g, '_')
+        );
+
+        // 4. Parse data rows
+        const data = [];
+        for (let i = headerIndex + 1; i < lines.length; i++) {
+            const values = lines[i].split(delimiter).map(v => v.trim());
+            if (values.length < 2) continue; // Skip empty or invalid lines
 
             const entry = {};
             headers.forEach((header, index) => {
-                entry[header] = values[index];
+                if (header) { // Only assign if header is not empty
+                    entry[header] = values[index] || '';
+                }
             });
             data.push(entry);
         }
@@ -260,22 +284,32 @@
             enrolledList.innerHTML = '';
             let enrolledStudents = await window.educationService.getStudentsByClass(classId);
 
-            // This assumes student objects have a 'status' property, which is not in the DB schema.
-            // This part of the logic might need adjustment if student status is a feature to be kept.
-            // For now, the filter will be ignored as 'status' is not a field.
-            // if (hideInactiveCheckbox.checked) {
-            //     enrolledStudents = enrolledStudents.filter(student => student.status === 'Ativo');
-            // }
+            if (hideInactiveCheckbox.checked) {
+                enrolledStudents = enrolledStudents.filter(student => student.situacao === 'Ativo');
+            }
 
-            enrolledStudents.sort((a, b) => (a.callNumber || 0) - (b.callNumber || 0));
+            enrolledStudents.sort((a, b) => (a.numero_chamada || 0) - (b.numero_chamada || 0));
+
+            // Adiciona um cabeçalho à lista
+            enrolledList.innerHTML = `
+                <li class="list-group-item list-group-item-info">
+                    <div class="row">
+                        <div class="col-xs-2"><strong>Nº</strong></div>
+                        <div class="col-xs-5"><strong>Nome</strong></div>
+                        <div class="col-xs-3"><strong>Situação</strong></div>
+                        <div class="col-xs-2"><strong>Ações</strong></div>
+                    </div>
+                </li>
+            `;
 
             enrolledStudents.forEach(student => {
                 const item = `
                     <li class="list-group-item">
                         <div class="row">
-                            <div class="col-xs-6">${student.nome}</div>
-                            <div class="col-xs-3">${student.matricula || ''}</div>
-                            <div class="col-xs-3">
+                            <div class="col-xs-2">${student.numero_chamada || ''}</div>
+                            <div class="col-xs-5">${student.nome}</div>
+                            <div class="col-xs-3">${student.situacao || 'N/A'}</div>
+                            <div class="col-xs-2">
                                 <button class="btn btn-xs btn-danger pull-right" onclick="removeStudentFromClassWrapper('${student.id}', '${classId}')">Remover</button>
                             </div>
                         </div>
@@ -294,9 +328,16 @@
         document.getElementById('saveNewStudentBtn').onclick = async () => {
             const studentData = {
                 nome: document.getElementById('add-student-name').value,
-                matricula: document.getElementById('add-student-call-number').value, // Assuming call number is matricula
-                data_nascimento: document.getElementById('add-student-birthdate').value
+                numero_chamada: parseInt(document.getElementById('add-student-call-number').value, 10),
+                data_nascimento: document.getElementById('add-student-birthdate').value,
+                situacao: document.getElementById('add-student-status').value
             };
+
+            if (!studentData.nome) {
+                alert('O nome do aluno é obrigatório.');
+                return;
+            }
+
             const targetClassId = document.getElementById('add-student-class-id').value;
 
             try {
@@ -328,7 +369,24 @@
             const reader = new FileReader();
             reader.onload = async (e) => {
                 const content = e.target.result;
-                const studentsData = parseCSV(content);
+                const studentsData = parseCSV(content).map(student => {
+                    const dob = student.data_nascimento; // Use the new normalized header
+                    let formattedDob = '';
+                    if (dob) {
+                        // Handles dd/mm/yyyy
+                        const parts = dob.split('/');
+                        if (parts.length === 3) {
+                            formattedDob = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                        }
+                    }
+
+                    return {
+                        nome: student.nome_do_aluno,
+                        numero_chamada: parseInt(student.numero_chamada, 10),
+                        data_nascimento: formattedDob,
+                        situacao: student.situacao || 'Ativo'
+                    };
+                });
 
                 if (studentsData.length === 0) {
                     showToast('Arquivo CSV vazio ou em formato inválido.', 'error');
@@ -338,6 +396,9 @@
                 try {
                     const result = await window.educationService.importStudentsToClass(classId, studentsData);
                     showToast(result.message || `${result.success_count} aluno(s) importado(s) com sucesso.`);
+                    if (result.errors && result.errors.length > 0) {
+                        console.warn('Erros de importação:', result.errors);
+                    }
                 } catch (err) {
                     showToast(`Erro ao importar alunos: ${err.message}`, 'error');
                 }

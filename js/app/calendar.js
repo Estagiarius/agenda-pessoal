@@ -1,65 +1,4 @@
-function parseICS(content) {
-    const events = [];
-    const lines = content.replace(/\r\n/g, '\n').split('\n');
-    let currentEvent = null;
-
-    lines.forEach(line => {
-        if (line.startsWith('BEGIN:VEVENT')) {
-            currentEvent = {};
-        } else if (line.startsWith('END:VEVENT')) {
-            if (currentEvent && currentEvent.title && currentEvent.date) {
-                events.push(currentEvent);
-            }
-            currentEvent = null;
-        } else if (currentEvent) {
-            const [key, ...valueParts] = line.split(':');
-            if (!key || valueParts.length === 0) return;
-
-            const value = valueParts.join(':').trim();
-            const keyParts = key.split(';');
-            const mainKey = keyParts[0];
-
-            switch (mainKey) {
-                case 'SUMMARY':
-                    currentEvent.title = value;
-                    break;
-                case 'DESCRIPTION':
-                    currentEvent.description = value.replace(/\\n/g, '\n');
-                    break;
-                case 'DTSTART':
-                case 'DTEND':
-                    // Formats: YYYYMMDDTHHMMSSZ, YYYYMMDDTHHMMSS, YYYYMMDD
-                    const dateMatch = value.match(/^(\d{8})/);
-                    const timeMatch = value.match(/T(\d{6})/);
-
-                    if (dateMatch) {
-                        const y = dateMatch[1].substring(0, 4);
-                        const m = dateMatch[1].substring(4, 6);
-                        const d = dateMatch[1].substring(6, 8);
-                        const dateStr = `${y}-${m}-${d}`;
-
-                        if (mainKey === 'DTSTART') {
-                            currentEvent.date = dateStr;
-                        }
-                    }
-
-                    if (timeMatch) {
-                        const h = timeMatch[1].substring(0, 2);
-                        const min = timeMatch[1].substring(2, 4);
-                        const timeStr = `${h}:${min}`;
-
-                        if (mainKey === 'DTSTART') {
-                            currentEvent.startTime = timeStr;
-                        } else { // DTEND
-                            currentEvent.endTime = timeStr;
-                        }
-                    }
-                    break;
-            }
-        }
-    });
-    return events;
-}
+// A função parseICS personalizada foi removida. A biblioteca ICAL.js será usada em seu lugar.
 // Variable to store the current filter category
 let currentFilterCategory = 'all';
 // Variable to store reminders for the event currently being edited/created in the modal
@@ -525,25 +464,64 @@ async function initAllEventsView() {
         const reader = new FileReader();
         reader.onload = async (e) => {
             const content = e.target.result;
-            const eventsData = parseICS(content);
-
-            if (eventsData.length === 0) {
-                showToast('Arquivo .ics vazio ou sem eventos válidos.', 'error');
-                return;
-            }
 
             try {
-                const result = await window.eventService.importEvents(eventsData);
-                showToast(`${result.count} evento(s) importado(s) com sucesso.`);
+                const jcalData = ICAL.parse(content);
+                const vcalendar = new ICAL.Component(jcalData);
+                const vevents = vcalendar.getAllSubcomponents('vevent');
+
+                const eventsToImport = [];
+                const oneYearFromNow = new Date();
+                oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+
+                vevents.forEach(vevent => {
+                    const event = new ICAL.Event(vevent);
+
+                    if (event.isRecurring()) {
+                        const iterator = event.iterator();
+                        let next;
+                        let count = 0;
+                        while ((next = iterator.next()) && count < 100) {
+                            const nextDate = next.toJSDate();
+                            if (nextDate > oneYearFromNow) {
+                                break;
+                            }
+                            const occurrence = event.getOccurrenceDetails(next);
+                            eventsToImport.push({
+                                title: occurrence.item.summary,
+                                date: occurrence.startDate.toJSDate().toISOString().split('T')[0],
+                                startTime: !occurrence.startDate.isDate ? occurrence.startDate.toJSDate().toTimeString().substring(0, 5) : '',
+                                endTime: occurrence.endDate && !occurrence.endDate.isDate ? occurrence.endDate.toJSDate().toTimeString().substring(0, 5) : '',
+                                description: occurrence.item.description || ''
+                            });
+                            count++;
+                        }
+                    } else {
+                        eventsToImport.push({
+                            title: event.summary,
+                            date: event.startDate.toJSDate().toISOString().split('T')[0],
+                            startTime: !event.startDate.isDate ? event.startDate.toJSDate().toTimeString().substring(0, 5) : '',
+                            endTime: event.endDate && !event.endDate.isDate ? event.endDate.toJSDate().toTimeString().substring(0, 5) : '',
+                            description: event.description || ''
+                        });
+                    }
+                });
+
+                if (eventsToImport.length === 0) {
+                    showToast('Nenhum evento válido encontrado no arquivo .ics.', 'error');
+                    return;
+                }
+
+                await window.eventService.importEvents(eventsToImport);
+                showToast(`${eventsToImport.length} evento(s) importado(s) com sucesso.`);
+                await filterAndRenderAllEvents();
+
             } catch (err) {
-                showToast(`Erro ao importar eventos: ${err.message}`, 'error');
+                console.error('Erro ao processar arquivo .ics:', err);
+                showToast('Erro ao processar o arquivo .ics. Verifique o formato do arquivo.', 'error');
+            } finally {
+                event.target.value = '';
             }
-            event.target.value = ''; // Reset input
-            await initAllEventsView(); // Refresh view
-        };
-        reader.onerror = () => {
-            showToast('Erro ao ler o arquivo.', 'error');
-            event.target.value = '';
         };
         reader.readAsText(file);
     });
