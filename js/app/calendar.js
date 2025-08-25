@@ -511,14 +511,18 @@ async function initAllEventsView() {
 
                         let startTime = '';
                         if (!isAllDayStart && dtstartStr.includes('T')) {
-                            const timeParts = dtstartStr.split('T')[1].split(':');
-                            startTime = `${timeParts[0]}:${timeParts[1]}`;
+                            const timeStr = dtstartStr.split('T')[1];
+                            const hour = timeStr.substring(0, 2);
+                            const minute = timeStr.substring(2, 4);
+                            startTime = `${hour}:${minute}`;
                         }
 
                         let endTime = '';
                         if (dtendStr && !isAllDayStart && dtendStr.includes('T')) {
-                             const timeParts = dtendStr.split('T')[1].split(':');
-                             endTime = `${timeParts[0]}:${timeParts[1]}`;
+                             const timeStr = dtendStr.split('T')[1];
+                             const hour = timeStr.substring(0, 2);
+                             const minute = timeStr.substring(2, 4);
+                             endTime = `${hour}:${minute}`;
                         }
 
                         eventsToImport.push({
