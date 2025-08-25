@@ -220,44 +220,42 @@ async function displayUpcomingEventsAndTasks() { // ASYNC
     await displayUpcomingTasks();
 }
 
-async function displayUpcomingEvents() { // ASYNC
+async function displayUpcomingEvents() {
     const overviewContainer = document.getElementById('todays-overview');
     if (!overviewContainer) return;
 
     if (!window.eventService) {
-        overviewContainer.innerHTML = '<h3>Resumo de Hoje</h3><p>Serviço de eventos não disponível.</p>';
+        overviewContainer.innerHTML = '<h3>Eventos de Hoje</h3><p>Serviço de eventos não disponível.</p>';
         return;
     }
 
-    const allEvents = await window.eventService.getEvents(); // AWAIT
-    const today = moment().startOf('day');
-    const sevenDaysFromNow = moment().add(7, 'days').endOf('day');
+    const allEvents = await window.eventService.getEvents();
+    const today = moment(); // Get current moment
 
-    const upcomingEvents = allEvents
-        .filter(event => moment(event.date, 'YYYY-MM-DD').isBetween(today, sevenDaysFromNow, null, '[]'))
+    const todaysEvents = allEvents
+        .filter(event => moment(event.date, 'YYYY-MM-DD').isSame(today, 'day'))
         .sort((a, b) => {
-            const dateA = moment(a.date, 'YYYY-MM-DD');
-            const dateB = moment(b.date, 'YYYY-MM-DD');
-            if (dateA.isBefore(dateB)) return -1;
-            if (dateA.isAfter(dateB)) return 1;
+            // Sort by start time, treating 'all-day' events as earliest
+            if (!a.startTime && b.startTime) return -1;
+            if (a.startTime && !b.startTime) return 1;
             if (a.startTime && b.startTime) return a.startTime.localeCompare(b.startTime);
-            return a.startTime ? -1 : 1;
+            return 0; // Keep original order if both are all-day
         });
 
-    let contentHtml = '<h3>Resumo de Hoje</h3>';
-    if (upcomingEvents.length === 0) {
-        contentHtml += '<p>Nenhum evento programado para os próximos 7 dias.</p>';
+    let contentHtml = '<h3>Eventos de Hoje</h3>';
+    if (todaysEvents.length === 0) {
+        contentHtml += '<p>Nenhum evento programado para hoje.</p>';
     } else {
         contentHtml += '<ul class="list-group">';
-        upcomingEvents.forEach(event => {
+        todaysEvents.forEach(event => {
             contentHtml += `
                 <li class="list-group-item" data-event-id="${escapeHTML(String(event.id))}" style="cursor: pointer;">
                     <h5 class="list-group-item-heading">
-                        <span class="badge pull-right">${moment(event.date, 'YYYY-MM-DD').format('DD/MM')}</span>
                         ${escapeHTML(event.title)}
                     </h5>
                     <p class="list-group-item-text mb-0">
-                        ${event.startTime ? `Horário: ${escapeHTML(event.startTime)}` : 'Dia todo'}
+                        <span class="glyphicon glyphicon-time"></span>
+                        ${event.startTime ? ` ${escapeHTML(event.startTime)}` : ' Dia todo'}
                     </p>
                 </li>`;
         });
@@ -265,12 +263,16 @@ async function displayUpcomingEvents() { // ASYNC
     }
     overviewContainer.innerHTML = contentHtml;
 
-    overviewContainer.addEventListener('click', function(e) {
-        const listItem = e.target.closest('li.list-group-item[data-event-id]');
-        if (listItem) {
-            showEventDetails(listItem.dataset.eventId);
-        }
-    });
+    // Use a flag to prevent adding the listener multiple times
+    if (!overviewContainer.dataset.listenerAttached) {
+        overviewContainer.addEventListener('click', function(e) {
+            const listItem = e.target.closest('li.list-group-item[data-event-id]');
+            if (listItem) {
+                showEventDetails(listItem.dataset.eventId);
+            }
+        });
+        overviewContainer.dataset.listenerAttached = 'true';
+    }
 }
 
 async function displayUpcomingTasks() { // ASYNC
@@ -557,22 +559,41 @@ async function initAllEventsView() {
     await filterAndRenderAllEvents();
 
     const importIcsInput = document.getElementById('import-ics-file');
-    importIcsInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
+
+    // Helper function to format time from a Date object
+    function formatTime(date) {
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+    }
+
+    // Helper function to create a consistent event object from ICAL data
+    function createEventObjectFromIcal(summary, startDate, endDate, description) {
+        const jsStartDate = startDate.toJSDate();
+        const jsEndDate = endDate ? endDate.toJSDate() : null;
+
+        return {
+            title: summary,
+            date: jsStartDate.toISOString().split('T')[0],
+            startTime: !startDate.isDate ? formatTime(jsStartDate) : '',
+            endTime: endDate && !endDate.isDate ? formatTime(jsEndDate) : '',
+            description: description || ''
+        };
+    }
+
+    importIcsInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = async (e) => {
-            const content = e.target.result;
-
+        reader.onload = async (readerEvent) => {
+            const content = readerEvent.target.result;
             try {
                 const jcalData = ICAL.parse(content);
                 const vcalendar = new ICAL.Component(jcalData);
                 const vevents = vcalendar.getAllSubcomponents('vevent');
-
                 const eventsToImport = [];
-                const oneYearFromNow = new Date();
-                oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+                const oneYearFromNow = moment().add(1, 'year');
 
                 vevents.forEach(vevent => {
                     const event = new ICAL.Event(vevent);
@@ -580,47 +601,47 @@ async function initAllEventsView() {
                     if (event.isRecurring()) {
                         const iterator = event.iterator();
                         let next;
-                        let count = 0;
+                        let count = 0; // Limit to 100 occurrences per recurring event
                         while ((next = iterator.next()) && count < 100) {
-                            const nextDate = next.toJSDate();
-                            if (nextDate > oneYearFromNow) {
+                            if (moment(next.toJSDate()).isAfter(oneYearFromNow)) {
                                 break;
                             }
                             const occurrence = event.getOccurrenceDetails(next);
-                            eventsToImport.push({
-                                title: occurrence.item.summary,
-                                date: occurrence.startDate.toJSDate().toISOString().split('T')[0],
-                                startTime: !occurrence.startDate.isDate ? occurrence.startDate.toJSDate().toTimeString().substring(0, 5) : '',
-                                endTime: occurrence.endDate && !occurrence.endDate.isDate ? occurrence.endDate.toJSDate().toTimeString().substring(0, 5) : '',
-                                description: occurrence.item.description || ''
-                            });
+                            eventsToImport.push(createEventObjectFromIcal(
+                                occurrence.item.summary,
+                                occurrence.startDate,
+                                occurrence.endDate,
+                                occurrence.item.description
+                            ));
                             count++;
                         }
                     } else {
-                        eventsToImport.push({
-                            title: event.summary,
-                            date: event.startDate.toJSDate().toISOString().split('T')[0],
-                            startTime: !event.startDate.isDate ? event.startDate.toJSDate().toTimeString().substring(0, 5) : '',
-                            endTime: event.endDate && !event.endDate.isDate ? event.endDate.toJSDate().toTimeString().substring(0, 5) : '',
-                            description: event.description || ''
-                        });
+                        // For non-recurring events, only import if they are within the next year
+                        if (moment(event.startDate.toJSDate()).isBefore(oneYearFromNow)) {
+                            eventsToImport.push(createEventObjectFromIcal(
+                                event.summary,
+                                event.startDate,
+                                event.endDate,
+                                event.description
+                            ));
+                        }
                     }
                 });
 
                 if (eventsToImport.length === 0) {
-                    showToast('Nenhum evento válido encontrado no arquivo .ics.', 'error');
+                    showToast('Nenhum evento válido encontrado no arquivo .ics (ou todos os eventos são muito antigos/futuros).', 'error');
                     return;
                 }
 
                 await window.eventService.importEvents(eventsToImport);
-                showToast(`${eventsToImport.length} evento(s) importado(s) com sucesso.`);
+                showToast(`${eventsToImport.length} evento(s) importado(s) com sucesso.`, 'success');
                 await filterAndRenderAllEvents();
 
             } catch (err) {
                 console.error('Erro ao processar arquivo .ics:', err);
                 showToast('Erro ao processar o arquivo .ics. Verifique o formato do arquivo.', 'error');
             } finally {
-                event.target.value = '';
+                e.target.value = ''; // Reset file input
             }
         };
         reader.readAsText(file);
