@@ -466,9 +466,18 @@ async function initAllEventsView() {
             const content = e.target.result;
 
             try {
+                // Etapa 1: Verificar se a biblioteca ICAL foi carregada. Se não, o CDN pode estar em baixo.
+                if (typeof ICAL === 'undefined') {
+                    showToast('Erro: A biblioteca de calendário (ical.js) não conseguiu ser carregada. Verifique a sua conexão com a internet.', 'error');
+                    console.error("A biblioteca ICAL.js não está definida. Verifique a tag de script em index.html e a conexão de rede.");
+                    return;
+                }
+
+                // Etapa 2: Usar a única função necessária da biblioteca para obter dados brutos.
                 const jcalData = ICAL.parse(content);
                 const eventsToImport = [];
 
+                // Etapa 3: Analisar manualmente os dados brutos para evitar bugs da biblioteca.
                 const subcomponents = jcalData[2];
                 const veventArrays = subcomponents.filter(sub => sub[0] === 'vevent');
 
