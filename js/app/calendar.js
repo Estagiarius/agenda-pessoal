@@ -474,25 +474,21 @@ async function initAllEventsView() {
                 const oneYearFromNow = new Date();
                 oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
 
-                // O código foi reescrito para seguir a recomendação do relatório de bug,
-                // que indicava que a estrutura de dados de `vevent` não era um objeto de componente completo.
-                // A nova abordagem envolve a criação explícita de um ICAL.Component e, em seguida,
-                // a utilização de um ICAL.Event para lidar com a complexidade dos eventos recorrentes.
+                // A correção, agora informada por um log de erro detalhado, é garantir que
+                // os dados brutos do evento sejam encapsulados em um ICAL.Component antes de
+                // serem passados para o ICAL.Event. Isso evita o TypeError dentro dos métodos do evento.
                 vevents.forEach(veventData => {
                     const component = new ICAL.Component(veventData);
                     const event = new ICAL.Event(component);
 
-                    const oneYearFromNow = new Date();
-                    oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-
                     if (event.isRecurring()) {
                         const iterator = event.iterator();
                         let next;
-                        let count = 0; // Limita a expansão para 100 ocorrências para evitar loops infinitos
+                        let count = 0;
                         while ((next = iterator.next()) && count < 100) {
                             const nextDate = next.toJSDate();
                             if (nextDate > oneYearFromNow) {
-                                break; // Não importa eventos com mais de um ano de antecedência
+                                break;
                             }
                             const occurrence = event.getOccurrenceDetails(next);
                             eventsToImport.push({
@@ -505,7 +501,6 @@ async function initAllEventsView() {
                             count++;
                         }
                     } else {
-                        // Lógica para evento único
                         eventsToImport.push({
                             title: event.summary,
                             date: event.startDate.toJSDate().toISOString().split('T')[0],
