@@ -489,8 +489,13 @@ async function initAllEventsView() {
                                 description = propValue;
                                 break;
                             case 'dtstart':
-                                // Reusa o ICAL.Time para conversão de data/hora, que é confiável
+                                if (eventsToImport.length === 0) {
+                                    console.log("DIAGNÓSTICO DTSTART: jCal property array:", JSON.parse(JSON.stringify(prop)));
+                                }
                                 dtstart = new ICAL.Time(prop);
+                                if (eventsToImport.length === 0) {
+                                    console.log("DIAGNÓSTICO DTSTART: Resulting ICAL.Time object:", JSON.parse(JSON.stringify(dtstart)));
+                                }
                                 break;
                             case 'dtend':
                                 dtend = new ICAL.Time(prop);
