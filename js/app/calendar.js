@@ -598,6 +598,13 @@ async function initAllEventsView() {
                 vevents.forEach(vevent => {
                     const event = new ICAL.Event(vevent);
                     const dtstartProp = event.getProperties('dtstart')[0];
+
+                    // If there's no start property, we can't process it. Skip.
+                    if (!dtstartProp) {
+                        console.warn('Skipping event with no DTSTART property:', event.summary);
+                        return; // This is 'continue' in a forEach loop
+                    }
+
                     // The 'value' parameter will be 'date' for all-day events. Otherwise it's a date-time.
                     const isAllDay = dtstartProp.getParameter('value') === 'date';
 
