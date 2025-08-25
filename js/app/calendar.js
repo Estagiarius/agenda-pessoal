@@ -589,13 +589,7 @@ async function initAllEventsView() {
         reader.onload = async (readerEvent) => {
             const content = readerEvent.target.result;
             try {
-                let jcalData;
-                try {
-                    jcalData = ICAL.parse(content);
-                } catch (e) {
-                    throw new Error('Erro Diagnóstico [Passo 1]: O conteúdo do arquivo não é um formato iCalendar válido.');
-                }
-
+                const jcalData = ICAL.parse(content);
                 const vcalendar = new ICAL.Component(jcalData);
                 const vevents = vcalendar.getAllSubcomponents('vevent');
                 const eventsToImport = [];
@@ -603,29 +597,48 @@ async function initAllEventsView() {
 
                 vevents.forEach(vevent => {
                     try {
-                        const event = new ICAL.Event(vevent);
-                        const dtstartProp = event.getProperties('dtstart')[0];
-
-                        // Basic validation
+                        // First, work with the component to get parameters
+                        const dtstartProp = vevent.getProperties('dtstart')[0];
                         if (!dtstartProp) {
-                            console.warn('Skipping event with no DTSTART property:', event.summary);
-                            return;
+                            console.warn('Skipping VEVENT with no DTSTART property.');
+                            return; // continue
                         }
-
                         const isAllDay = dtstartProp.getParameter('value') === 'date';
 
-                        // Simplified diagnostic logic:
-                        // Ignore recurrence and date filters for now.
-                        // Just try to parse every vevent as a single item.
-                        eventsToImport.push(createEventObjectFromIcal(
-                            event.summary,
-                            event.startDate,
-                            event.endDate,
-                            event.description,
-                            isAllDay
-                        ));
+                        // Now, create the high-level event wrapper
+                        const event = new ICAL.Event(vevent);
+
+                        if (event.isRecurring()) {
+                            const iterator = event.iterator();
+                            let next;
+                            let count = 0;
+                            while ((next = iterator.next()) && count < 100) {
+                                if (moment(next.toJSDate()).isAfter(oneYearFromNow)) {
+                                    break;
+                                }
+                                const occurrence = event.getOccurrenceDetails(next);
+                                eventsToImport.push(createEventObjectFromIcal(
+                                    occurrence.item.summary,
+                                    occurrence.startDate,
+                                    occurrence.endDate,
+                                    occurrence.item.description,
+                                    isAllDay
+                                ));
+                                count++;
+                            }
+                        } else {
+                            if (moment(event.startDate.toJSDate()).isBefore(oneYearFromNow)) {
+                                eventsToImport.push(createEventObjectFromIcal(
+                                    event.summary,
+                                    event.startDate,
+                                    event.endDate,
+                                    event.description,
+                                    isAllDay
+                                ));
+                            }
+                        }
                     } catch (e) {
-                        console.error(`Falha ao processar um vevent individualmente. Pulando.`, e);
+                        console.error("Failed to process a VEVENT, skipping.", e);
                     }
                 });
 
@@ -639,9 +652,8 @@ async function initAllEventsView() {
                 await filterAndRenderAllEvents();
 
             } catch (err) {
-                console.error('Erro ao processar arquivo .ics:', err);
-                // Exibe a mensagem de erro específica que foi lançada
-                showToast(err.message || 'Ocorreu um erro desconhecido ao processar o arquivo.', 'error');
+                console.error('Erro fatal ao processar arquivo .ics:', err);
+                showToast('Ocorreu um erro geral ao processar o arquivo .ics. Verifique o formato.', 'error');
             } finally {
                 e.target.value = ''; // Reset file input
             }
