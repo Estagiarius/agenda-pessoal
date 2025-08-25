@@ -596,6 +596,7 @@ async function initAllEventsView() {
                 const oneYearFromNow = moment().add(1, 'year');
 
                 vevents.forEach(vevent => {
+                    console.log("Inspecting vevent object:", vevent); // DIAGNOSTIC LOG
                     try {
                         // Correct Order of Operations:
                         // 1. Work with the low-level ICAL.Component (`vevent`) to get parameters.
