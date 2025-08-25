@@ -465,21 +465,67 @@ async function initAllEventsView() {
         reader.onload = async (e) => {
             const content = e.target.result;
 
-            // CÓDIGO DE DIAGNÓSTICO TEMPORÁRIO
             try {
-                console.log("--- INICIANDO DIAGNÓSTICO DE IMPORTAÇÃO DE ICS ---");
                 const jcalData = ICAL.parse(content);
-                const vcalendar = new ICAL.Component(jcalData);
-                const vevents = vcalendar.getAllSubcomponents('vevent');
+                const eventsToImport = [];
 
-                console.log("TIPO DA VARIÁVEL 'vevents':", typeof vevents);
-                console.log("CONTEÚDO DA VARIÁVEL 'vevents':", JSON.parse(JSON.stringify(vevents)));
+                // Acessa a lista de subcomponentes diretamente do jCal
+                const subcomponents = jcalData[2];
+                const veventArrays = subcomponents.filter(sub => sub[0] === 'vevent');
 
-                showToast('Diagnóstico concluído. Verifique o console do navegador.', 'info');
-                console.log("--- FIM DO DIAGNÓSTICO ---");
+                veventArrays.forEach(veventData => {
+                    const properties = veventData[1];
+                    let summary = '', description = '', dtstart, dtend, rrule;
+
+                    // Itera manualmente sobre as propriedades
+                    properties.forEach(prop => {
+                        const propName = prop[0];
+                        const propValue = prop[3];
+                        switch (propName) {
+                            case 'summary':
+                                summary = propValue;
+                                break;
+                            case 'description':
+                                description = propValue;
+                                break;
+                            case 'dtstart':
+                                // Reusa o ICAL.Time para conversão de data/hora, que é confiável
+                                dtstart = new ICAL.Time(prop);
+                                break;
+                            case 'dtend':
+                                dtend = new ICAL.Time(prop);
+                                break;
+                            case 'rrule':
+                                // Captura a regra de recorrência para importação futura, se necessário
+                                rrule = propValue;
+                                break;
+                        }
+                    });
+
+                    if (dtstart) {
+                         // Trata eventos recorrentes como um único evento por enquanto
+                        eventsToImport.push({
+                            title: summary,
+                            date: dtstart.toJSDate().toISOString().split('T')[0],
+                            startTime: !dtstart.isDate ? dtstart.toJSDate().toTimeString().substring(0, 5) : '',
+                            endTime: dtend && !dtend.isDate ? dtend.toJSDate().toTimeString().substring(0, 5) : '',
+                            description: description
+                        });
+                    }
+                });
+
+                if (eventsToImport.length === 0) {
+                    showToast('Nenhum evento válido encontrado no arquivo .ics.', 'error');
+                    return;
+                }
+
+                await window.eventService.importEvents(eventsToImport);
+                showToast(`${eventsToImport.length} evento(s) importado(s) com sucesso (recorrentes como evento único).`);
+                await filterAndRenderAllEvents();
+
             } catch (err) {
-                console.error("ERRO DURANTE O DIAGNÓSTICO:", err);
-                showToast('Ocorreu um erro durante o diagnóstico. Verifique o console.', 'error');
+                console.error('Erro ao processar arquivo .ics:', err);
+                showToast('Erro ao processar o arquivo .ics. Verifique o formato do arquivo.', 'error');
             } finally {
                 event.target.value = '';
             }
