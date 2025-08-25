@@ -87,12 +87,21 @@
         return deleteEvent(eventId, deleteType);
     }
 
-    // This function is dangerous, so it should probably be removed or have a confirmation.
-    // For now, I will not implement a backend endpoint for it.
     async function deleteAllEvents() {
-        console.warn('deleteAllEvents is not implemented against the server API.');
-        // To implement, one would need a `DELETE /api/eventos` endpoint, which is risky.
-        return Promise.resolve();
+        const response = await fetch('/api/eventos', {
+            method: 'DELETE'
+        });
+
+        if (!response.ok && response.status !== 204) { // 204 No Content is a success status
+            try {
+                const error = await response.json();
+                throw new Error(error.error || 'Erro ao excluir todos os eventos.');
+            } catch (e) {
+                // If the response is not JSON, throw a generic error
+                throw new Error(`Erro ao excluir todos os eventos: ${response.statusText}`);
+            }
+        }
+        // No need to return anything on success
     }
 
     async function importEvents(eventsData) {

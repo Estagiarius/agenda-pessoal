@@ -377,6 +377,20 @@ def delete_aluno(aluno_id):
     conn.close()
     return '', 204
 
+@app.route('/api/eventos', methods=['DELETE'])
+def delete_all_eventos():
+    conn = db.get_db_connection()
+    try:
+        conn.execute('DELETE FROM evento')
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        return jsonify({'error': f'Erro ao excluir todos os eventos: {e}'}), 500
+
+    conn.close()
+    return '', 204
+
 # --- API para Matrículas (Enrollments) ---
 
 @app.route('/api/turmas/<string:turma_id>/alunos', methods=['GET'])

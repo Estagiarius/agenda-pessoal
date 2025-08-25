@@ -712,4 +712,26 @@ async function initAllEventsView() {
             });
         });
     }
+
+    const deleteAllBtn = document.getElementById('delete-all-btn');
+    if (deleteAllBtn) {
+        deleteAllBtn.addEventListener('click', () => {
+            showConfirmationModal(
+                'Esta ação é irreversível. Para confirmar, digite "apagar tudo" na caixa abaixo.',
+                async () => {
+                    try {
+                        await window.eventService.deleteAllEvents();
+                        showToast('Todos os eventos foram excluídos com sucesso.', 'success');
+                        await filterAndRenderAllEvents();
+                    } catch (error) {
+                        console.error('Erro ao excluir todos os eventos:', error);
+                        showToast(error.message || 'Ocorreu um erro inesperado.', 'error');
+                    }
+                },
+                {
+                    requireInput: 'apagar tudo'
+                }
+            );
+        });
+    }
 }
