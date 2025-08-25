@@ -530,7 +530,11 @@ async function initAllEventsView() {
                             date: date,
                             startTime: startTime,
                             endTime: endTime,
-                            description: description
+                            description: description,
+                            category: 'General', // Adiciona uma categoria padrão
+                            reminders: [], // Adiciona um array de lembretes vazio
+                            recurrenceFrequency: 'none', // Adiciona um padrão
+                            recurrenceEndDate: '' // Adiciona um padrão
                         });
                     }
                 });
