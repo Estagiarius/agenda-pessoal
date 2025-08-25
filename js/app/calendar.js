@@ -474,8 +474,9 @@ async function initAllEventsView() {
                 const oneYearFromNow = new Date();
                 oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
 
-                vevents.forEach(vevent => {
-                    const event = new ICAL.Event(vevent);
+                vevents.forEach(veventData => {
+                    const veventComponent = new ICAL.Component(veventData);
+                    const event = new ICAL.Event(veventComponent);
 
                     if (event.isRecurring()) {
                         const iterator = event.iterator();
