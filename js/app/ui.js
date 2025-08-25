@@ -11,12 +11,32 @@ document.addEventListener('DOMContentLoaded', function() {
  * Exibe um toast de notificação.
  * @param {string} message - A mensagem a ser exibida.
  */
-window.showToast = function(message) {
+window.showToast = function(message, type = 'info') { // type can be 'info', 'success', 'error'
     const toast = document.getElementById('toast');
     const toastMessage = document.getElementById('toast-message');
+    if (!toast || !toastMessage) {
+        console.error('Toast elements not found in the DOM.');
+        return;
+    }
     toastMessage.textContent = message;
-    toast.className = "toast show";
-    setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+
+    // Reset classes, keeping the base 'toast' class
+    toast.className = "toast";
+
+    // Add type class for styling
+    if (type === 'error') {
+        toast.classList.add('error');
+    } else if (type === 'success') {
+        toast.classList.add('success');
+    }
+
+    // Show the toast
+    toast.classList.add('show');
+
+    // Hide after 3 seconds
+    setTimeout(function() {
+        toast.className = toast.className.replace("show", "");
+    }, 3000);
 }
 
 /**

@@ -180,6 +180,41 @@ async function showEventDetails(eventId) { // ASYNC
     }
 }
 
+async function showEditEventModal(eventId) {
+    try {
+        const event = await window.eventService.getEventById(eventId);
+        if (!event) {
+            showToast('Evento não encontrado.', 'error');
+            return;
+        }
+
+        // Populate the modal fields
+        document.getElementById('event-id-input').value = event.id;
+        document.getElementById('eventTitleInput').value = event.title;
+        document.getElementById('eventDateInput').value = event.date;
+        document.getElementById('selectedDateDisplay').textContent = moment(event.date).format('DD/MM/YYYY');
+        document.getElementById('eventStartTimeInput').value = event.startTime || '';
+        document.getElementById('eventEndTimeInput').value = event.endTime || '';
+        document.getElementById('eventDescriptionInput').value = event.description || '';
+        document.getElementById('eventCategoryInput').value = event.category || 'General';
+
+        document.getElementById('eventRecurrenceFrequency').value = event.recurrenceFrequency || 'none';
+        document.getElementById('eventRecurrenceEndDate').value = event.recurrenceEndDate || '';
+        document.getElementById('recurrence-end-date-group').style.display = (event.recurrenceFrequency && event.recurrenceFrequency !== 'none') ? 'block' : 'none';
+
+        currentModalReminders = event.reminders ? [...event.reminders] : [];
+        renderConfiguredReminders();
+
+        document.getElementById('eventModalLabel').textContent = 'Editar Evento';
+
+        $('#eventModal').modal('show');
+
+    } catch (error) {
+        console.error('Erro ao buscar evento para edição:', error);
+        showToast('Não foi possível carregar os detalhes do evento.', 'error');
+    }
+}
+
 async function displayUpcomingEventsAndTasks() { // ASYNC
     await displayUpcomingEvents();
     await displayUpcomingTasks();
@@ -296,9 +331,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const saveEventButton = document.getElementById('saveEventButton');
     const addReminderButton = document.getElementById('addReminderButton');
     const configuredRemindersList = document.getElementById('configuredRemindersList');
+    const recurrenceFrequencySelect = document.getElementById('eventRecurrenceFrequency');
+    const eventModal = $('#eventModal');
 
+    // Combined Save/Update logic
     if (saveEventButton) {
-        saveEventButton.addEventListener('click', async function() { // ASYNC
+        saveEventButton.addEventListener('click', async function() {
+            const eventId = document.getElementById('event-id-input').value;
             const eventObject = {
                 title: document.getElementById('eventTitleInput').value,
                 date: document.getElementById('eventDateInput').value,
@@ -312,21 +351,49 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             if (!eventObject.title || !eventObject.date) {
-                alert('Por favor, insira um título e uma data.');
+                showToast('Por favor, insira um título e uma data.', 'error');
                 return;
             }
 
-            await window.eventService.addEvent(eventObject); // AWAIT
-            
-            document.getElementById('eventForm').reset();
-            currentModalReminders = [];
-            renderConfiguredReminders();
-            $('#eventModal').modal('hide');
+            try {
+                if (eventId) {
+                    eventObject.id = eventId;
+                    await window.eventService.updateEvent(eventObject);
+                    showToast('Evento atualizado com sucesso!', 'success');
+                } else {
+                    await window.eventService.addEvent(eventObject);
+                    showToast('Evento adicionado com sucesso!', 'success');
+                }
 
-            await initCalendar(); // AWAIT
+                eventModal.modal('hide'); // Let the 'hidden.bs.modal' event handle the reset
+
+                // Refresh the calendar/view
+                if (window.location.hash === '#/all-events') {
+                    await filterAndRenderAllEvents();
+                } else {
+                    await initCalendar();
+                }
+
+            } catch (error) {
+                console.error('Erro ao salvar evento:', error);
+                showToast(error.message || 'Ocorreu um erro ao salvar o evento.', 'error');
+            }
         });
     }
 
+    // Modal reset logic
+    if (eventModal.length) {
+        eventModal.on('hidden.bs.modal', function () {
+            document.getElementById('eventForm').reset();
+            document.getElementById('event-id-input').value = '';
+            document.getElementById('eventModalLabel').textContent = 'Adicionar Novo Evento';
+            document.getElementById('recurrence-end-date-group').style.display = 'none';
+            currentModalReminders = [];
+            renderConfiguredReminders();
+        });
+    }
+
+    // Other listeners from the original DOMContentLoaded
     if (addReminderButton) {
         addReminderButton.addEventListener('click', function() {
             const reminderValueInput = document.getElementById('reminderValueInput');
@@ -348,14 +415,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    const recurrenceFrequencySelect = document.getElementById('eventRecurrenceFrequency');
     if (recurrenceFrequencySelect) {
         recurrenceFrequencySelect.addEventListener('change', function() {
             document.getElementById('recurrence-end-date-group').style.display = this.value === 'none' ? 'none' : 'block';
         });
     }
-
-    // Initial load is now handled by the router's callback
 });
 
 function escapeHTML(str) {
@@ -381,44 +445,53 @@ function renderAllEventsPage(eventsToRender, selectionMode = false) {
     const container = document.getElementById('all-events-container');
     if (!container) return;
 
+    // 1. Sort events
     eventsToRender.sort((a, b) => moment(a.date).diff(moment(b.date)) || (a.startTime || '').localeCompare(b.startTime || ''));
 
+    // 2. Group sorted events by date
+    const eventsByDate = eventsToRender.reduce((acc, event) => {
+        const dateKey = moment(event.date).format('YYYY-MM-DD');
+        if (!acc[dateKey]) {
+            acc[dateKey] = [];
+        }
+        acc[dateKey].push(event);
+        return acc;
+    }, {});
+
     let contentHtml = '';
-    if (!eventsToRender || eventsToRender.length === 0) {
-        contentHtml = '<p>Nenhum evento cadastrado no sistema.</p>';
+    const dates = Object.keys(eventsByDate);
+
+    if (dates.length === 0) {
+        contentHtml = '<p>Nenhum evento encontrado para o período selecionado.</p>';
     } else {
-        eventsToRender.forEach(event => {
-            const checkboxHtml = selectionMode ? `<input type="checkbox" class="event-checkbox" data-event-id="${event.id}" style="margin-right: 10px;">` : '';
-            contentHtml += `
-                <div class="panel panel-default event-item">
-                    <div class="panel-heading"><h3 class="panel-title">${checkboxHtml}${escapeHTML(event.title)} - ${moment(event.date).format('DD/MM/YYYY')}</h3></div>
-                    <div class="panel-body">
-                        <p><strong>Horário:</strong> ${event.startTime ? `${escapeHTML(event.startTime)} - ${escapeHTML(event.endTime || '')}` : 'Dia todo'}</p>
-                        <p><strong>Descrição:</strong> ${escapeHTML(event.description || 'Nenhuma descrição.')}</p>
-                    </div>
-                    <div class="panel-footer">
-                        <button class="btn btn-info btn-sm view-event-details-btn" data-event-id="${event.id}">Ver Detalhes</button>
-                        <button class="btn btn-danger btn-sm delete-event-btn" data-event-id="${event.id}" data-recurrence-id="${event.recurrence_id || ''}">Excluir</button>
-                    </div>
-                </div>`;
+        // 3. Render grouped events
+        dates.forEach(dateKey => {
+            const eventsOnDay = eventsByDate[dateKey];
+            const formattedDate = moment(dateKey).locale('pt-br').format('dddd, D [de] MMMM [de] YYYY');
+
+            contentHtml += `<h2 class="date-header">${formattedDate}</h2>`; // Date header
+
+            eventsOnDay.forEach(event => {
+                const checkboxHtml = selectionMode ? `<input type="checkbox" class="event-checkbox" data-event-id="${event.id}" style="margin-right: 10px;">` : '';
+                contentHtml += `
+                    <div class="panel panel-default event-item">
+                        <div class="panel-heading"><h3 class="panel-title">${checkboxHtml}${escapeHTML(event.title)}</h3></div>
+                        <div class="panel-body">
+                            <p><strong>Horário:</strong> ${event.startTime ? `${escapeHTML(event.startTime)}${event.endTime ? ` - ${escapeHTML(event.endTime)}` : ''}` : 'Dia todo'}</p>
+                            <p><strong>Descrição:</strong> ${escapeHTML(event.description || 'Nenhuma descrição.')}</p>
+                            <p><strong>Categoria:</strong> ${escapeHTML(event.category || 'Geral')}</p>
+                        </div>
+                        <div class="panel-footer">
+                            <button class="btn btn-info btn-sm view-event-details-btn" data-event-id="${event.id}">Ver Detalhes</button>
+                            <button class="btn btn-primary btn-sm edit-event-btn" data-event-id="${event.id}">Editar</button>
+                            <button class="btn btn-danger btn-sm delete-event-btn" data-event-id="${event.id}" data-recurrence-id="${event.recurrence_id || ''}">Excluir</button>
+                        </div>
+                    </div>`;
+            });
         });
     }
-    container.innerHTML = contentHtml;
 
-    container.addEventListener('click', function(e) {
-        const target = e.target;
-        if (target.classList.contains('view-event-details-btn')) {
-            showEventDetails(target.dataset.eventId);
-        } else if (target.classList.contains('delete-event-btn')) {
-            const eventId = target.dataset.eventId;
-            const recurrenceId = target.dataset.recurrenceId;
-            if (recurrenceId) {
-                showRecurrentEventDeletionModal(eventId);
-            } else {
-                deleteEventFromAllEventsView(eventId);
-            }
-        }
-    });
+    container.innerHTML = contentHtml;
 }
 
 function showRecurrentEventDeletionModal(eventId) {
@@ -428,10 +501,15 @@ function showRecurrentEventDeletionModal(eventId) {
     document.getElementById('delete-all-events-btn').onclick = () => { deleteEvent(eventId, 'all'); $('#recurrentEventDeletionModal').modal('hide'); };
 }
 
-async function deleteEvent(eventId, scope){ // Combined function
-    await window.eventService.deleteEvent(eventId, scope);
-    await filterAndRenderAllEvents();
-    showToast('Evento(s) excluído(s) com sucesso!');
+async function deleteEvent(eventId, scope) {
+    try {
+        await window.eventService.deleteEvent(eventId, scope);
+        await filterAndRenderAllEvents();
+        showToast('Evento(s) excluído(s) com sucesso!', 'success');
+    } catch (error) {
+        console.error('Falha ao excluir evento:', error);
+        showToast(error.message || 'Ocorreu um erro ao excluir o evento.', 'error');
+    }
 }
 
 function deleteEventFromAllEventsView(eventId) {
@@ -453,6 +531,28 @@ async function initAllEventsView() {
     ['filter-by-month-checkbox', 'month-filter', 'filter-by-year-checkbox', 'year-filter'].forEach(id => {
         document.getElementById(id).addEventListener('change', filterAndRenderAllEvents);
     });
+
+    // Attach a single event listener to the container for handling clicks on dynamic content
+    const container = document.getElementById('all-events-container');
+    if (container && !container.dataset.listenerAttached) {
+        container.addEventListener('click', function(e) {
+            const target = e.target;
+            if (target.classList.contains('view-event-details-btn')) {
+                showEventDetails(target.dataset.eventId);
+            } else if (target.classList.contains('edit-event-btn')) {
+                showEditEventModal(target.dataset.eventId);
+            } else if (target.classList.contains('delete-event-btn')) {
+                const eventId = target.dataset.eventId;
+                const recurrenceId = target.dataset.recurrenceId;
+                if (recurrenceId) {
+                    showRecurrentEventDeletionModal(eventId);
+                } else {
+                    deleteEventFromAllEventsView(eventId);
+                }
+            }
+        });
+        container.dataset.listenerAttached = 'true';
+    }
 
     await filterAndRenderAllEvents();
 
@@ -525,4 +625,66 @@ async function initAllEventsView() {
         };
         reader.readAsText(file);
     });
+
+    // --- Bulk Action Event Listeners ---
+    const selectMultipleBtn = document.getElementById('select-multiple-btn');
+    const cancelSelectionBtn = document.getElementById('cancel-selection-btn');
+    const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+    const defaultActions = document.getElementById('default-actions');
+    const bulkActions = document.getElementById('bulk-actions');
+
+    if (selectMultipleBtn) {
+        selectMultipleBtn.addEventListener('click', () => {
+            defaultActions.style.display = 'none';
+            bulkActions.style.display = 'block';
+            filterAndRenderAllEvents(); // Re-render with checkboxes
+        });
+    }
+
+    if (cancelSelectionBtn) {
+        cancelSelectionBtn.addEventListener('click', () => {
+            bulkActions.style.display = 'none';
+            defaultActions.style.display = 'block';
+            filterAndRenderAllEvents(); // Re-render without checkboxes
+        });
+    }
+
+    if (deleteSelectedBtn) {
+        deleteSelectedBtn.addEventListener('click', () => {
+            const selectedCheckboxes = document.querySelectorAll('.event-checkbox:checked');
+            const eventIdsToDelete = Array.from(selectedCheckboxes).map(cb => cb.dataset.eventId);
+
+            if (eventIdsToDelete.length === 0) {
+                showToast('Nenhum evento selecionado.', 'error');
+                return;
+            }
+
+            showConfirmationModal(`Tem certeza que deseja excluir os ${eventIdsToDelete.length} eventos selecionados?`, async () => {
+                const deletePromises = eventIdsToDelete.map(id => window.eventService.deleteEvent(id, 'this'));
+                const results = await Promise.allSettled(deletePromises);
+
+                const successfulDeletes = results.filter(r => r.status === 'fulfilled').length;
+                const failedDeletes = results.filter(r => r.status === 'rejected').length;
+
+                let toastMessage = '';
+                let toastType = 'success';
+
+                if (successfulDeletes > 0) {
+                    toastMessage = `${successfulDeletes} evento(s) excluído(s) com sucesso. `;
+                }
+                if (failedDeletes > 0) {
+                    toastMessage += `Falha ao excluir ${failedDeletes} evento(s).`;
+                    toastType = 'error';
+                    console.error('Falhas na exclusão em massa:', results.filter(r => r.status === 'rejected'));
+                }
+
+                showToast(toastMessage, toastType);
+
+                // Reset view
+                bulkActions.style.display = 'none';
+                defaultActions.style.display = 'block';
+                filterAndRenderAllEvents();
+            });
+        });
+    }
 }

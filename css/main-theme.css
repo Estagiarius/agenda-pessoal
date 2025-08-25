@@ -251,6 +251,16 @@ body {
     color: #333; /* Ensure strong tags are sufficiently dark */
 }
 
+.date-header {
+    margin-top: 20px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eee;
+    font-size: 1.75em;
+    font-weight: 300;
+    color: #007bff;
+}
+
 /* Event Modal Field Adjustments */
 #eventStartTimeInput,
 #eventEndTimeInput {
@@ -385,6 +395,16 @@ body {
     visibility: visible;
     -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
     animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+.toast.success {
+    background-color: #4CAF50; /* Green */
+    color: white;
+}
+
+.toast.error {
+    background-color: #f44336; /* Red */
+    color: white;
 }
 
 @-webkit-keyframes fadein {
