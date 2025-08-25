@@ -568,15 +568,15 @@ async function initAllEventsView() {
     }
 
     // Helper function to create a consistent event object from ICAL data
-    function createEventObjectFromIcal(summary, startDate, endDate, description) {
+    function createEventObjectFromIcal(summary, startDate, endDate, description, isAllDay) {
         const jsStartDate = startDate.toJSDate();
         const jsEndDate = endDate ? endDate.toJSDate() : null;
 
         return {
             title: summary,
             date: jsStartDate.toISOString().split('T')[0],
-            startTime: !startDate.isDate ? formatTime(jsStartDate) : '',
-            endTime: endDate && !endDate.isDate ? formatTime(jsEndDate) : '',
+            startTime: !isAllDay ? formatTime(jsStartDate) : '',
+            endTime: endDate && !isAllDay ? formatTime(jsEndDate) : '',
             description: description || ''
         };
     }
@@ -597,11 +597,14 @@ async function initAllEventsView() {
 
                 vevents.forEach(vevent => {
                     const event = new ICAL.Event(vevent);
+                    const dtstartProp = event.getProperties('dtstart')[0];
+                    // The 'value' parameter will be 'date' for all-day events. Otherwise it's a date-time.
+                    const isAllDay = dtstartProp.getParameter('value') === 'date';
 
                     if (event.isRecurring()) {
                         const iterator = event.iterator();
                         let next;
-                        let count = 0; // Limit to 100 occurrences per recurring event
+                        let count = 0; // Limit to 100 occurrences
                         while ((next = iterator.next()) && count < 100) {
                             if (moment(next.toJSDate()).isAfter(oneYearFromNow)) {
                                 break;
@@ -611,18 +614,19 @@ async function initAllEventsView() {
                                 occurrence.item.summary,
                                 occurrence.startDate,
                                 occurrence.endDate,
-                                occurrence.item.description
+                                occurrence.item.description,
+                                isAllDay // Pass the flag
                             ));
                             count++;
                         }
                     } else {
-                        // For non-recurring events, only import if they are within the next year
                         if (moment(event.startDate.toJSDate()).isBefore(oneYearFromNow)) {
                             eventsToImport.push(createEventObjectFromIcal(
                                 event.summary,
                                 event.startDate,
                                 event.endDate,
-                                event.description
+                                event.description,
+                                isAllDay // Pass the flag
                             ));
                         }
                     }
