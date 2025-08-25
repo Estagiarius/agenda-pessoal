@@ -589,53 +589,70 @@ async function initAllEventsView() {
         reader.onload = async (readerEvent) => {
             const content = readerEvent.target.result;
             try {
-                const jcalData = ICAL.parse(content);
+                let jcalData;
+                try {
+                    jcalData = ICAL.parse(content);
+                } catch (e) {
+                    throw new Error('Erro Diagnóstico [Passo 1]: O conteúdo do arquivo não é um formato iCalendar válido.');
+                }
+
                 const vcalendar = new ICAL.Component(jcalData);
                 const vevents = vcalendar.getAllSubcomponents('vevent');
                 const eventsToImport = [];
                 const oneYearFromNow = moment().add(1, 'year');
 
                 vevents.forEach(vevent => {
-                    const event = new ICAL.Event(vevent);
-                    const dtstartProp = event.getProperties('dtstart')[0];
-
-                    // If there's no start property, we can't process it. Skip.
-                    if (!dtstartProp) {
-                        console.warn('Skipping event with no DTSTART property:', event.summary);
-                        return; // This is 'continue' in a forEach loop
+                    let event;
+                    try {
+                        event = new ICAL.Event(vevent);
+                    } catch(e) {
+                        console.warn('Falha ao construir objeto ICAL.Event a partir de um vevent. Pulando.', vevent);
+                        return; // Pula para o próximo vevent
                     }
 
-                    // The 'value' parameter will be 'date' for all-day events. Otherwise it's a date-time.
-                    const isAllDay = dtstartProp.getParameter('value') === 'date';
+                    try {
+                        const dtstartProp = event.getProperties('dtstart')[0];
 
-                    if (event.isRecurring()) {
-                        const iterator = event.iterator();
-                        let next;
-                        let count = 0; // Limit to 100 occurrences
-                        while ((next = iterator.next()) && count < 100) {
-                            if (moment(next.toJSDate()).isAfter(oneYearFromNow)) {
-                                break;
+                        if (!dtstartProp) {
+                            console.warn('Skipping event with no DTSTART property:', event.summary);
+                            return;
+                        }
+
+                        const isAllDay = dtstartProp.getParameter('value') === 'date';
+
+                        if (event.isRecurring()) {
+                            const iterator = event.iterator();
+                            let next;
+                            let count = 0;
+                            while ((next = iterator.next()) && count < 100) {
+                                if (moment(next.toJSDate()).isAfter(oneYearFromNow)) {
+                                    break;
+                                }
+                                const occurrence = event.getOccurrenceDetails(next);
+                                eventsToImport.push(createEventObjectFromIcal(
+                                    occurrence.item.summary,
+                                    occurrence.startDate,
+                                    occurrence.endDate,
+                                    occurrence.item.description,
+                                    isAllDay
+                                ));
+                                count++;
                             }
-                            const occurrence = event.getOccurrenceDetails(next);
-                            eventsToImport.push(createEventObjectFromIcal(
-                                occurrence.item.summary,
-                                occurrence.startDate,
-                                occurrence.endDate,
-                                occurrence.item.description,
-                                isAllDay // Pass the flag
-                            ));
-                            count++;
+                        } else {
+                            if (moment(event.startDate.toJSDate()).isBefore(oneYearFromNow)) {
+                                eventsToImport.push(createEventObjectFromIcal(
+                                    event.summary,
+                                    event.startDate,
+                                    event.endDate,
+                                    event.description,
+                                    isAllDay
+                                ));
+                            }
                         }
-                    } else {
-                        if (moment(event.startDate.toJSDate()).isBefore(oneYearFromNow)) {
-                            eventsToImport.push(createEventObjectFromIcal(
-                                event.summary,
-                                event.startDate,
-                                event.endDate,
-                                event.description,
-                                isAllDay // Pass the flag
-                            ));
-                        }
+                    } catch (e) {
+                        // Se falhar ao processar um único evento, loga o erro e continua com os outros
+                        console.error(`Falha ao processar um evento individual: ${event.summary}`, e);
+                        // Lança um erro mais específico para o usuário, se desejado, ou apenas continua
                     }
                 });
 
@@ -650,7 +667,8 @@ async function initAllEventsView() {
 
             } catch (err) {
                 console.error('Erro ao processar arquivo .ics:', err);
-                showToast('Erro ao processar o arquivo .ics. Verifique o formato do arquivo.', 'error');
+                // Exibe a mensagem de erro específica que foi lançada
+                showToast(err.message || 'Ocorreu um erro desconhecido ao processar o arquivo.', 'error');
             } finally {
                 e.target.value = ''; // Reset file input
             }
