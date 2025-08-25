@@ -503,12 +503,26 @@ async function initAllEventsView() {
                     });
 
                     if (dtstart) {
-                         // Trata eventos recorrentes como um único evento por enquanto
+                        const year = dtstart.year;
+                        const month = String(dtstart.month).padStart(2, '0');
+                        const day = String(dtstart.day).padStart(2, '0');
+                        const date = `${year}-${month}-${day}`;
+
+                        const startTime = !dtstart.isDate
+                            ? `${String(dtstart.hour).padStart(2, '0')}:${String(dtstart.minute).padStart(2, '0')}`
+                            : '';
+
+                        let endTime = '';
+                        if (dtend && !dtend.isDate) {
+                            endTime = `${String(dtend.hour).padStart(2, '0')}:${String(dtend.minute).padStart(2, '0')}`;
+                        }
+
+                        // Trata eventos recorrentes como um único evento por enquanto
                         eventsToImport.push({
                             title: summary,
-                            date: dtstart.toJSDate().toISOString().split('T')[0],
-                            startTime: !dtstart.isDate ? dtstart.toJSDate().toTimeString().substring(0, 5) : '',
-                            endTime: dtend && !dtend.isDate ? dtend.toJSDate().toTimeString().substring(0, 5) : '',
+                            date: date,
+                            startTime: startTime,
+                            endTime: endTime,
                             description: description
                         });
                     }
