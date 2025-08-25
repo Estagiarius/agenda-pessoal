@@ -469,15 +469,13 @@ async function initAllEventsView() {
                 const jcalData = ICAL.parse(content);
                 const eventsToImport = [];
 
-                // Acessa a lista de subcomponentes diretamente do jCal
                 const subcomponents = jcalData[2];
                 const veventArrays = subcomponents.filter(sub => sub[0] === 'vevent');
 
                 veventArrays.forEach(veventData => {
                     const properties = veventData[1];
-                    let summary = '', description = '', dtstart, dtend, rrule;
+                    let summary = '', description = '', dtstartStr, dtendStr, isAllDayStart = false;
 
-                    // Itera manualmente sobre as propriedades
                     properties.forEach(prop => {
                         const propName = prop[0];
                         const propValue = prop[3];
@@ -489,40 +487,31 @@ async function initAllEventsView() {
                                 description = propValue;
                                 break;
                             case 'dtstart':
-                                if (eventsToImport.length === 0) {
-                                    console.log("DIAGNÓSTICO DTSTART: jCal property array:", JSON.parse(JSON.stringify(prop)));
-                                }
-                                dtstart = new ICAL.Time(prop);
-                                if (eventsToImport.length === 0) {
-                                    console.log("DIAGNÓSTICO DTSTART: Resulting ICAL.Time object:", JSON.parse(JSON.stringify(dtstart)));
-                                }
+                                dtstartStr = propValue;
+                                isAllDayStart = prop[2] === 'date';
                                 break;
                             case 'dtend':
-                                dtend = new ICAL.Time(prop);
-                                break;
-                            case 'rrule':
-                                // Captura a regra de recorrência para importação futura, se necessário
-                                rrule = propValue;
+                                dtendStr = propValue;
                                 break;
                         }
                     });
 
-                    if (dtstart) {
-                        const year = dtstart.year;
-                        const month = String(dtstart.month).padStart(2, '0');
-                        const day = String(dtstart.day).padStart(2, '0');
-                        const date = `${year}-${month}-${day}`;
+                    if (dtstartStr) {
+                        const dateParts = dtstartStr.split('T')[0].split('-');
+                        const date = dateParts.join('-');
 
-                        const startTime = !dtstart.isDate
-                            ? `${String(dtstart.hour).padStart(2, '0')}:${String(dtstart.minute).padStart(2, '0')}`
-                            : '';
-
-                        let endTime = '';
-                        if (dtend && !dtend.isDate) {
-                            endTime = `${String(dtend.hour).padStart(2, '0')}:${String(dtend.minute).padStart(2, '0')}`;
+                        let startTime = '';
+                        if (!isAllDayStart && dtstartStr.includes('T')) {
+                            const timeParts = dtstartStr.split('T')[1].split(':');
+                            startTime = `${timeParts[0]}:${timeParts[1]}`;
                         }
 
-                        // Trata eventos recorrentes como um único evento por enquanto
+                        let endTime = '';
+                        if (dtendStr && !isAllDayStart && dtendStr.includes('T')) {
+                             const timeParts = dtendStr.split('T')[1].split(':');
+                             endTime = `${timeParts[0]}:${timeParts[1]}`;
+                        }
+
                         eventsToImport.push({
                             title: summary,
                             date: date,
