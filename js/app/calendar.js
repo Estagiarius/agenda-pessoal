@@ -465,72 +465,21 @@ async function initAllEventsView() {
         reader.onload = async (e) => {
             const content = e.target.result;
 
+            // CÓDIGO DE DIAGNÓSTICO TEMPORÁRIO
             try {
+                console.log("--- INICIANDO DIAGNÓSTICO DE IMPORTAÇÃO DE ICS ---");
                 const jcalData = ICAL.parse(content);
                 const vcalendar = new ICAL.Component(jcalData);
                 const vevents = vcalendar.getAllSubcomponents('vevent');
 
-                const eventsToImport = [];
-                const oneYearFromNow = new Date();
-                oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+                console.log("TIPO DA VARIÁVEL 'vevents':", typeof vevents);
+                console.log("CONTEÚDO DA VARIÁVEL 'vevents':", JSON.parse(JSON.stringify(vevents)));
 
-                vevents.forEach(veventData => {
-                    const component = new ICAL.Component(veventData);
-
-                    // Se o evento tem uma regra de recorrência (RRULE), use o ICAL.Event para expandi-la,
-                    // pois a lógica de expansão é complexa.
-                    if (component.hasProperty('rrule')) {
-                        const event = new ICAL.Event(component);
-                        const iterator = event.iterator();
-                        let next;
-                        let count = 0;
-                        while ((next = iterator.next()) && count < 100) {
-                            const nextDate = next.toJSDate();
-                            if (nextDate > oneYearFromNow) break;
-
-                            const occurrence = event.getOccurrenceDetails(next);
-                            eventsToImport.push({
-                                title: occurrence.item.summary,
-                                date: occurrence.startDate.toJSDate().toISOString().split('T')[0],
-                                startTime: !occurrence.startDate.isDate ? occurrence.startDate.toJSDate().toTimeString().substring(0, 5) : '',
-                                endTime: occurrence.endDate && !occurrence.endDate.isDate ? occurrence.endDate.toJSDate().toTimeString().substring(0, 5) : '',
-                                description: occurrence.item.description || ''
-                            });
-                            count++;
-                        }
-                    } else {
-                        // Para eventos simples ou com RECURRENCE-ID (que não são o evento "mestre"),
-                        // extraia os dados manualmente para evitar o bug do construtor ICAL.Event.
-                        const summary = component.getPropertyValue('summary');
-                        const dtstart = component.getPropertyValue('dtstart');
-                        const dtend = component.getPropertyValue('dtend');
-                        const description = component.getPropertyValue('description');
-
-                        // Ignora eventos sem data de início, que são inválidos.
-                        if (!dtstart) return;
-
-                        eventsToImport.push({
-                            title: summary || '',
-                            date: dtstart.toJSDate().toISOString().split('T')[0],
-                            startTime: !dtstart.isDate ? dtstart.toJSDate().toTimeString().substring(0, 5) : '',
-                            endTime: dtend && !dtend.isDate ? dtend.toJSDate().toTimeString().substring(0, 5) : '',
-                            description: description || ''
-                        });
-                    }
-                });
-
-                if (eventsToImport.length === 0) {
-                    showToast('Nenhum evento válido encontrado no arquivo .ics.', 'error');
-                    return;
-                }
-
-                await window.eventService.importEvents(eventsToImport);
-                showToast(`${eventsToImport.length} evento(s) importado(s) com sucesso.`);
-                await filterAndRenderAllEvents();
-
+                showToast('Diagnóstico concluído. Verifique o console do navegador.', 'info');
+                console.log("--- FIM DO DIAGNÓSTICO ---");
             } catch (err) {
-                console.error('Erro ao processar arquivo .ics:', err);
-                showToast('Erro ao processar o arquivo .ics. Verifique o formato do arquivo.', 'error');
+                console.error("ERRO DURANTE O DIAGNÓSTICO:", err);
+                showToast('Ocorreu um erro durante o diagnóstico. Verifique o console.', 'error');
             } finally {
                 event.target.value = '';
             }
