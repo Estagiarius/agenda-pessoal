@@ -602,17 +602,11 @@ async function initAllEventsView() {
                 const oneYearFromNow = moment().add(1, 'year');
 
                 vevents.forEach(vevent => {
-                    let event;
                     try {
-                        event = new ICAL.Event(vevent);
-                    } catch(e) {
-                        console.warn('Falha ao construir objeto ICAL.Event a partir de um vevent. Pulando.', vevent);
-                        return; // Pula para o próximo vevent
-                    }
-
-                    try {
+                        const event = new ICAL.Event(vevent);
                         const dtstartProp = event.getProperties('dtstart')[0];
 
+                        // Basic validation
                         if (!dtstartProp) {
                             console.warn('Skipping event with no DTSTART property:', event.summary);
                             return;
@@ -620,39 +614,18 @@ async function initAllEventsView() {
 
                         const isAllDay = dtstartProp.getParameter('value') === 'date';
 
-                        if (event.isRecurring()) {
-                            const iterator = event.iterator();
-                            let next;
-                            let count = 0;
-                            while ((next = iterator.next()) && count < 100) {
-                                if (moment(next.toJSDate()).isAfter(oneYearFromNow)) {
-                                    break;
-                                }
-                                const occurrence = event.getOccurrenceDetails(next);
-                                eventsToImport.push(createEventObjectFromIcal(
-                                    occurrence.item.summary,
-                                    occurrence.startDate,
-                                    occurrence.endDate,
-                                    occurrence.item.description,
-                                    isAllDay
-                                ));
-                                count++;
-                            }
-                        } else {
-                            if (moment(event.startDate.toJSDate()).isBefore(oneYearFromNow)) {
-                                eventsToImport.push(createEventObjectFromIcal(
-                                    event.summary,
-                                    event.startDate,
-                                    event.endDate,
-                                    event.description,
-                                    isAllDay
-                                ));
-                            }
-                        }
+                        // Simplified diagnostic logic:
+                        // Ignore recurrence and date filters for now.
+                        // Just try to parse every vevent as a single item.
+                        eventsToImport.push(createEventObjectFromIcal(
+                            event.summary,
+                            event.startDate,
+                            event.endDate,
+                            event.description,
+                            isAllDay
+                        ));
                     } catch (e) {
-                        // Se falhar ao processar um único evento, loga o erro e continua com os outros
-                        console.error(`Falha ao processar um evento individual: ${event.summary}`, e);
-                        // Lança um erro mais específico para o usuário, se desejado, ou apenas continua
+                        console.error(`Falha ao processar um vevent individualmente. Pulando.`, e);
                     }
                 });
 
