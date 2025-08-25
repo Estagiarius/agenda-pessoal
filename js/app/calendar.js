@@ -597,17 +597,19 @@ async function initAllEventsView() {
 
                 vevents.forEach(vevent => {
                     try {
-                        // First, work with the component to get parameters
+                        // Correct Order of Operations:
+                        // 1. Work with the low-level ICAL.Component (`vevent`) to get parameters.
                         const dtstartProp = vevent.getProperties('dtstart')[0];
                         if (!dtstartProp) {
                             console.warn('Skipping VEVENT with no DTSTART property.');
-                            return; // continue
+                            return; // Skips this iteration of the loop.
                         }
                         const isAllDay = dtstartProp.getParameter('value') === 'date';
 
-                        // Now, create the high-level event wrapper
+                        // 2. Now create the high-level ICAL.Event wrapper to easily access details.
                         const event = new ICAL.Event(vevent);
 
+                        // 3. Restore full logic for recurrence and date filtering.
                         if (event.isRecurring()) {
                             const iterator = event.iterator();
                             let next;
@@ -637,8 +639,8 @@ async function initAllEventsView() {
                                 ));
                             }
                         }
-                    } catch (e) {
-                        console.error("Failed to process a VEVENT, skipping.", e);
+                    } catch (err) {
+                        console.error("Failed to process a VEVENT, skipping. Error:", err);
                     }
                 });
 
