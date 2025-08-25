@@ -474,22 +474,20 @@ async function initAllEventsView() {
                 const oneYearFromNow = new Date();
                 oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
 
-                // A correção, agora informada por um log de erro detalhado, é garantir que
-                // os dados brutos do evento sejam encapsulados em um ICAL.Component antes de
-                // serem passados para o ICAL.Event. Isso evita o TypeError dentro dos métodos do evento.
                 vevents.forEach(veventData => {
                     const component = new ICAL.Component(veventData);
-                    const event = new ICAL.Event(component);
 
-                    if (event.isRecurring()) {
+                    // Se o evento tem uma regra de recorrência (RRULE), use o ICAL.Event para expandi-la,
+                    // pois a lógica de expansão é complexa.
+                    if (component.hasProperty('rrule')) {
+                        const event = new ICAL.Event(component);
                         const iterator = event.iterator();
                         let next;
                         let count = 0;
                         while ((next = iterator.next()) && count < 100) {
                             const nextDate = next.toJSDate();
-                            if (nextDate > oneYearFromNow) {
-                                break;
-                            }
+                            if (nextDate > oneYearFromNow) break;
+
                             const occurrence = event.getOccurrenceDetails(next);
                             eventsToImport.push({
                                 title: occurrence.item.summary,
@@ -501,12 +499,22 @@ async function initAllEventsView() {
                             count++;
                         }
                     } else {
+                        // Para eventos simples ou com RECURRENCE-ID (que não são o evento "mestre"),
+                        // extraia os dados manualmente para evitar o bug do construtor ICAL.Event.
+                        const summary = component.getPropertyValue('summary');
+                        const dtstart = component.getPropertyValue('dtstart');
+                        const dtend = component.getPropertyValue('dtend');
+                        const description = component.getPropertyValue('description');
+
+                        // Ignora eventos sem data de início, que são inválidos.
+                        if (!dtstart) return;
+
                         eventsToImport.push({
-                            title: event.summary,
-                            date: event.startDate.toJSDate().toISOString().split('T')[0],
-                            startTime: !event.startDate.isDate ? event.startDate.toJSDate().toTimeString().substring(0, 5) : '',
-                            endTime: event.endDate && !event.endDate.isDate ? event.endDate.toJSDate().toTimeString().substring(0, 5) : '',
-                            description: event.description || ''
+                            title: summary || '',
+                            date: dtstart.toJSDate().toISOString().split('T')[0],
+                            startTime: !dtstart.isDate ? dtstart.toJSDate().toTimeString().substring(0, 5) : '',
+                            endTime: dtend && !dtend.isDate ? dtend.toJSDate().toTimeString().substring(0, 5) : '',
+                            description: description || ''
                         });
                     }
                 });
