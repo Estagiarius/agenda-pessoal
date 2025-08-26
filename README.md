@@ -2,7 +2,7 @@
 
 Uma aplicação web de agenda pessoal e acadêmica com uma arquitetura cliente-servidor moderna.
 
-## Visão Geral
+## Visão Geral - 
 
 Este projeto é uma Single Page Application (SPA) que se conecta a um backend para oferecer uma experiência rica e persistente. Embora algumas funcionalidades legadas ainda utilizem o `localStorage`, o núcleo da aplicação agora salva os dados em um servidor central, permitindo acesso de qualquer lugar.
 
