@@ -102,10 +102,9 @@ def init_db():
     CREATE TABLE IF NOT EXISTS evento (
         id TEXT PRIMARY KEY,
         title TEXT NOT NULL,
-        date TEXT NOT NULL,
-        start_time TEXT,
-        end_time TEXT,
         description TEXT,
+        start_datetime TEXT NOT NULL,
+        end_datetime TEXT,
         recurrence_id TEXT,
         reminders TEXT
     )
