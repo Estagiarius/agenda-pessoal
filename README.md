@@ -36,6 +36,20 @@ python launch.py
 
 Abra o arquivo `tests/test-runner.html` em um navegador para rodar os testes unitários.
 
+### Solução de Problemas (Troubleshooting)
+
+**Erro `sqlite3.OperationalError: no such column:`**
+
+Este erro pode ocorrer após uma atualização que modifica a estrutura do banco de dados. Ele indica que o arquivo de banco de dados local (`app_database.db`) está usando um esquema antigo.
+
+Para resolver isso, você pode resetar o banco de dados executando o seguinte script. **Atenção:** Isso apagará todos os dados existentes.
+
+```bash
+python3 reset_database.py
+```
+
+Após executar o script, inicie a aplicação novamente com `python3 launch.py`.
+
 ## Estrutura do Projeto
 
 ```
@@ -59,3 +73,18 @@ Abra o arquivo `tests/test-runner.html` em um navegador para rodar os testes uni
 3.  **Faça o Commit:** Faça o commit das suas alterações (`git commit -m 'feat: Adiciona nova feature'`).
 4.  **Faça o Push:** Envie para a sua branch (`git push origin feature/nova-feature`).
 5.  **Abra um Pull Request:** Abra um pull request para o repositório original.
+
+---
+
+## Mudanças Recentes (Setembro 2025)
+
+Para melhorar a manutenibilidade e a qualidade do código, foram realizadas as seguintes refatorações significativas:
+
+1.  **Remoção da Funcionalidade de Chat:** A funcionalidade de chat com IA, que estava desativada, foi completamente removida do código. Isso incluiu a remoção de arquivos de interface (`HTML`, `CSS`, `JS`), rotas de frontend e o endpoint da API de backend.
+
+2.  **Refatoração do Sistema de Calendário:**
+    -   **Banco de Dados:** O armazenamento de eventos foi modernizado. Em vez de salvar data e hora em campos de texto separados, agora usamos colunas `start_datetime` e `end_datetime` que armazenam a data e hora completas no formato padrão ISO 8601. Isso torna as consultas e a ordenação de eventos mais eficientes e confiáveis.
+    -   **Visualização "Agenda Completa":** A interface da agenda completa foi redesenhada para agrupar os eventos por dia e ordená-los por hora, oferecendo uma visualização muito mais clara e organizada.
+
+3.  **Melhoria no Gerenciamento de Conexões com o Banco de Dados:**
+    -   A aplicação agora utiliza o contexto de aplicação do Flask para gerenciar as conexões com o banco de dados. Isso garante que as conexões sejam abertas apenas quando necessário e fechadas automaticamente no final de cada requisição, seguindo as melhores práticas e prevenindo vazamentos de recursos.

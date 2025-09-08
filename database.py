@@ -1,21 +1,33 @@
 import sqlite3
 import os
+from flask import g
 
 # Define o caminho do banco de dados no diretório raiz do projeto
 DATABASE_FILE = "app_database.db"
 
-def get_db_connection():
-    """Cria e retorna uma conexão com o banco de dados SQLite."""
-    conn = sqlite3.connect(DATABASE_FILE)
-    conn.row_factory = sqlite3.Row  # Permite acessar colunas por nome
-    return conn
+def get_db():
+    """
+    Retorna uma conexão com o banco de dados. Se não existir no contexto da
+    aplicação (g), uma nova conexão é criada e armazenada lá.
+    """
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE_FILE)
+        db.row_factory = sqlite3.Row
+    return db
+
+def close_db(e=None):
+    """Fecha a conexão com o banco de dados se ela existir."""
+    db = g.pop('_database', None)
+    if db is not None:
+        db.close()
 
 def init_db():
     """
-    Inicializa o banco de dados. Cria a tabela 'materials' se ela ainda não existir.
+    Inicializa o banco de dados. Cria as tabelas se elas ainda não existirem.
     É seguro chamar esta função a cada inicialização do servidor.
     """
-    conn = get_db_connection()
+    conn = sqlite3.connect(DATABASE_FILE)
     cursor = conn.cursor()
 
     # Tabela para os Materiais de Estudo (usando IF NOT EXISTS para segurança)

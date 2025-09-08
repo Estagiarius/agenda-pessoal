@@ -15,6 +15,10 @@ if not os.path.exists(UPLOAD_FOLDER):
 app = Flask(__name__, static_folder='.', static_url_path='')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+@app.teardown_appcontext
+def close_connection(exception):
+    db.close_db(exception)
+
 @app.route('/')
 def serve_index():
     return send_from_directory('.', 'index.html')
@@ -33,7 +37,7 @@ def upload_file():
         file.save(file_path)
 
         # Salva os metadados no banco de dados
-        conn = db.get_db_connection()
+        conn = db.get_db()
 
         # Gera um ID único para o material
         material_id = f'mat_{uuid.uuid4().hex}'
@@ -52,24 +56,21 @@ def upload_file():
         )
 
         conn.commit()
-        conn.close()
 
         return 'File uploaded successfully', 200
 
 @app.route('/api/materials/<string:material_id>')
 def get_material(material_id):
-    conn = db.get_db_connection()
+    conn = db.get_db()
     material = conn.execute('SELECT * FROM materials WHERE id = ?', (material_id,)).fetchone()
-    conn.close()
     if material is None:
         return jsonify({'error': 'Material não encontrado'}), 404
     return jsonify(dict(material))
 
 @app.route('/api/materials')
 def get_materials():
-    conn = db.get_db_connection()
+    conn = db.get_db()
     materials_rows = conn.execute('SELECT * FROM materials ORDER BY title').fetchall()
-    conn.close()
 
     materials = []
     for row in materials_rows:
@@ -87,9 +88,8 @@ def get_materials():
 
 @app.route('/api/disciplinas', methods=['GET'])
 def get_disciplinas():
-    conn = db.get_db_connection()
+    conn = db.get_db()
     disciplinas_rows = conn.execute('SELECT * FROM disciplina ORDER BY nome').fetchall()
-    conn.close()
     disciplinas = [dict(row) for row in disciplinas_rows]
     return jsonify(disciplinas)
 
@@ -104,7 +104,7 @@ def create_disciplina():
     codigo = data.get('codigo', '')
     descricao = data.get('descricao', '')
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     conn.execute(
         'INSERT INTO disciplina (id, nome, codigo, descricao) VALUES (?, ?, ?, ?)',
         (new_id, nome, codigo, descricao)
@@ -112,15 +112,13 @@ def create_disciplina():
     conn.commit()
 
     new_disciplina = conn.execute('SELECT * FROM disciplina WHERE id = ?', (new_id,)).fetchone()
-    conn.close()
 
     return jsonify(dict(new_disciplina)), 201
 
 @app.route('/api/disciplinas/<string:disciplina_id>', methods=['GET'])
 def get_disciplina(disciplina_id):
-    conn = db.get_db_connection()
+    conn = db.get_db()
     disciplina = conn.execute('SELECT * FROM disciplina WHERE id = ?', (disciplina_id,)).fetchone()
-    conn.close()
     if disciplina is None:
         return jsonify({'error': 'Disciplina não encontrada'}), 404
     return jsonify(dict(disciplina))
@@ -131,11 +129,10 @@ def update_disciplina(disciplina_id):
     if not data:
         return jsonify({'error': 'Dados inválidos'}), 400
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     # Verifica se a disciplina existe
     disciplina = conn.execute('SELECT * FROM disciplina WHERE id = ?', (disciplina_id,)).fetchone()
     if disciplina is None:
-        conn.close()
         return jsonify({'error': 'Disciplina não encontrada'}), 404
 
     # Coleta os novos dados
@@ -150,22 +147,19 @@ def update_disciplina(disciplina_id):
     conn.commit()
 
     updated_disciplina = conn.execute('SELECT * FROM disciplina WHERE id = ?', (disciplina_id,)).fetchone()
-    conn.close()
 
     return jsonify(dict(updated_disciplina))
 
 @app.route('/api/disciplinas/<string:disciplina_id>', methods=['DELETE'])
 def delete_disciplina(disciplina_id):
-    conn = db.get_db_connection()
+    conn = db.get_db()
     # Verifica se a disciplina existe antes de deletar
     disciplina = conn.execute('SELECT * FROM disciplina WHERE id = ?', (disciplina_id,)).fetchone()
     if disciplina is None:
-        conn.close()
         return jsonify({'error': 'Disciplina não encontrada'}), 404
 
     conn.execute('DELETE FROM disciplina WHERE id = ?', (disciplina_id,))
     conn.commit()
-    conn.close()
 
     return '', 204
 
@@ -174,7 +168,7 @@ def delete_disciplina(disciplina_id):
 
 @app.route('/api/turmas', methods=['GET'])
 def get_turmas():
-    conn = db.get_db_connection()
+    conn = db.get_db()
     # Join com disciplina para obter o nome da disciplina, que é útil para a UI
     query = """
         SELECT t.*, d.nome as disciplina_nome
@@ -183,7 +177,6 @@ def get_turmas():
         ORDER BY t.nome
     """
     turmas_rows = conn.execute(query).fetchall()
-    conn.close()
     turmas = [dict(row) for row in turmas_rows]
     return jsonify(turmas)
 
@@ -199,11 +192,10 @@ def create_turma():
     ano_semestre = data.get('ano_semestre', '')
     professor = data.get('professor', '')
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     # RN02: Verificar se a disciplina existe
     disciplina = conn.execute('SELECT id FROM disciplina WHERE id = ?', (id_disciplina,)).fetchone()
     if disciplina is None:
-        conn.close()
         return jsonify({'error': 'A disciplina especificada não existe.'}), 400
 
     conn.execute(
@@ -219,15 +211,13 @@ def create_turma():
         JOIN disciplina d ON t.id_disciplina = d.id
         WHERE t.id = ?
     """, (new_id,)).fetchone()
-    conn.close()
 
     return jsonify(dict(new_turma_row)), 201
 
 @app.route('/api/turmas/<string:turma_id>', methods=['GET'])
 def get_turma(turma_id):
-    conn = db.get_db_connection()
+    conn = db.get_db()
     turma = conn.execute('SELECT * FROM turma WHERE id = ?', (turma_id,)).fetchone()
-    conn.close()
     if turma is None:
         return jsonify({'error': 'Turma não encontrada'}), 404
     return jsonify(dict(turma))
@@ -238,10 +228,9 @@ def update_turma(turma_id):
     if not data:
         return jsonify({'error': 'Dados inválidos'}), 400
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     turma = conn.execute('SELECT * FROM turma WHERE id = ?', (turma_id,)).fetchone()
     if turma is None:
-        conn.close()
         return jsonify({'error': 'Turma não encontrada'}), 404
 
     nome = data.get('nome', turma['nome'])
@@ -261,21 +250,18 @@ def update_turma(turma_id):
         JOIN disciplina d ON t.id_disciplina = d.id
         WHERE t.id = ?
     """, (turma_id,)).fetchone()
-    conn.close()
 
     return jsonify(dict(updated_turma_row))
 
 @app.route('/api/turmas/<string:turma_id>', methods=['DELETE'])
 def delete_turma(turma_id):
-    conn = db.get_db_connection()
+    conn = db.get_db()
     turma = conn.execute('SELECT * FROM turma WHERE id = ?', (turma_id,)).fetchone()
     if turma is None:
-        conn.close()
         return jsonify({'error': 'Turma não encontrada'}), 404
 
     conn.execute('DELETE FROM turma WHERE id = ?', (turma_id,))
     conn.commit()
-    conn.close()
 
     return '', 204
 
@@ -284,9 +270,8 @@ def delete_turma(turma_id):
 
 @app.route('/api/alunos', methods=['GET'])
 def get_alunos():
-    conn = db.get_db_connection()
+    conn = db.get_db()
     alunos_rows = conn.execute('SELECT * FROM aluno ORDER BY nome').fetchall()
-    conn.close()
     alunos = [dict(row) for row in alunos_rows]
     return jsonify(alunos)
 
@@ -302,21 +287,19 @@ def create_aluno():
     data_nascimento = data.get('data_nascimento', '')
     situacao = data.get('situacao', 'Ativo')
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     conn.execute(
         'INSERT INTO aluno (id, nome, numero_chamada, data_nascimento, situacao) VALUES (?, ?, ?, ?, ?)',
         (new_id, nome, numero_chamada, data_nascimento, situacao)
     )
     conn.commit()
     new_aluno = conn.execute('SELECT * FROM aluno WHERE id = ?', (new_id,)).fetchone()
-    conn.close()
     return jsonify(dict(new_aluno)), 201
 
 @app.route('/api/alunos/<string:aluno_id>', methods=['GET'])
 def get_aluno(aluno_id):
-    conn = db.get_db_connection()
+    conn = db.get_db()
     aluno = conn.execute('SELECT * FROM aluno WHERE id = ?', (aluno_id,)).fetchone()
-    conn.close()
     if aluno is None:
         return jsonify({'error': 'Aluno não encontrado'}), 404
     return jsonify(dict(aluno))
@@ -327,10 +310,9 @@ def update_aluno(aluno_id):
     if not data:
         return jsonify({'error': 'Dados inválidos'}), 400
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     aluno = conn.execute('SELECT * FROM aluno WHERE id = ?', (aluno_id,)).fetchone()
     if aluno is None:
-        conn.close()
         return jsonify({'error': 'Aluno não encontrado'}), 404
 
     nome = data.get('nome', aluno['nome'])
@@ -344,28 +326,25 @@ def update_aluno(aluno_id):
     )
     conn.commit()
     updated_aluno = conn.execute('SELECT * FROM aluno WHERE id = ?', (aluno_id,)).fetchone()
-    conn.close()
     return jsonify(dict(updated_aluno))
 
 @app.route('/api/alunos/<string:aluno_id>', methods=['DELETE'])
 def delete_aluno(aluno_id):
-    conn = db.get_db_connection()
+    conn = db.get_db()
     # RN10: Verifica se o aluno está matriculado em alguma turma
     matriculas = conn.execute('SELECT id_turma FROM matricula WHERE id_aluno = ?', (aluno_id,)).fetchall()
     if matriculas:
-        conn.close()
         return jsonify({'error': 'Este aluno está matriculado em uma ou mais turmas e não pode ser excluído.'}), 400
 
     conn.execute('DELETE FROM aluno WHERE id = ?', (aluno_id,))
     conn.commit()
-    conn.close()
     return '', 204
 
 # --- API para Matrículas (Enrollments) ---
 
 @app.route('/api/turmas/<string:turma_id>/alunos', methods=['GET'])
 def get_alunos_por_turma(turma_id):
-    conn = db.get_db_connection()
+    conn = db.get_db()
     query = """
         SELECT a.* FROM aluno a
         JOIN matricula m ON a.id = m.id_aluno
@@ -373,7 +352,6 @@ def get_alunos_por_turma(turma_id):
         ORDER BY a.nome
     """
     alunos_rows = conn.execute(query, (turma_id,)).fetchall()
-    conn.close()
     alunos = [dict(row) for row in alunos_rows]
     return jsonify(alunos)
 
@@ -384,32 +362,27 @@ def matricular_aluno(turma_id):
         return jsonify({'error': 'O campo "id_aluno" é obrigatório'}), 400
     id_aluno = data['id_aluno']
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     # Adicionar lógica para verificar se aluno e turma existem, se necessário
     try:
         conn.execute('INSERT INTO matricula (id_aluno, id_turma) VALUES (?, ?)', (id_aluno, turma_id))
         conn.commit()
     except conn.IntegrityError:
         # RN09: Lida com a violação da chave primária (matrícula duplicada)
-        conn.close()
         return jsonify({'error': 'Este aluno já está matriculado nesta turma.'}), 409 # 409 Conflict
-    finally:
-        conn.close()
 
     return jsonify({'success': True}), 201
 
 @app.route('/api/turmas/<string:turma_id>/alunos/<string:aluno_id>', methods=['DELETE'])
 def desmatricular_aluno(turma_id, aluno_id):
-    conn = db.get_db_connection()
+    conn = db.get_db()
     # Verificar se a matrícula existe antes de deletar
     matricula = conn.execute('SELECT * FROM matricula WHERE id_aluno = ? AND id_turma = ?', (aluno_id, turma_id)).fetchone()
     if matricula is None:
-        conn.close()
         return jsonify({'error': 'Matrícula não encontrada'}), 404
 
     conn.execute('DELETE FROM matricula WHERE id_aluno = ? AND id_turma = ?', (aluno_id, turma_id))
     conn.commit()
-    conn.close()
     return '', 204
 
 @app.route('/api/turmas/<string:turma_id>/alunos/import', methods=['POST'])
@@ -418,11 +391,10 @@ def import_alunos(turma_id):
     if not isinstance(students_data, list):
         return jsonify({'error': 'O corpo da requisição deve ser uma lista de alunos.'}), 400
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     # Check if class exists
     turma = conn.execute('SELECT * FROM turma WHERE id = ?', (turma_id,)).fetchone()
     if turma is None:
-        conn.close()
         return jsonify({'error': 'Turma não encontrada'}), 404
 
     success_count = 0
@@ -462,10 +434,8 @@ def import_alunos(turma_id):
         cursor.execute('COMMIT')
     except Exception as e:
         cursor.execute('ROLLBACK')
-        conn.close()
         return jsonify({'error': f'Erro na transação do banco de dados: {e}', 'details': errors}), 500
 
-    conn.close()
     return jsonify({
         'message': f'{success_count} aluno(s) importado(s) com sucesso.',
         'success_count': success_count,
@@ -477,9 +447,8 @@ def import_alunos(turma_id):
 
 @app.route('/api/turmas/<string:turma_id>/avaliacoes', methods=['GET'])
 def get_avaliacoes_por_turma(turma_id):
-    conn = db.get_db_connection()
+    conn = db.get_db()
     avaliacoes_rows = conn.execute('SELECT * FROM avaliacao WHERE id_turma = ? ORDER BY nome', (turma_id,)).fetchall()
-    conn.close()
     avaliacoes = [dict(row) for row in avaliacoes_rows]
     return jsonify(avaliacoes)
 
@@ -491,29 +460,26 @@ def create_avaliacao():
 
     new_id = f"aval_{uuid.uuid4().hex}"
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     conn.execute(
         'INSERT INTO avaliacao (id, nome, peso, nota_maxima, id_turma) VALUES (?, ?, ?, ?, ?)',
         (new_id, data['nome'], data['peso'], data['nota_maxima'], data['id_turma'])
     )
     conn.commit()
     new_avaliacao = conn.execute('SELECT * FROM avaliacao WHERE id = ?', (new_id,)).fetchone()
-    conn.close()
     return jsonify(dict(new_avaliacao)), 201
 
 @app.route('/api/avaliacoes', methods=['GET'])
 def get_all_avaliacoes():
-    conn = db.get_db_connection()
+    conn = db.get_db()
     avaliacoes_rows = conn.execute('SELECT * FROM avaliacao ORDER BY nome').fetchall()
-    conn.close()
     avaliacoes = [dict(row) for row in avaliacoes_rows]
     return jsonify(avaliacoes)
 
 @app.route('/api/avaliacoes/<string:avaliacao_id>', methods=['GET'])
 def get_avaliacao(avaliacao_id):
-    conn = db.get_db_connection()
+    conn = db.get_db()
     avaliacao = conn.execute('SELECT * FROM avaliacao WHERE id = ?', (avaliacao_id,)).fetchone()
-    conn.close()
     if avaliacao is None:
         return jsonify({'error': 'Avaliação não encontrada'}), 404
     return jsonify(dict(avaliacao))
@@ -524,10 +490,9 @@ def update_avaliacao(avaliacao_id):
     if not data:
         return jsonify({'error': 'Dados inválidos'}), 400
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     avaliacao = conn.execute('SELECT * FROM avaliacao WHERE id = ?', (avaliacao_id,)).fetchone()
     if avaliacao is None:
-        conn.close()
         return jsonify({'error': 'Avaliação não encontrada'}), 404
 
     nome = data.get('nome', avaliacao['nome'])
@@ -540,12 +505,11 @@ def update_avaliacao(avaliacao_id):
     )
     conn.commit()
     updated_avaliacao = conn.execute('SELECT * FROM avaliacao WHERE id = ?', (avaliacao_id,)).fetchone()
-    conn.close()
     return jsonify(dict(updated_avaliacao))
 
 @app.route('/api/avaliacoes/<string:avaliacao_id>', methods=['DELETE'])
 def delete_avaliacao(avaliacao_id):
-    conn = db.get_db_connection()
+    conn = db.get_db()
     # RN16: Excluir notas associadas
     conn.execute('BEGIN')
     try:
@@ -554,17 +518,14 @@ def delete_avaliacao(avaliacao_id):
         conn.commit()
     except Exception as e:
         conn.rollback()
-        conn.close()
         return jsonify({'error': f'Erro ao excluir avaliação: {e}'}), 500
 
-    conn.close()
     return '', 204
 
 @app.route('/api/avaliacoes/<string:avaliacao_id>/notas', methods=['GET'])
 def get_notas_por_avaliacao(avaliacao_id):
-    conn = db.get_db_connection()
+    conn = db.get_db()
     notas_rows = conn.execute('SELECT * FROM nota WHERE id_avaliacao = ?', (avaliacao_id,)).fetchall()
-    conn.close()
     notas = [dict(row) for row in notas_rows]
     return jsonify(notas)
 
@@ -574,17 +535,15 @@ def save_notas(avaliacao_id):
     if not isinstance(grades, list):
         return jsonify({'error': 'O corpo da requisição deve ser uma lista de notas.'}), 400
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     # RN13: Validação da nota máxima
     avaliacao = conn.execute('SELECT nota_maxima FROM avaliacao WHERE id = ?', (avaliacao_id,)).fetchone()
     if not avaliacao:
-        conn.close()
         return jsonify({'error': 'Avaliação não encontrada.'}), 404
     nota_maxima = avaliacao['nota_maxima']
 
     for grade in grades:
         if grade.get('grade') > nota_maxima:
-            conn.close()
             return jsonify({'error': f"A nota para o aluno {grade.get('studentId')} não pode ser maior que {nota_maxima}."}), 400
 
     # Usar uma transação para a operação de apagar e inserir
@@ -602,10 +561,8 @@ def save_notas(avaliacao_id):
         cursor.execute('COMMIT')
     except Exception as e:
         cursor.execute('ROLLBACK')
-        conn.close()
         return jsonify({'error': f'Erro ao salvar notas: {e}'}), 500
 
-    conn.close()
     return jsonify({'success': True}), 201
 
 
@@ -616,7 +573,7 @@ def get_eventos():
     start_date_str = request.args.get('start')
     end_date_str = request.args.get('end')
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     if start_date_str and end_date_str:
         # Fetch events within a date range, using the start_datetime column
         # The date is extracted from the full datetime string for range comparison
@@ -627,8 +584,6 @@ def get_eventos():
     else:
         # Fetch all events if no range is specified
         event_rows = conn.execute('SELECT * FROM evento ORDER BY start_datetime').fetchall()
-
-    conn.close()
 
     events = []
     for row in event_rows:
@@ -647,7 +602,7 @@ def create_evento():
     if not data or not data.get('title') or not data.get('date'):
         return jsonify({'error': 'Campos "title" e "date" são obrigatórios.'}), 400
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     cursor = conn.cursor()
 
     recurrence_frequency = data.get('recurrenceFrequency')
@@ -736,10 +691,8 @@ def create_evento():
         cursor.execute('COMMIT')
     except Exception as e:
         cursor.execute('ROLLBACK')
-        conn.close()
         return jsonify({'error': f'Erro ao criar evento(s): {e}'}), 500
 
-    conn.close()
     return jsonify({'success': True, 'count': len(events_to_insert)}), 201
 
 @app.route('/api/eventos/import', methods=['POST'])
@@ -772,7 +725,7 @@ def import_eventos():
     if not events_to_insert:
         return jsonify({'error': 'Nenhum evento válido para importar.'}), 400
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     try:
         cursor = conn.cursor()
         cursor.execute('BEGIN')
@@ -783,17 +736,14 @@ def import_eventos():
         cursor.execute('COMMIT')
     except Exception as e:
         cursor.execute('ROLLBACK')
-        conn.close()
         return jsonify({'error': f'Erro ao importar eventos: {e}'}), 500
 
-    conn.close()
     return jsonify({'success': True, 'count': len(events_to_insert)}), 201
 
 @app.route('/api/eventos/<string:evento_id>', methods=['GET'])
 def get_evento(evento_id):
-    conn = db.get_db_connection()
+    conn = db.get_db()
     evento = conn.execute('SELECT * FROM evento WHERE id = ?', (evento_id,)).fetchone()
-    conn.close()
     if evento is None:
         return jsonify({'error': 'Evento não encontrado'}), 404
 
@@ -810,10 +760,9 @@ def update_evento(evento_id):
     if not data:
         return jsonify({'error': 'Dados inválidos'}), 400
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     evento = conn.execute('SELECT * FROM evento WHERE id = ?', (evento_id,)).fetchone()
     if evento is None:
-        conn.close()
         return jsonify({'error': 'Evento não encontrado'}), 404
 
     title = data.get('title', evento['title'])
@@ -840,17 +789,19 @@ def update_evento(evento_id):
 
     end_datetime_iso = evento['end_datetime']
     if end_time_str:
-        if evento['end_datetime']:
-            end_datetime_obj = datetime.fromisoformat(evento['end_datetime'])
-        else:
-            # If no end time existed, base it on the new start time
-            end_datetime_obj = start_datetime_obj
+        # If end_datetime exists, use it as a base, otherwise base it on the start_datetime
+        base_dt_for_end = datetime.fromisoformat(evento['end_datetime']) if evento['end_datetime'] else start_datetime_obj
 
         new_end_time_obj = datetime.strptime(end_time_str, '%H:%M').time()
-        # Also update the date part of end_datetime to match start_datetime
-        end_datetime_obj = end_datetime_obj.replace(
-            year=start_datetime_obj.year, month=start_datetime_obj.month, day=start_datetime_obj.day,
-            hour=new_end_time_obj.hour, minute=new_end_time_obj.minute
+
+        # The end date should always match the start date unless it's a multi-day event,
+        # which is not supported by this UI. So we sync the date part.
+        end_datetime_obj = base_dt_for_end.replace(
+            year=start_datetime_obj.year,
+            month=start_datetime_obj.month,
+            day=start_datetime_obj.day,
+            hour=new_end_time_obj.hour,
+            minute=new_end_time_obj.minute
         )
         end_datetime_iso = end_datetime_obj.isoformat()
 
@@ -861,7 +812,6 @@ def update_evento(evento_id):
     )
     conn.commit()
     updated_evento = conn.execute('SELECT * FROM evento WHERE id = ?', (evento_id,)).fetchone()
-    conn.close()
 
     event_dict = dict(updated_evento)
     if event_dict.get('reminders'):
@@ -875,10 +825,9 @@ def update_evento(evento_id):
 def delete_evento(evento_id):
     scope = request.args.get('scope', 'this') # 'this', 'future', 'all'
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     evento_to_delete = conn.execute('SELECT * FROM evento WHERE id = ?', (evento_id,)).fetchone()
     if evento_to_delete is None:
-        conn.close()
         return jsonify({'error': 'Evento não encontrado'}), 404
 
     try:
@@ -895,10 +844,8 @@ def delete_evento(evento_id):
         conn.commit()
     except Exception as e:
         conn.rollback()
-        conn.close()
         return jsonify({'error': f'Erro ao excluir evento(s): {e}'}), 500
 
-    conn.close()
     return '', 204
 
 
@@ -906,9 +853,8 @@ def delete_evento(evento_id):
 
 @app.route('/api/tarefas', methods=['GET'])
 def get_tarefas():
-    conn = db.get_db_connection()
+    conn = db.get_db()
     tarefas_rows = conn.execute('SELECT * FROM tarefa ORDER BY id').fetchall()
-    conn.close()
 
     tarefas = []
     for row in tarefas_rows:
@@ -927,14 +873,13 @@ def create_tarefa():
 
     new_id = f"task_{uuid.uuid4().hex}"
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     conn.execute(
         'INSERT INTO tarefa (id, text, completed, priority, due_date) VALUES (?, ?, ?, ?, ?)',
         (new_id, data['text'], 0, data.get('priority'), data.get('dueDate'))
     )
     conn.commit()
     new_tarefa = conn.execute('SELECT * FROM tarefa WHERE id = ?', (new_id,)).fetchone()
-    conn.close()
 
     tarefa_dict = dict(new_tarefa)
     tarefa_dict['completed'] = bool(tarefa_dict['completed'])
@@ -947,10 +892,9 @@ def update_tarefa(tarefa_id):
     if not data:
         return jsonify({'error': 'Dados inválidos'}), 400
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     tarefa = conn.execute('SELECT * FROM tarefa WHERE id = ?', (tarefa_id,)).fetchone()
     if tarefa is None:
-        conn.close()
         return jsonify({'error': 'Tarefa não encontrada'}), 404
 
     # Use 'get' with a default value of the existing data
@@ -966,7 +910,6 @@ def update_tarefa(tarefa_id):
     )
     conn.commit()
     updated_tarefa = conn.execute('SELECT * FROM tarefa WHERE id = ?', (tarefa_id,)).fetchone()
-    conn.close()
 
     tarefa_dict = dict(updated_tarefa)
     tarefa_dict['completed'] = bool(tarefa_dict['completed'])
@@ -975,23 +918,22 @@ def update_tarefa(tarefa_id):
 
 @app.route('/api/tarefas/<string:tarefa_id>', methods=['DELETE'])
 def delete_tarefa(tarefa_id):
-    conn = db.get_db_connection()
+    conn = db.get_db()
     tarefa = conn.execute('SELECT * FROM tarefa WHERE id = ?', (tarefa_id,)).fetchone()
     if tarefa is None:
-        conn.close()
         return jsonify({'error': 'Tarefa não encontrada'}), 404
 
     conn.execute('DELETE FROM tarefa WHERE id = ?', (tarefa_id,))
     conn.commit()
-    conn.close()
 
     return '', 204
 
 
 # --- API para Planos de Aula ---
 
-def _get_lesson_plan_details(conn, plan_id):
+def _get_lesson_plan_details(plan_id):
     """Helper function to fetch a full lesson plan with its relations."""
+    conn = db.get_db()
     plan_row = conn.execute('SELECT * FROM plano_de_aula WHERE id = ?', (plan_id,)).fetchone()
     if not plan_row:
         return None
@@ -1014,21 +956,18 @@ def _get_lesson_plan_details(conn, plan_id):
 
 @app.route('/api/planos_de_aula', methods=['GET'])
 def get_planos_de_aula():
-    conn = db.get_db_connection()
+    conn = db.get_db()
     planos_rows = conn.execute('SELECT * FROM plano_de_aula ORDER BY date DESC').fetchall()
 
     # For the list view, we might not need all details, but for simplicity, we'll fetch them.
     # In a real-world scenario with performance concerns, this could be optimized.
-    planos = [_get_lesson_plan_details(conn, row['id']) for row in planos_rows]
-    conn.close()
+    planos = [_get_lesson_plan_details(row['id']) for row in planos_rows]
 
     return jsonify(planos)
 
 @app.route('/api/planos_de_aula/<string:plan_id>', methods=['GET'])
 def get_plano_de_aula(plan_id):
-    conn = db.get_db_connection()
-    plan = _get_lesson_plan_details(conn, plan_id)
-    conn.close()
+    plan = _get_lesson_plan_details(plan_id)
 
     if plan is None:
         return jsonify({'error': 'Plano de aula não encontrado'}), 404
@@ -1040,7 +979,7 @@ def create_plano_de_aula():
     if not data or not data.get('title'):
         return jsonify({'error': 'O campo "title" é obrigatório.'}), 400
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     cursor = conn.cursor()
 
     new_id = f"lp_{uuid.uuid4().hex}"
@@ -1066,12 +1005,10 @@ def create_plano_de_aula():
         cursor.execute('COMMIT')
     except Exception as e:
         cursor.execute('ROLLBACK')
-        conn.close()
         return jsonify({'error': f'Erro ao criar plano de aula: {e}'}), 500
 
     # Fetch the complete new plan to return
-    new_plan = _get_lesson_plan_details(conn, new_id)
-    conn.close()
+    new_plan = _get_lesson_plan_details(new_id)
 
     return jsonify(new_plan), 201
 
@@ -1081,7 +1018,7 @@ def update_plano_de_aula(plan_id):
     if not data:
         return jsonify({'error': 'Dados inválidos'}), 400
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     cursor = conn.cursor()
 
     try:
@@ -1109,22 +1046,19 @@ def update_plano_de_aula(plan_id):
         cursor.execute('COMMIT')
     except Exception as e:
         cursor.execute('ROLLBACK')
-        conn.close()
         return jsonify({'error': f'Erro ao atualizar plano de aula: {e}'}), 500
 
     # Fetch the complete updated plan to return
-    updated_plan = _get_lesson_plan_details(conn, plan_id)
-    conn.close()
+    updated_plan = _get_lesson_plan_details(plan_id)
 
     return jsonify(updated_plan)
 
 @app.route('/api/planos_de_aula/<string:plan_id>', methods=['DELETE'])
 def delete_plano_de_aula(plan_id):
-    conn = db.get_db_connection()
+    conn = db.get_db()
     # ON DELETE CASCADE will handle join table deletions
     conn.execute('DELETE FROM plano_de_aula WHERE id = ?', (plan_id,))
     conn.commit()
-    conn.close()
     return '', 204
 
 
@@ -1147,7 +1081,7 @@ def get_perguntas():
     subject = request.args.get('subject')
     difficulty = request.args.get('difficulty')
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     query = 'SELECT * FROM pergunta'
     filters = []
     params = []
@@ -1163,16 +1097,14 @@ def get_perguntas():
         query += ' WHERE ' + ' AND '.join(filters)
 
     perguntas_rows = conn.execute(query, params).fetchall()
-    conn.close()
 
     perguntas = [_format_question_response(row) for row in perguntas_rows]
     return jsonify(perguntas)
 
 @app.route('/api/perguntas/subjects', methods=['GET'])
 def get_question_subjects():
-    conn = db.get_db_connection()
+    conn = db.get_db()
     subjects_rows = conn.execute('SELECT DISTINCT subject FROM pergunta WHERE subject IS NOT NULL AND subject != ""').fetchall()
-    conn.close()
     subjects = [row['subject'] for row in subjects_rows]
     return jsonify(subjects)
 
@@ -1185,22 +1117,20 @@ def create_pergunta():
     new_id = f"q_{uuid.uuid4().hex}"
     options_json = json.dumps(data.get('options', []))
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     conn.execute(
         'INSERT INTO pergunta (id, text, subject, difficulty, options, answer) VALUES (?, ?, ?, ?, ?, ?)',
         (new_id, data['text'], data.get('subject'), data.get('difficulty'), options_json, data['answer'])
     )
     conn.commit()
     new_pergunta = conn.execute('SELECT * FROM pergunta WHERE id = ?', (new_id,)).fetchone()
-    conn.close()
 
     return jsonify(_format_question_response(new_pergunta)), 201
 
 @app.route('/api/perguntas/<string:pergunta_id>', methods=['GET'])
 def get_pergunta(pergunta_id):
-    conn = db.get_db_connection()
+    conn = db.get_db()
     pergunta = conn.execute('SELECT * FROM pergunta WHERE id = ?', (pergunta_id,)).fetchone()
-    conn.close()
     if pergunta is None:
         return jsonify({'error': 'Pergunta não encontrada'}), 404
     return jsonify(_format_question_response(pergunta))
@@ -1211,10 +1141,9 @@ def update_pergunta(pergunta_id):
     if not data:
         return jsonify({'error': 'Dados inválidos'}), 400
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     pergunta = conn.execute('SELECT * FROM pergunta WHERE id = ?', (pergunta_id,)).fetchone()
     if pergunta is None:
-        conn.close()
         return jsonify({'error': 'Pergunta não encontrada'}), 404
 
     text = data.get('text', pergunta['text'])
@@ -1234,17 +1163,15 @@ def update_pergunta(pergunta_id):
     )
     conn.commit()
     updated_pergunta = conn.execute('SELECT * FROM pergunta WHERE id = ?', (pergunta_id,)).fetchone()
-    conn.close()
 
     return jsonify(_format_question_response(updated_pergunta))
 
 @app.route('/api/perguntas/<string:pergunta_id>', methods=['DELETE'])
 def delete_pergunta(pergunta_id):
-    conn = db.get_db_connection()
+    conn = db.get_db()
     # Add check if question is used in any quiz results in the future if that gets implemented
     conn.execute('DELETE FROM pergunta WHERE id = ?', (pergunta_id,))
     conn.commit()
-    conn.close()
     return '', 204
 
 
@@ -1252,10 +1179,9 @@ def delete_pergunta(pergunta_id):
 
 @app.route('/api/configuracoes', methods=['GET'])
 def get_configuracoes():
-    conn = db.get_db_connection()
+    conn = db.get_db()
     # There should only ever be one row for settings
     settings_row = conn.execute('SELECT value FROM configuracoes WHERE key = ?', ('user_settings',)).fetchone()
-    conn.close()
 
     if settings_row:
         # Return saved settings
@@ -1279,14 +1205,13 @@ def save_configuracoes():
 
     settings_json = json.dumps(settings_data)
 
-    conn = db.get_db_connection()
+    conn = db.get_db()
     # Use INSERT OR REPLACE to handle both creation and update
     conn.execute(
         'INSERT OR REPLACE INTO configuracoes (key, value) VALUES (?, ?)',
         ('user_settings', settings_json)
     )
     conn.commit()
-    conn.close()
 
     return jsonify(settings_data)
 
