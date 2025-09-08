@@ -301,7 +301,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 startTime: document.getElementById('eventStartTimeInput').value,
                 endTime: document.getElementById('eventEndTimeInput').value,
                 description: document.getElementById('eventDescriptionInput').value,
-                category: document.getElementById('eventCategoryInput').value,
                 reminders: [...currentModalReminders],
                 recurrenceFrequency: document.getElementById('eventRecurrenceFrequency').value,
                 recurrenceEndDate: document.getElementById('eventRecurrenceEndDate').value
