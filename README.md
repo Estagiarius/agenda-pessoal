@@ -36,6 +36,20 @@ python launch.py
 
 Abra o arquivo `tests/test-runner.html` em um navegador para rodar os testes unitários.
 
+### Solução de Problemas (Troubleshooting)
+
+**Erro `sqlite3.OperationalError: no such column:`**
+
+Este erro pode ocorrer após uma atualização que modifica a estrutura do banco de dados. Ele indica que o arquivo de banco de dados local (`app_database.db`) está usando um esquema antigo.
+
+Para resolver isso, você pode resetar o banco de dados executando o seguinte script. **Atenção:** Isso apagará todos os dados existentes.
+
+```bash
+python3 reset_database.py
+```
+
+Após executar o script, inicie a aplicação novamente com `python3 launch.py`.
+
 ## Estrutura do Projeto
 
 ```
