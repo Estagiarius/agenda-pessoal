@@ -33,21 +33,18 @@ async function initCalendar() {
     const eventsByDate = {}; // Helper to group events
 
     filteredEvents.forEach(event => {
-        const parts = event.date.split('-');
-        if (parts.length === 3) {
-            const eventDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-            const dateKey = eventDate.toDateString();
+        const eventMoment = moment(event.start_datetime);
+        const eventDate = eventMoment.toDate();
+        const dateKey = eventDate.toDateString();
 
-            if (!eventsByDate[dateKey]) {
-                eventsByDate[dateKey] = {
-                    date: eventDate,
-                    eventDetails: []
-                };
-            }
-            eventsByDate[dateKey].eventDetails.push({ title: event.title, category: event.category });
-        } else {
-            console.warn('Formato de data inválido para o evento:', event);
+        if (!eventsByDate[dateKey]) {
+            eventsByDate[dateKey] = {
+                date: eventDate,
+                eventDetails: []
+            };
         }
+        // Category is no longer part of the event, so we just push the title.
+        eventsByDate[dateKey].eventDetails.push({ title: event.title });
     });
 
     for (const key in eventsByDate) {
@@ -155,16 +152,21 @@ async function showEventDetails(eventId) { // ASYNC
     if (modalTitle) modalTitle.textContent = event.title || 'N/A';
     if (modalDescription) modalDescription.textContent = event.description || 'N/A';
     
-    let formattedDate = event.date ? moment(event.date, 'YYYY-MM-DD').format('DD/MM/YYYY') : 'N/A';
-    if (modalDate) modalDate.textContent = `Date: ${formattedDate}`;
+    const eventMoment = moment(event.start_datetime);
+    let formattedDate = eventMoment.format('DD/MM/YYYY');
+    if (modalDate) modalDate.textContent = `Data: ${formattedDate}`;
 
-    let timeInfo = 'All day';
-    if (event.startTime) {
-        timeInfo = `Time: ${event.startTime}`;
-        if (event.endTime) timeInfo += ` - ${event.endTime}`;
+    let timeInfo = 'Dia todo';
+    if (event.start_datetime) {
+        timeInfo = `Horário: ${eventMoment.format('HH:mm')}`;
+        if (event.end_datetime) {
+            timeInfo += ` - ${moment(event.end_datetime).format('HH:mm')}`;
+        }
     }
     if (modalTime) modalTime.textContent = timeInfo;
-    if (modalCategory) modalCategory.textContent = `Category: ${event.category || 'General'}`;
+
+    // The category field was removed from the new schema, so we remove it from the modal as well.
+    if (modalCategory) modalCategory.textContent = '';
 
     const modalReminders = document.getElementById('viewEventModalReminders');
     if (modalReminders) {
@@ -199,15 +201,8 @@ async function displayUpcomingEvents() { // ASYNC
     const sevenDaysFromNow = moment().add(7, 'days').endOf('day');
 
     const upcomingEvents = allEvents
-        .filter(event => moment(event.date, 'YYYY-MM-DD').isBetween(today, sevenDaysFromNow, null, '[]'))
-        .sort((a, b) => {
-            const dateA = moment(a.date, 'YYYY-MM-DD');
-            const dateB = moment(b.date, 'YYYY-MM-DD');
-            if (dateA.isBefore(dateB)) return -1;
-            if (dateA.isAfter(dateB)) return 1;
-            if (a.startTime && b.startTime) return a.startTime.localeCompare(b.startTime);
-            return a.startTime ? -1 : 1;
-        });
+        .filter(event => moment(event.start_datetime).isBetween(today, sevenDaysFromNow, null, '[]'))
+        .sort((a, b) => moment(a.start_datetime).diff(moment(b.start_datetime)));
 
     let contentHtml = '<h3>Resumo de Hoje</h3>';
     if (upcomingEvents.length === 0) {
@@ -215,14 +210,15 @@ async function displayUpcomingEvents() { // ASYNC
     } else {
         contentHtml += '<ul class="list-group">';
         upcomingEvents.forEach(event => {
+            const eventMoment = moment(event.start_datetime);
             contentHtml += `
                 <li class="list-group-item" data-event-id="${escapeHTML(String(event.id))}" style="cursor: pointer;">
                     <h5 class="list-group-item-heading">
-                        <span class="badge pull-right">${moment(event.date, 'YYYY-MM-DD').format('DD/MM')}</span>
+                        <span class="badge pull-right">${eventMoment.format('DD/MM')}</span>
                         ${escapeHTML(event.title)}
                     </h5>
                     <p class="list-group-item-text mb-0">
-                        ${event.startTime ? `Horário: ${escapeHTML(event.startTime)}` : 'Dia todo'}
+                        Horário: ${eventMoment.format('HH:mm')}
                     </p>
                 </li>`;
         });
@@ -366,14 +362,17 @@ async function filterAndRenderAllEvents() { // ASYNC
     let events = await window.eventService.getEvents(); // AWAIT
     const selectionMode = document.getElementById('bulk-actions').style.display === 'block';
 
+    // Filtering logic now uses start_datetime
     if (document.getElementById('filter-by-month-checkbox').checked) {
         const selectedMonth = parseInt(document.getElementById('month-filter').value, 10);
-        events = events.filter(event => moment(event.date).month() === selectedMonth);
+        events = events.filter(event => moment(event.start_datetime).month() === selectedMonth);
     }
     if (document.getElementById('filter-by-year-checkbox').checked) {
         const selectedYear = parseInt(document.getElementById('year-filter').value, 10);
-        events = events.filter(event => moment(event.date).year() === selectedYear);
+        events = events.filter(event => moment(event.start_datetime).year() === selectedYear);
     }
+
+    // The backend now sorts the events, so no need to sort here.
     renderAllEventsPage(events, selectionMode);
 }
 
@@ -381,30 +380,53 @@ function renderAllEventsPage(eventsToRender, selectionMode = false) {
     const container = document.getElementById('all-events-container');
     if (!container) return;
 
-    eventsToRender.sort((a, b) => moment(a.date).diff(moment(b.date)) || (a.startTime || '').localeCompare(b.startTime || ''));
-
     let contentHtml = '';
     if (!eventsToRender || eventsToRender.length === 0) {
-        contentHtml = '<p>Nenhum evento cadastrado no sistema.</p>';
+        contentHtml = '<p>Nenhum evento cadastrado para o período selecionado.</p>';
     } else {
+        let lastDate = null;
         eventsToRender.forEach(event => {
+            const eventMoment = moment(event.start_datetime);
+            const eventDate = eventMoment.format('YYYY-MM-DD');
+
+            // Add a date header if it's a new day
+            if (eventDate !== lastDate) {
+                if (lastDate !== null) {
+                    contentHtml += '</ul>'; // Close the previous day's list
+                }
+                // Format date to "Quarta-feira, 25 de Setembro de 2024"
+                const formattedDate = eventMoment.format('dddd, D [de] MMMM [de] YYYY');
+                contentHtml += `<h4 class="event-date-header">${formattedDate}</h4>`;
+                contentHtml += '<ul class="list-group">';
+                lastDate = eventDate;
+            }
+
             const checkboxHtml = selectionMode ? `<input type="checkbox" class="event-checkbox" data-event-id="${event.id}" style="margin-right: 10px;">` : '';
+
+            // Format time range
+            let timeString = eventMoment.format('HH:mm');
+            if (event.end_datetime) {
+                timeString += ` - ${moment(event.end_datetime).format('HH:mm')}`;
+            }
+
             contentHtml += `
-                <div class="panel panel-default event-item">
-                    <div class="panel-heading"><h3 class="panel-title">${checkboxHtml}${escapeHTML(event.title)} - ${moment(event.date).format('DD/MM/YYYY')}</h3></div>
-                    <div class="panel-body">
-                        <p><strong>Horário:</strong> ${event.startTime ? `${escapeHTML(event.startTime)} - ${escapeHTML(event.endTime || '')}` : 'Dia todo'}</p>
-                        <p><strong>Descrição:</strong> ${escapeHTML(event.description || 'Nenhuma descrição.')}</p>
+                <li class="list-group-item event-item">
+                    <div class="row">
+                        <div class="col-sm-3 event-time"><strong>${timeString}</strong></div>
+                        <div class="col-sm-6 event-title">${checkboxHtml}${escapeHTML(event.title)}</div>
+                        <div class="col-sm-3 event-actions text-right">
+                            <button class="btn btn-info btn-xs view-event-details-btn" data-event-id="${event.id}">Detalhes</button>
+                            <button class="btn btn-danger btn-xs delete-event-btn" data-event-id="${event.id}" data-recurrence-id="${event.recurrence_id || ''}">Excluir</button>
+                        </div>
                     </div>
-                    <div class="panel-footer">
-                        <button class="btn btn-info btn-sm view-event-details-btn" data-event-id="${event.id}">Ver Detalhes</button>
-                        <button class="btn btn-danger btn-sm delete-event-btn" data-event-id="${event.id}" data-recurrence-id="${event.recurrence_id || ''}">Excluir</button>
-                    </div>
-                </div>`;
+                    ${event.description ? `<div class="row"><div class="col-sm-12 event-description"><small>${escapeHTML(event.description)}</small></div></div>` : ''}
+                </li>`;
         });
+        contentHtml += '</ul>'; // Close the last day's list
     }
     container.innerHTML = contentHtml;
 
+    // Re-attach event listeners since we are overwriting the HTML
     container.addEventListener('click', function(e) {
         const target = e.target;
         if (target.classList.contains('view-event-details-btn')) {
@@ -441,9 +463,9 @@ function deleteEventFromAllEventsView(eventId) {
 async function initAllEventsView() {
     const events = await window.eventService.getEvents();
     const yearFilter = document.getElementById('year-filter');
-    const years = [...new Set(events.map(event => moment(event.date).year()))];
+    const years = [...new Set(events.map(event => moment(event.start_datetime).year()))];
     yearFilter.innerHTML = '';
-    years.forEach(year => {
+    years.sort((a, b) => b - a).forEach(year => { // Sort years descending
         const option = document.createElement('option');
         option.value = year;
         option.textContent = year;

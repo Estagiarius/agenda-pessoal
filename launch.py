@@ -15,22 +15,6 @@ if not os.path.exists(UPLOAD_FOLDER):
 app = Flask(__name__, static_folder='.', static_url_path='')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-
-# Configuração do Cliente OpenAI para a API da Maritaca
-client = None
-if "MARITACA_API_KEY" in os.environ:
-    try:
-        client = OpenAI(
-            api_key=os.environ["MARITACA_API_KEY"],
-            base_url="https://chat.maritaca.ai/api",
-        )
-    except Exception as e:
-        print(f"AVISO: Falha ao inicializar o cliente da API da Maritaca: {e}", file=sys.stderr)
-else:
-    print("AVISO: A chave da API da Maritaca (MARITACA_API_KEY) não foi definida. A funcionalidade de chat estará desativada.", file=sys.stderr)
-
-DEFAULT_MODEL = "sabia-3.1"
-
 @app.route('/')
 def serve_index():
     return send_from_directory('.', 'index.html')
@@ -634,14 +618,15 @@ def get_eventos():
 
     conn = db.get_db_connection()
     if start_date_str and end_date_str:
-        # Fetch events within a date range
+        # Fetch events within a date range, using the start_datetime column
+        # The date is extracted from the full datetime string for range comparison
         event_rows = conn.execute(
-            'SELECT * FROM evento WHERE date BETWEEN ? AND ? ORDER BY date, start_time',
+            "SELECT * FROM evento WHERE date(start_datetime) BETWEEN ? AND ? ORDER BY start_datetime",
             (start_date_str, end_date_str)
         ).fetchall()
     else:
         # Fetch all events if no range is specified
-        event_rows = conn.execute('SELECT * FROM evento ORDER BY date, start_time').fetchall()
+        event_rows = conn.execute('SELECT * FROM evento ORDER BY start_datetime').fetchall()
 
     conn.close()
 
@@ -670,19 +655,34 @@ def create_evento():
 
     events_to_insert = []
 
+    # Helper to combine date and time into an ISO 8601 string
+    def create_datetime_iso(date_str, time_str):
+        if not date_str:
+            return None
+        # If time is missing, default to midnight
+        time_str = time_str if time_str else '00:00'
+        return f"{date_str}T{time_str}:00"
+
+    start_datetime_iso = create_datetime_iso(data.get('date'), data.get('startTime'))
+    end_datetime_iso = create_datetime_iso(data.get('date'), data.get('endTime'))
+
     base_event = {
         'title': data['title'],
-        'date': data['date'],
-        'start_time': data.get('startTime'),
-        'end_time': data.get('endTime'),
         'description': data.get('description'),
+        'start_datetime': start_datetime_iso,
+        'end_datetime': end_datetime_iso,
         'reminders': ','.join(map(str, data.get('reminders', [])))
     }
 
+    if not base_event['start_datetime']:
+        return jsonify({'error': 'A data do evento (date) é obrigatória.'}), 400
+
     if recurrence_frequency and recurrence_frequency != 'none' and recurrence_end_date_str:
         recurrence_id = f"rec_{uuid.uuid4().hex}"
-        current_date = date.fromisoformat(base_event['date'])
-        end_date = date.fromisoformat(recurrence_end_date_str)
+
+        # We need to parse the initial datetime to increment it
+        current_dt_obj = datetime.fromisoformat(base_event['start_datetime'])
+        end_date_obj = date.fromisoformat(recurrence_end_date_str)
 
         delta = None
         if recurrence_frequency == 'daily':
@@ -690,35 +690,47 @@ def create_evento():
         elif recurrence_frequency == 'weekly':
             delta = timedelta(weeks=1)
 
-        while current_date <= end_date:
+        while current_dt_obj.date() <= end_date_obj:
             event_id = f"evt_{uuid.uuid4().hex}"
+
+            # Calculate end_datetime for this occurrence if start and end times were provided
+            current_end_dt_iso = None
+            if base_event['end_datetime']:
+                 # Calculate duration and add to current start time
+                start_dt = datetime.fromisoformat(base_event['start_datetime'])
+                end_dt = datetime.fromisoformat(base_event['end_datetime'])
+                duration = end_dt - start_dt
+                current_end_dt_obj = current_dt_obj + duration
+                current_end_dt_iso = current_end_dt_obj.isoformat()
+
             events_to_insert.append((
-                event_id, base_event['title'], current_date.isoformat(),
-                base_event['start_time'], base_event['end_time'],
-                base_event['description'], recurrence_id, base_event['reminders']
+                event_id, base_event['title'], base_event['description'],
+                current_dt_obj.isoformat(), current_end_dt_iso,
+                recurrence_id, base_event['reminders']
             ))
+
             if delta:
-                current_date += delta
+                current_dt_obj += delta
             elif recurrence_frequency == 'monthly':
-                # This is a simplified version, for a real app use a library like dateutil
-                if current_date.month == 12:
-                    current_date = current_date.replace(year=current_date.year + 1, month=1)
+                # Simplified monthly recurrence
+                if current_dt_obj.month == 12:
+                    current_dt_obj = current_dt_obj.replace(year=current_dt_obj.year + 1, month=1)
                 else:
-                    current_date = current_date.replace(month=current_date.month + 1)
+                    current_dt_obj = current_dt_obj.replace(month=current_dt_obj.month + 1)
             else:
                 break
     else:
         event_id = f"evt_{uuid.uuid4().hex}"
         events_to_insert.append((
-            event_id, base_event['title'], base_event['date'],
-            base_event['start_time'], base_event['end_time'],
-            base_event['description'], None, base_event['reminders']
+            event_id, base_event['title'], base_event['description'],
+            base_event['start_datetime'], base_event['end_datetime'],
+            None, base_event['reminders']
         ))
 
     try:
         cursor.execute('BEGIN')
         cursor.executemany(
-            'INSERT INTO evento (id, title, date, start_time, end_time, description, recurrence_id, reminders) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO evento (id, title, description, start_datetime, end_datetime, recurrence_id, reminders) VALUES (?, ?, ?, ?, ?, ?, ?)',
             events_to_insert
         )
         cursor.execute('COMMIT')
@@ -742,13 +754,17 @@ def import_eventos():
             continue  # Skip invalid events
 
         event_id = f"evt_{uuid.uuid4().hex}"
+
+        # Combine date and time for start_datetime and end_datetime
+        start_datetime_iso = f"{event['date']}T{event.get('startTime', '00:00')}:00"
+        end_datetime_iso = f"{event['date']}T{event['endTime']}:00" if event.get('endTime') else None
+
         events_to_insert.append((
             event_id,
             event['title'],
-            event['date'],
-            event.get('startTime'),
-            event.get('endTime'),
             event.get('description'),
+            start_datetime_iso,
+            end_datetime_iso,
             None,  # recurrence_id
             ''     # reminders
         ))
@@ -761,7 +777,7 @@ def import_eventos():
         cursor = conn.cursor()
         cursor.execute('BEGIN')
         cursor.executemany(
-            'INSERT INTO evento (id, title, date, start_time, end_time, description, recurrence_id, reminders) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO evento (id, title, description, start_datetime, end_datetime, recurrence_id, reminders) VALUES (?, ?, ?, ?, ?, ?, ?)',
             events_to_insert
         )
         cursor.execute('COMMIT')
@@ -801,15 +817,47 @@ def update_evento(evento_id):
         return jsonify({'error': 'Evento não encontrado'}), 404
 
     title = data.get('title', evento['title'])
-    date_str = data.get('date', evento['date'])
-    start_time = data.get('startTime', evento['start_time'])
-    end_time = data.get('endTime', evento['end_time'])
     description = data.get('description', evento['description'])
     reminders = ','.join(map(str, data.get('reminders', [])))
 
+    # Reconstruct datetime fields if date or time are provided
+    date_str = data.get('date')
+    start_time_str = data.get('startTime')
+    end_time_str = data.get('endTime')
+
+    # Use existing datetime as a base
+    start_datetime_obj = datetime.fromisoformat(evento['start_datetime'])
+
+    if date_str:
+        new_date_obj = date.fromisoformat(date_str)
+        start_datetime_obj = start_datetime_obj.replace(year=new_date_obj.year, month=new_date_obj.month, day=new_date_obj.day)
+
+    if start_time_str:
+        new_time_obj = datetime.strptime(start_time_str, '%H:%M').time()
+        start_datetime_obj = start_datetime_obj.replace(hour=new_time_obj.hour, minute=new_time_obj.minute)
+
+    start_datetime_iso = start_datetime_obj.isoformat()
+
+    end_datetime_iso = evento['end_datetime']
+    if end_time_str:
+        if evento['end_datetime']:
+            end_datetime_obj = datetime.fromisoformat(evento['end_datetime'])
+        else:
+            # If no end time existed, base it on the new start time
+            end_datetime_obj = start_datetime_obj
+
+        new_end_time_obj = datetime.strptime(end_time_str, '%H:%M').time()
+        # Also update the date part of end_datetime to match start_datetime
+        end_datetime_obj = end_datetime_obj.replace(
+            year=start_datetime_obj.year, month=start_datetime_obj.month, day=start_datetime_obj.day,
+            hour=new_end_time_obj.hour, minute=new_end_time_obj.minute
+        )
+        end_datetime_iso = end_datetime_obj.isoformat()
+
+
     conn.execute(
-        'UPDATE evento SET title = ?, date = ?, start_time = ?, end_time = ?, description = ?, reminders = ? WHERE id = ?',
-        (title, date_str, start_time, end_time, description, reminders, evento_id)
+        'UPDATE evento SET title = ?, description = ?, start_datetime = ?, end_datetime = ?, reminders = ? WHERE id = ?',
+        (title, description, start_datetime_iso, end_datetime_iso, reminders, evento_id)
     )
     conn.commit()
     updated_evento = conn.execute('SELECT * FROM evento WHERE id = ?', (evento_id,)).fetchone()
@@ -841,8 +889,8 @@ def delete_evento(evento_id):
             conn.execute('DELETE FROM evento WHERE recurrence_id = ?', (evento_to_delete['recurrence_id'],))
         elif scope == 'future':
             conn.execute(
-                'DELETE FROM evento WHERE recurrence_id = ? AND date >= ?',
-                (evento_to_delete['recurrence_id'], evento_to_delete['date'])
+                'DELETE FROM evento WHERE recurrence_id = ? AND start_datetime >= ?',
+                (evento_to_delete['recurrence_id'], evento_to_delete['start_datetime'])
             )
         conn.commit()
     except Exception as e:
@@ -1241,44 +1289,6 @@ def save_configuracoes():
     conn.close()
 
     return jsonify(settings_data)
-
-
-@app.route('/api/chat', methods=['POST'])
-def chat():
-    if not client:
-        error_message = json.dumps({"error": "A funcionalidade de chat não está configurada no servidor."})
-        return Response(f"data: {error_message}\n\n", status=503, mimetype='text/event-stream')
-
-    data = request.get_json()
-    message = data.get('message')
-    model = data.get('model', DEFAULT_MODEL)
-
-    if not message:
-        return Response(json.dumps({'error': 'Nenhuma mensagem fornecida'}), status=400, mimetype='application/json')
-
-    def generate():
-        try:
-            stream = client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "user", "content": message}
-                ],
-                stream=True,
-                max_tokens=8192,
-                temperature=0.5,
-                top_p=0.95
-            )
-            for chunk in stream:
-                content = chunk.choices[0].delta.content or ""
-                if content:
-                    # Formato Server-Sent Events (SSE)
-                    yield f"data: {json.dumps({'answer': content})}\n\n"
-        except Exception as e:
-            print(f"ERRO: Erro ao chamar a API da Maritaca: {e}", file=sys.stderr)
-            error_message = json.dumps({"error": "Ocorreu um erro ao se comunicar com a IA."})
-            yield f"data: {error_message}\n\n"
-
-    return Response(generate(), mimetype='text/event-stream')
 
 if __name__ == '__main__':
     # Garante que o banco de dados e a tabela 'materials' existam ao iniciar

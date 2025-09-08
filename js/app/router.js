@@ -163,14 +163,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             });
-        } else if (viewKey === '#/chat') {
-            fetchView('views/chat.html', () => {
-                if (typeof initChatApp === 'function') {
-                    initChatApp();
-                } else {
-                    console.error('A função initChatApp não está definida.');
-                }
-            });
         } else if (viewKey === '#/subjects') {
             fetchView('views/subjects.html', () => {
                 if (typeof initSubjectsView === 'function') initSubjectsView();
