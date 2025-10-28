@@ -2,6 +2,7 @@ import customtkinter as ctk
 from src.core.ai_core import AICore
 from src.gui.chat_view import ChatView
 from src.gui.dashboard_view import DashboardView
+from src.gui.grade_entry_view import GradeEntryView
 
 class TeacherAssistantApp(ctk.CTk):
     def __init__(self):
@@ -34,6 +35,10 @@ class TeacherAssistantApp(ctk.CTk):
                                               command=lambda: self.show_frame("DashboardView"))
         self.dashboard_button.grid(row=2, column=0, padx=20, pady=10)
 
+        self.grade_entry_button = ctk.CTkButton(self.navigation_frame, text="Lançar Notas",
+                                                command=lambda: self.show_frame("GradeEntryView"))
+        self.grade_entry_button.grid(row=3, column=0, padx=20, pady=10)
+
         # Create main content frame
         self.main_frame = ctk.CTkFrame(self, corner_radius=0)
         self.main_frame.grid(row=0, column=1, sticky="nsew")
@@ -43,7 +48,7 @@ class TeacherAssistantApp(ctk.CTk):
         self.frames = {}
 
         # Initialize each view and add it to the frames dictionary
-        for F in (ChatView, DashboardView):
+        for F in (ChatView, DashboardView, GradeEntryView):
             page_name = F.__name__
             frame = F(parent=self.main_frame, controller=self)
             self.frames[page_name] = frame
