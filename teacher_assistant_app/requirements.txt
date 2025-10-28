@@ -1,0 +1,7 @@
+customtkinter
+python-dotenv
+openai
+requests
+beautifulsoup4
+pandas
+matplotlib
