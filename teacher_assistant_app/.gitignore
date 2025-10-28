@@ -37,3 +37,6 @@ venv.bak/
 # Project-specific files
 *.db
 *.sqlite3
+
+# Test artifacts
+*.png
