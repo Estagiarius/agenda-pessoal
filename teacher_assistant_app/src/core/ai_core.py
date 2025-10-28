@@ -6,26 +6,21 @@ from src.tools.web_search_tool import search_web
 
 class AICore:
     def __init__(self):
-        # Determine which AI provider to use
         provider = config_manager.get_setting('Settings', 'ai_provider', fallback='Maritaca')
 
         if provider == 'OpenAI':
             self.api_key = config_manager.get_setting('API', 'openai_api_key')
             self.api_base = "https://api.openai.com/v1"
-            self.model = "gpt-3.5-turbo" # A common default for OpenAI
+            self.model = "gpt-3.5-turbo"
         else: # Default to Maritaca
             self.api_key = config_manager.get_setting('API', 'maritaca_api_key')
             self.api_base = "https://chat.maritaca.ai/api/v1"
             self.model = "maritaca-ai/maritaca-llm"
 
-        if not self.api_key:
-            print(f"Warning: {provider} API key is not set. AI features will fail.")
-
         self.client = openai.OpenAI(api_key=self.api_key, base_url=self.api_base)
 
-        # Tool definitions remain the same...
         self.tools = [
-             {
+            {
                 "type": "function",
                 "function": {
                     "name": "query_database",
@@ -56,17 +51,32 @@ class AICore:
             "search_web": search_web,
         }
 
-    def get_ai_response(self, user_message, chat_history=None):
+    def get_ai_response(self, user_message, chat_history=None, pdf_context=None):
         if not self.api_key:
              return "Erro: A chave da API para o provedor selecionado não está configurada."
 
-        # ... (rest of the method remains the same)
-        messages = [{"role": "system", "content": "Você é um assistente prestativo..."}]
+        if pdf_context:
+            final_user_message = (
+                "Com base no seguinte documento, responda à pergunta abaixo.\n\n"
+                f"--- DOCUMENTO ---\n{pdf_context}\n--- FIM DO DOCUMENTO ---\n\n"
+                f"Pergunta: {user_message}"
+            )
+        else:
+            final_user_message = user_message
+
+        messages = [{"role": "system", "content": "Você é um assistente prestativo."}]
         if chat_history:
-            messages.extend(chat_history)
-        messages.append({"role": "user", "content": user_message})
+            # Exclude the last message to avoid duplicating the user's latest query
+            messages.extend(chat_history[:-1])
+        messages.append({"role": "user", "content": final_user_message})
 
         try:
+            # When a PDF is loaded, we focus the AI on the document and disable tool usage.
+            if pdf_context:
+                response = self.client.chat.completions.create(model=self.model, messages=messages)
+                return response.choices[0].message.content
+
+            # Standard tool-using logic
             response = self.client.chat.completions.create(
                 model=self.model, messages=messages, tools=self.tools, tool_choice="auto"
             )
@@ -96,4 +106,4 @@ class AICore:
                 return "Erro de Autenticação: A chave da API é inválida."
             return f"Erro da API: {e}"
         except Exception as e:
-            return "Desculpe, ocorreu um erro inesperado."
+            return f"Desculpe, ocorreu um erro inesperado: {e}"
